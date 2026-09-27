@@ -222,6 +222,15 @@ details.opt[open] summary{margin-bottom:10px}
 .favbtn:hover{color:var(--accent)}
 .tab.favtab .heart{color:var(--accent)}
 .tab.favtab[aria-pressed="true"] .heart{color:var(--accent)}
+.poster{width:60px;aspect-ratio:2/3;object-fit:cover;border-radius:7px;flex:0 0 auto;background:var(--surface-2);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.pedit{display:flex;gap:12px;align-items:flex-start}
+.pedit .pimg{width:84px;aspect-ratio:2/3;border-radius:8px;background:var(--surface-2);object-fit:cover;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);text-align:center;padding:4px;border:1px dashed var(--line)}
+.pedit .pctl{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1}
+.presults{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px}
+.presults button{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:4px;display:flex;flex-direction:column;gap:3px;text-align:left;font-size:11px;line-height:1.25;color:var(--ink)}
+.presults button img{width:100%;aspect-ratio:2/3;object-fit:cover;border-radius:5px}
+.presults button small{color:var(--muted);font-family:var(--mono);font-size:10px}
+.presults button:hover{border-color:var(--accent)}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:80;max-width:calc(100% - 32px);box-shadow:var(--shadow)}
 .menu{position:relative}
 .menu .pop{position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px;display:flex;flex-direction:column;min-width:220px;z-index:30}
@@ -250,6 +259,7 @@ details.opt[open] summary{margin-bottom:10px}
           <button id="mExportJson">Download backup (.json)</button>
           <button id="mExportCsv">Download spreadsheet (.csv)</button>
           <button id="mImportJson">Restore from backup…</button>
+          <button id="mPosters">Find missing posters</button>
           <hr>
           <button id="mDeleteAll" style="color:var(--st-dropped)">Delete entire library…</button>
         </div>
@@ -531,6 +541,7 @@ function cardHTML(it){
   return `<article class="card${it._example?" example":""}" style="--st:var(--st-${st})" data-id="${esc(it.id)}" tabindex="0" role="button" aria-label="${esc(it.title)}, open details">
     ${it._example?`<span class="example-tag">Example</span>`:""}
     <div class="row1">
+      ${it.poster?`<img class="poster" src="${esc(it.poster)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:""}
       <div class="ttl">
         <div class="meta">${meta||"&nbsp;"}${it.watchedYear?`<span>· watched ${esc(it.watchedYear)}</span>`:""}</div>
         <h3>${it.favorite?`<span class="fav" title="Favorite">♥</span> `:""}${esc(it.title)}</h3>
@@ -593,6 +604,7 @@ document.addEventListener("click",e=>{if(!menuPop.hidden&&!e.target.closest(".me
 $("#mExportJson").onclick=()=>{menuPop.hidden=true;exportFile("json")};
 $("#mExportCsv").onclick=()=>{menuPop.hidden=true;exportFile("csv")};
 $("#mImportJson").onclick=()=>{menuPop.hidden=true;$("#fileJson").click()};
+$("#mPosters").onclick=()=>{menuPop.hidden=true;findPosters(items(),true)};
 $("#mDeleteAll").onclick=()=>{menuPop.hidden=true;openDeleteAll()};
 
 /* ---------- sheets ---------- */
@@ -629,6 +641,14 @@ function openEdit(it){
     <header><h2>${isNew?"Add a title":"Edit title"}</h2><button class="x" data-close aria-label="Close">×</button></header>
     <form class="body" id="editForm" autocomplete="off">
       ${d.needsReview&&(d.flags||[]).length?`<div class="flagbox"><span class="lbl" style="color:var(--st-on_hold)">From your import, please check</span><ul>${d.flags.map(f=>`<li>${esc(f)}</li>`).join("")}</ul>${d.rawLine?`<div class="help">Original line: <span class="raw">${esc(d.rawLine)}</span></div>`:""}</div>`:""}
+      <div class="pedit">
+        <div id="pImgBox"></div>
+        <div class="pctl"><span class="lbl">Poster</span>
+          <div style="display:flex;flex-wrap:wrap;gap:6px"><button type="button" class="btn sm" id="ePFind">Find poster</button><button type="button" class="btn sm ghost" id="ePRemove">Remove</button></div>
+          <span class="help" id="ePMsg">Posters come from AniList.</span>
+        </div>
+      </div>
+      <div class="presults" id="ePResults"></div>
       ${past}
       <div class="form-grid">
         <div class="field c6"><label for="eTitle">Title</label><input type="text" id="eTitle" value="${esc(d.title)}" required${isNew?" autofocus":""}></div>
@@ -680,6 +700,19 @@ function openEdit(it){
   };hint();
   $("#scorePick").onclick=e=>{const b=e.target.closest("[data-s]");if(!b)return;const s=+b.dataset.s;score=score===s?null:s;
     sheet.querySelectorAll("#scorePick button").forEach(x=>x.setAttribute("aria-pressed",String(+x.dataset.s===score)));hint()};
+  let poster=d.poster||null,alUrl=d.alUrl||null;
+  const drawP=()=>{$("#pImgBox").innerHTML=poster?`<img class="pimg" src="${esc(poster)}" alt="" referrerpolicy="no-referrer">`:`<div class="pimg">No poster</div>`;$("#ePRemove").hidden=!poster};drawP();
+  $("#ePRemove").onclick=()=>{poster=null;alUrl=null;drawP();$("#ePMsg").textContent="Poster removed. Save to keep the change."};
+  $("#ePFind").onclick=async()=>{
+    const q=cleanForSearch($("#eTitle").value||d.title);if(!q){$("#ePMsg").textContent="Type a title first.";return}
+    $("#ePMsg").textContent="Searching AniList…";$("#ePResults").innerHTML="";
+    try{const list=await alSearchList(q);
+      if(!list.length){$("#ePMsg").textContent="No matches on AniList. It may not list this show (most Western cartoons aren't there).";return}
+      $("#ePMsg").textContent="Tap the right one:";
+      $("#ePResults").innerHTML=list.map((m,i)=>`<button type="button" data-pi="${i}"><img src="${esc(m.coverImage.large)}" alt="" referrerpolicy="no-referrer"><span>${esc(m.title.english||m.title.romaji)}</span><small>${[m.format,m.seasonYear].filter(Boolean).join(" · ")}</small></button>`).join("");
+      $("#ePResults").onclick=e=>{const b=e.target.closest("[data-pi]");if(!b)return;const m=list[+b.dataset.pi];poster=m.coverImage.large;alUrl=m.siteUrl;drawP();$("#ePResults").innerHTML="";$("#ePMsg").textContent="Poster picked. Save to keep it."};
+    }catch(err){$("#ePMsg").textContent="Couldn't reach AniList. Check your connection and try again."}
+  };
   const drawS=()=>{
     $("#sList").innerHTML=seasons.map((x,i)=>`<div class="srow${x._new?" new":""}" data-si="${i}">
       <span class="sn">Season ${x.n}</span>
@@ -720,7 +753,7 @@ function openEdit(it){
     const title=$("#eTitle").value.trim();if(!title){$("#eTitle").focus();toast("Give the title a name first.");return}
     const status=$("#eStatus").value,type=$("#eType").value;
     const now=Date.now();
-    const out={...d,title,altTitle:$("#eAlt").value.trim()||null,kind:$("#eKind").value,demo:$("#eDemo").value||null,type,year:toInt($("#eYear").value),
+    const out={...d,poster:poster||null,alUrl:poster?(alUrl||null):null,posterTried:poster?false:!!d.posterTried,title,altTitle:$("#eAlt").value.trim()||null,kind:$("#eKind").value,demo:$("#eDemo").value||null,type,year:toInt($("#eYear").value),
       status,watchedYear:toInt($("#eWatched").value),startDate:$("#eStart").value||null,finishDate:$("#eFinish").value||null,score,genres,
       rewatches:toInt($("#eRe").value),favorite:$("#eFav").checked,notes:$("#eNotes").value.trim()||null,updatedAt:now};
     delete out.epWatched;delete out.epTotal;
@@ -741,7 +774,7 @@ function openEdit(it){
     if(markChecked){out.needsReview=false;out.flags=[];reviewMsg=d.needsReview?" Removed from Needs review.":""}
     if(isNew&&!dupOk){const dup=items().find(x=>norm(x.title)===norm(title));if(dup){dupOk=true;toast(`“${dup.title}” is already in your library. Press Add again to keep both.`);return}}
     $("#eSave").disabled=true;
-    try{await store.put(out);closeSheet();toast((isNew?`Added ${title}`:(origScore&&score!==origScore?`Score changed ${origScore} → ${score||"none"}. Your old take is saved.`:"Saved"))+reviewMsg)}catch(err){$("#eSave").disabled=false;toast(errMsg(err))}
+    try{await store.put(out);if(isNew&&!out.poster)findPosters([out],false);closeSheet();toast((isNew?`Added ${title}`:(origScore&&score!==origScore?`Score changed ${origScore} → ${score||"none"}. Your old take is saved.`:"Saved"))+reviewMsg)}catch(err){$("#eSave").disabled=false;toast(errMsg(err))}
   }
   $("#eSave").onclick=()=>save(false);
   const rv=$("#eReviewed");if(rv)rv.onclick=()=>save(true);
@@ -1054,6 +1087,7 @@ async function runImport(){
   if(failed.length){$("#bAIMsg").textContent=`${docs.length-failed.length} saved. ${failed.length} failed: ${errMsg(failed[0].e)}`;go.disabled=false;
     const failedIds=new Set(failed.map(f=>f.it.title));bulk.rows.forEach(r=>{if(!failedIds.has(r.title.trim()))r._include=false});return}
   const nr=docs.filter(d=>d.needsReview).length;
+  setTimeout(()=>findPosters(docs,false),1500);
   bulk.text="";closeSheet();
   state.status=nr?"review":"all";render();
   toast(`Imported ${docs.length} titles${nr?`. ${nr} are in Needs review`:""}`);
@@ -1270,6 +1304,52 @@ function openShare(){
     }catch(e){$("#shGo").disabled=false;$("#shGo").textContent="Download .xlsx";toast("Couldn’t build the spreadsheet. Try again.")}
   };
 }
+/* ---------- posters (AniList) ---------- */
+const AL_URL="https://graphql.anilist.co";
+function cleanForSearch(t){return String(t||"").replace(/\([^)]*\)/g," ").replace(/\s+/g," ").trim()}
+async function alQuery(query,variables){
+  for(let a=0;a<5;a++){
+    const r=await fetch(AL_URL,{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({query,variables})});
+    if(r.status===429){const ra=+(r.headers.get("Retry-After")||"30");await sleep(Math.min(90,ra)*1000+500);continue}
+    const j=await r.json().catch(()=>null);if(j)return j;
+    await sleep(2000);
+  }
+  throw new Error("anilist");
+}
+async function alSearchList(q){const j=await alQuery(`query($q:String){Page(perPage:8){media(search:$q,type:ANIME,sort:SEARCH_MATCH){id siteUrl seasonYear format title{romaji english} coverImage{large}}}}`,{q});return (j.data&&j.data.Page&&j.data.Page.media)||[]}
+async function alSearchMany(list){
+  const defs=[],parts=[],vars={};
+  list.forEach((it,i)=>{defs.push(`$s${i}:String`);vars["s"+i]=cleanForSearch(it.title);
+    parts.push(`m${i}:Media(search:$s${i},type:ANIME${it.type==="Movie"?",format:MOVIE":""}){id siteUrl seasonYear format coverImage{large}}`)});
+  const j=await alQuery(`query(${defs.join(",")}){${parts.join(" ")}}`,vars);
+  return list.map((_,i)=>(j.data&&j.data["m"+i])||null);
+}
+let postersRunning=false;
+async function findPosters(src,manual){
+  if(postersRunning){if(manual)toast("Already finding posters…");return}
+  const todo=src.filter(x=>x&&x.id&&!x.poster&&(manual||!x.posterTried)&&!x._example).map(x=>store.items.get(x.id)||x);
+  if(!todo.length){if(manual)toast("Every title already has a poster, or AniList doesn't list it.");return}
+  postersRunning=true;let found=0,done=0;const B=10;
+  try{
+    for(let i=0;i<todo.length;i+=B){
+      const batch=todo.slice(i,i+B);
+      toast(`Finding posters… ${done} of ${todo.length}`);
+      let res;try{res=await alSearchMany(batch)}catch(e){toast("Couldn't reach AniList for posters. Try More → Find missing posters later.");break}
+      for(let k=0;k<batch.length;k++){
+        const cur=store.items.get(batch[k].id);if(!cur)continue;const m=res[k];
+        const yearOk=!m||!cur.year||!m.seasonYear||Math.abs(m.seasonYear-cur.year)<=3;
+        const up=m&&m.coverImage&&m.coverImage.large&&yearOk?{...cur,poster:m.coverImage.large,alUrl:m.siteUrl,posterTried:false}:{...cur,posterTried:true};
+        if(up.poster)found++;
+        try{await store.put(up)}catch(e){}
+      }
+      done+=batch.length;
+      if(i+B<todo.length)await sleep(2200);
+    }
+  }finally{postersRunning=false;store.emit();}
+  const miss=done-found;
+  toast(`Added ${found} poster${found===1?"":"s"}.${miss?` ${miss} not found. Open a show and tap Find poster to pick one by hand.`:""}`);
+}
+
 /* ---------- terms reference ---------- */
 const TERMS=[
  {id:"demographics",title:"Demographics · who a show is made for",note:"Japanese manga is published in magazines aimed at a specific audience, and the anime keeps that label. It describes the target reader, not the content. Plenty of adults love shounen, and plenty of teens watch seinen.",items:[
