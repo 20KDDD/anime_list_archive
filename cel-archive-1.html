@@ -82,7 +82,7 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;padding-
 .tab .dot{width:8px;height:8px;border-radius:50%}
 .tab[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .tab.review{border-style:dashed}
-.filters{display:grid;grid-template-columns:minmax(0,2fr) repeat(3,minmax(0,1fr));gap:8px;margin-bottom:16px}
+.filters{display:grid;grid-template-columns:minmax(0,2fr) repeat(4,minmax(0,1fr));gap:8px;margin-bottom:16px}
 @media (max-width:700px){.filters{grid-template-columns:1fr 1fr}.filters .search{grid-column:1/-1}}
 .field{display:flex;flex-direction:column;gap:4px;min-width:0}
 .field>label,.lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
@@ -151,7 +151,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
 
 /* import rows */
 .irows{display:flex;flex-direction:column;gap:8px}
-.irow{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;grid-template-columns:auto minmax(0,3fr) repeat(6,minmax(0,1fr));gap:8px;align-items:end}
+.irow{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;grid-template-columns:auto minmax(0,3fr) repeat(7,minmax(0,1fr));gap:8px;align-items:end}
 .irow.off{opacity:.45}
 .irow.flagged{border-color:color-mix(in srgb,var(--st-on_hold) 60%,var(--line))}
 .irow .inc{align-self:center}
@@ -207,6 +207,16 @@ details.opt[open] summary{margin-bottom:10px}
 .grow .gtrack b{display:block;height:100%;background:var(--accent);border-radius:5px}
 .grow .gn{font-family:var(--mono);font-size:12px;color:var(--muted);min-width:24px;text-align:right}
 .grow .ga{font-family:var(--mono);font-size:12px;min-width:34px;text-align:right}
+.gl-sec{display:flex;flex-direction:column;gap:8px}
+.gl-sec h3{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-top:4px}
+.gl-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;margin:0}
+.gl-item{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:3px}
+.gl-item dt{font-weight:700;font-size:14.5px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.gl-item dt small{font-family:var(--mono);font-size:11px;color:var(--muted);font-weight:400}
+.gl-item dd{margin:0;font-size:13.5px;color:var(--muted);line-height:1.45}
+.gl-item dd i{color:var(--ink);font-style:normal}
+.gl-item.hit{border-color:var(--accent)}
+.linkbtn{border:none;background:none;color:var(--accent);font-size:13px;padding:4px;text-decoration:underline;text-underline-offset:2px}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:80;max-width:calc(100% - 32px);box-shadow:var(--shadow)}
 .menu{position:relative}
 .menu .pop{position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px;display:flex;flex-direction:column;min-width:220px;z-index:30}
@@ -228,6 +238,7 @@ details.opt[open] summary{margin-bottom:10px}
       <button class="btn primary" id="btnAdd">+ Add title</button>
       <button class="btn" id="btnBulk">Bulk import</button>
       <button class="btn" id="btnXlsx">Share as Excel</button>
+      <button class="btn ghost" id="btnTerms">Terms</button>
       <div class="menu">
         <button class="btn ghost" id="btnMenu" aria-haspopup="true" aria-expanded="false">More ▾</button>
         <div class="pop" id="menuPop" hidden>
@@ -249,6 +260,7 @@ details.opt[open] summary{margin-bottom:10px}
     <div class="field search"><label for="fq">Search</label><input type="search" id="fq" placeholder="Title, notes, genre…"></div>
     <div class="field"><label for="fkind">Kind</label><select id="fkind"></select></div>
     <div class="field"><label for="fgenre">Genre</label><select id="fgenre"></select></div>
+    <div class="field"><label for="fdemo">Demographic</label><select id="fdemo"></select></div>
     <div class="field"><label for="fsort">Sort</label><select id="fsort">
       <option value="updated">Recently updated</option>
       <option value="title">Title A–Z</option>
@@ -290,13 +302,18 @@ const KINDS=[
   {k:"other",label:"Other animation"}];
 const KIND_LABEL=Object.fromEntries(KINDS.map(s=>[s.k,s.label]));
 const TYPES=["TV","Movie","OVA","ONA","Special","Short","Web series"];
-const GENRES=["Action","Adventure","Comedy","Drama","Fantasy","Romance","Sci-Fi","Slice of Life","Mystery","Horror","Thriller","Psychological","Supernatural","Sports","Mecha","Music","Isekai","Historical","Martial Arts","Cultivation","Wuxia","Xianxia","Military","School","Shounen","Seinen","Shoujo","Josei","Kids","Family","Parody","Space","Detective","Vampire"];
-const GENRE_ALIAS={"sci fi":"Sci-Fi","scifi":"Sci-Fi","sci-fi":"Sci-Fi","science fiction":"Sci-Fi","sol":"Slice of Life","slice-of-life":"Slice of Life","slice of life":"Slice of Life","romcom":["Romance","Comedy"],"rom com":["Romance","Comedy"],"rom-com":["Romance","Comedy"],"shonen":"Shounen","shounen":"Shounen","shojo":"Shoujo","shoujo":"Shoujo","psych":"Psychological","sport":"Sports","martial art":"Martial Arts","martial arts":"Martial Arts","xianxia":"Xianxia","cultivation":"Cultivation","romantic":"Romance","funny":"Comedy","scary":"Horror","mech":"Mecha","robots":"Mecha","magic":"Fantasy","superpower":"Supernatural","super power":"Supernatural"};
+const GENRES=["Action","Adventure","Comedy","Drama","Fantasy","Romance","Sci-Fi","Slice of Life","Mystery","Horror","Thriller","Psychological","Supernatural","Sports","Mecha","Music","Isekai","Historical","Martial Arts","Military","School","Space","Detective","Vampire","Parody","Family","Kids","Harem","Ecchi","Iyashikei","Mahou Shoujo","Idol","Yuri","Yaoi (BL)","Gore","Cultivation","Wuxia","Xianxia"];
+const GENRE_ALIAS={"sci fi":"Sci-Fi","scifi":"Sci-Fi","science fiction":"Sci-Fi","sol":"Slice of Life","slice-of-life":"Slice of Life","romcom":["Romance","Comedy"],"rom com":["Romance","Comedy"],"rom-com":["Romance","Comedy"],"psych":"Psychological","sport":"Sports","martial art":"Martial Arts","romantic":"Romance","funny":"Comedy","scary":"Horror","mech":"Mecha","robots":"Mecha","magic":"Fantasy","superpower":"Supernatural","super power":"Supernatural","magical girl":"Mahou Shoujo","mahou shojo":"Mahou Shoujo","healing":"Iyashikei","bl":"Yaoi (BL)","boys love":"Yaoi (BL)","boys' love":"Yaoi (BL)","yaoi":"Yaoi (BL)","shounen-ai":"Yaoi (BL)","shonen-ai":"Yaoi (BL)","gl":"Yuri","girls love":"Yuri","girls' love":"Yuri","shoujo-ai":"Yuri","shojo-ai":"Yuri","idols":"Idol","gory":"Gore","reverse harem":"Harem"};
 GENRES.forEach(g=>{GENRE_ALIAS[g.toLowerCase()]=g});
+const DEMOS=[{k:"shounen",label:"Shounen"},{k:"seinen",label:"Seinen"},{k:"shoujo",label:"Shoujo"},{k:"josei",label:"Josei"},{k:"kodomo",label:"Kids (Kodomo)"},{k:"general",label:"General / all ages"}];
+const DEMO_LABEL=Object.fromEntries(DEMOS.map(d=>[d.k,d.label]));
+function demoOf(v){const t=String(v||"").toLowerCase().trim();if(!t)return null;
+  if(/^sh[oō]u?nen$/.test(t))return "shounen";if(t==="seinen")return "seinen";if(/^sh[oō]u?jo$/.test(t))return "shoujo";if(t==="josei")return "josei";
+  if(/^(kodomo|kids?|children)/.test(t))return "kodomo";if(/^(general|all ages|everyone|family)/.test(t))return "general";return null}
 const SCORE_LABEL={10:"Masterpiece",9:"Great",8:"Very good",7:"Good",6:"Fine",5:"Average",4:"Bad",3:"Very bad",2:"Horrible",1:"Appalling"};
 
 const EXAMPLES=[
-  {id:"ex1",title:"Attack on Titan",kind:"anime",type:"TV",year:2013,status:"completed",score:9,genres:["Action","Drama"],seasons:[{n:1,watched:true},{n:2,watched:true,effect:-1,note:"Dragged a bit"},{n:3,watched:true,effect:1},{n:4,watched:true,effect:1}],scoreHistory:[{score:8,date:1614600000000,note:"Great but slow start"}],scoreReason:"The final season changed everything",watchedYear:2023,favorite:true,updatedAt:3},
+  {id:"ex1",title:"Attack on Titan",kind:"anime",demo:"shounen",type:"TV",year:2013,status:"completed",score:9,genres:["Action","Drama"],seasons:[{n:1,watched:true},{n:2,watched:true,effect:-1,note:"Dragged a bit"},{n:3,watched:true,effect:1},{n:4,watched:true,effect:1}],scoreHistory:[{score:8,date:1614600000000,note:"Great but slow start"}],scoreReason:"The final season changed everything",watchedYear:2023,favorite:true,updatedAt:3},
   {id:"ex2",title:"Mo Dao Zu Shi",altTitle:"The Founder of Diabolism",kind:"donghua",type:"ONA",year:2018,status:"watching",score:9,genres:["Fantasy","Xianxia"],seasons:[{n:1,watched:true},{n:2,watched:true,effect:1},{n:3,watched:false}],updatedAt:2},
   {id:"ex3",title:"Avatar: The Last Airbender",kind:"cartoon",type:"TV",year:2005,status:"completed",score:10,genres:["Adventure","Fantasy","Martial Arts"],seasons:[{n:1,watched:true},{n:2,watched:true},{n:3,watched:true}],watchedYear:2012,updatedAt:1}];
 
@@ -374,7 +391,7 @@ function errMsg(e){
 function setSync(cls,txt){const s=$("#sync");s.className="sync "+cls;s.textContent=txt}
 
 /* ---------- state + filters ---------- */
-const state={status:"all",q:"",kind:"",genre:"",sort:lsGet("celarchive.sort")||"updated"};
+const state={status:"all",q:"",kind:"",genre:"",demo:"",sort:lsGet("celarchive.sort")||"updated"};
 $("#fsort").value=state.sort;
 
 function items(){return [...store.items.values()]}
@@ -387,7 +404,8 @@ function viewItems(){
     else if(state.status!=="all"&&it.status!==state.status)return false;
     if(state.kind&&it.kind!==state.kind)return false;
     if(state.genre&&!(it.genres||[]).includes(state.genre))return false;
-    if(q){const hay=[it.title,it.altTitle,it.notes,(it.genres||[]).join(" "),it.year,KIND_LABEL[it.kind]].join(" ").toLowerCase();if(!hay.includes(q))return false}
+    if(state.demo&&it.demo!==state.demo)return false;
+    if(q){const hay=[DEMO_LABEL[it.demo],it.title,it.altTitle,it.notes,(it.genres||[]).join(" "),it.year,KIND_LABEL[it.kind]].join(" ").toLowerCase();if(!hay.includes(q))return false}
     return true;
   });
   const by={
@@ -435,6 +453,8 @@ function renderTaste(){
   const rated=done.filter(x=>x.score);
   const g={};done.forEach(x=>(x.genres||[]).forEach(n=>{(g[n]=g[n]||{n,all:[],sc:[]}).all.push(x);if(x.score)g[n].sc.push(x)}));
   const gl=Object.values(g).sort((a,b)=>b.all.length-a.all.length||(avgOf(b.sc)||0)-(avgOf(a.sc)||0));
+  const dg={};done.filter(x=>x.demo).forEach(x=>{(dg[x.demo]=dg[x.demo]||{n:x.demo,all:[],sc:[]}).all.push(x);if(x.score)dg[x.demo].sc.push(x)});
+  const dgl=Object.values(dg).sort((a,b)=>b.all.length-a.all.length);
   const minN=Math.max(2,Math.round(rated.length*0.04));
   const bestG=[...gl].filter(x=>x.sc.length>=minN).sort((a,b)=>avgOf(b.sc)-avgOf(a.sc))[0];
   const kinds=["anime","donghua","cartoon","aeni","other"].map(k=>({k,sc:rated.filter(x=>x.kind===k)})).filter(x=>x.sc.length);
@@ -453,7 +473,8 @@ function renderTaste(){
   const up=changed.filter(x=>x.score>(x.scoreHistory.slice(-1)[0].score)).length;
   const card=(k,v,s,hero)=>`<div class="tcard${hero?" hero":""}"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${s}</span></div>`;
   const cards=[
-    gl[0]?card("Top genre",esc(gl[0].n),`${gl[0].all.length} of ${done.length} watched · avg ${f1(avgOf(gl[0].sc))}`,true):"",
+    gl[0]?card("Most watched genre",esc(gl[0].n),`${gl[0].all.length} of ${done.length} watched · avg ${f1(avgOf(gl[0].sc))}`,true):"",
+    dgl[0]?card("Most watched demographic",esc(DEMO_LABEL[dgl[0].n]),`${dgl[0].all.length} of ${done.length} watched · avg ${f1(avgOf(dgl[0].sc))}`,true):"",
     bestG?card("Highest-rated genre",esc(bestG.n),`avg ${f1(avgOf(bestG.sc))} across ${bestG.sc.length} titles`):"",
     bestK?card("You rate highest",esc(KIND_LABEL[bestK.k]),kinds.map(x=>`${KIND_LABEL[x.k].split(" ")[0]} ${f1(avgOf(x.sc))}`).join(" · ")):"",
     card("Series vs movies",`${sr.length} / ${mv.length}`,`series avg ${f1(avgOf(sr.filter(x=>x.score)))} · movies avg ${f1(avgOf(mv.filter(x=>x.score)))}`),
@@ -463,13 +484,15 @@ function renderTaste(){
     changed.length?card("Changed your mind",changed.length,`${up} went up · ${changed.length-up} went down`):""
   ].join("");
   const top=gl.slice(0,8),maxC=Math.max(1,...top.map(x=>x.all.length));
-  el.innerHTML=`<div class="thead"><h2>Your taste</h2><button type="button" id="tasteTog" aria-expanded="${!hidden}">${hidden?"Show":"Hide"}</button></div>
+  el.innerHTML=`<div class="thead"><h2>Your taste</h2><button type="button" class="linkbtn" data-terms="demographics">What do these terms mean?</button><button type="button" id="tasteTog" aria-expanded="${!hidden}">${hidden?"Show":"Hide"}</button></div>
     ${hidden?"":`<div class="tcards">${cards}</div>
     ${top.length?`<div class="gbars"><span class="k"><span>Genres you watch most</span><span>titles · avg</span></span>
       ${top.map(x=>`<button type="button" class="grow" data-genre="${esc(x.n)}" aria-label="Show ${esc(x.n)} titles"><span class="gname">${esc(x.n)}</span><span class="gtrack"><b style="width:${x.all.length/maxC*100}%"></b></span><span class="gn">${x.all.length}</span><span class="ga">${f1(avgOf(x.sc))}</span></button>`).join("")}</div>`:""}`}`;
+  if(!hidden&&dgl.length){const mx=Math.max(...dgl.map(x=>x.all.length));el.insertAdjacentHTML("beforeend",`<div class="gbars"><span class="k"><span>Demographics you watch</span><span>titles · avg</span></span>${dgl.map(x=>`<button type="button" class="grow" data-demo="${x.n}" aria-label="Show ${esc(DEMO_LABEL[x.n])} titles"><span class="gname">${esc(DEMO_LABEL[x.n])}</span><span class="gtrack"><b style="width:${x.all.length/mx*100}%"></b></span><span class="gn">${x.all.length}</span><span class="ga">${f1(avgOf(x.sc))}</span></button>`).join("")}</div>`)}
   $("#tasteTog").onclick=()=>{lsSet("celarchive.tasteHidden",hidden?"0":"1");renderTaste()};
 }
-$("#taste").addEventListener("click",e=>{const b=e.target.closest("[data-genre]");if(!b||isExampleMode())return;state.genre=b.dataset.genre;state.status="all";render();$("#fgenre").scrollIntoView({behavior:"smooth",block:"start"})});
+$("#taste").addEventListener("click",e=>{const tm=e.target.closest("[data-terms]");if(tm){openTerms(tm.dataset.terms);return}const d=e.target.closest("[data-demo]");if(d&&!isExampleMode()){state.demo=d.dataset.demo;state.genre="";state.status="all";render();$("#fdemo").scrollIntoView({behavior:"smooth",block:"start"});return}
+  const b=e.target.closest("[data-genre]");if(!b||isExampleMode())return;state.demo="";state.genre=b.dataset.genre;state.status="all";render();$("#fgenre").scrollIntoView({behavior:"smooth",block:"start"})});
 function renderTabs(){
   const src=isExampleMode()?EXAMPLES:items();
   const review=src.filter(x=>x.needsReview).length;
@@ -480,6 +503,7 @@ function renderTabs(){
 }
 function renderSelects(){
   const src=items();
+  const dsel=$("#fdemo");dsel.innerHTML=`<option value="">All</option>`+DEMOS.map(x=>`<option value="${x.k}">${x.label}</option>`).join("");dsel.value=state.demo;
   const k=$("#fkind"),g=$("#fgenre");
   k.innerHTML=`<option value="">All kinds</option>`+KINDS.map(x=>`<option value="${x.k}">${x.label}</option>`).join("");
   k.value=state.kind;
@@ -492,7 +516,7 @@ function cardHTML(it){
   const st=it.status||"plan";
   const ss=seasonsOf(it),sw=ss.filter(s=>s.watched).length;
   const pct=st==="completed"?100:(ss.length?sw/ss.length*100:0);
-  const meta=[KIND_LABEL[it.kind],it.type,it.year].filter(Boolean).map(esc).join(" · ");
+  const meta=[KIND_LABEL[it.kind],DEMO_LABEL[it.demo],it.type,it.year].filter(Boolean).map(esc).join(" · ");
   const prev=(it.scoreHistory||[]).slice(-1)[0];
   const sTxt=isMovie(it)?"Film":(ss.length?(st==="completed"?`${ss.length} season${ss.length>1?"s":""}`:`${sw} of ${ss.length} seasons`):"");
   const fx=e=>e>0?`+${e}`:e<0?`−${-e}`:"±0";
@@ -532,6 +556,7 @@ $("#tabs").addEventListener("click",e=>{const b=e.target.closest("[data-st]");if
 let qTimer;$("#fq").addEventListener("input",e=>{clearTimeout(qTimer);qTimer=setTimeout(()=>{state.q=e.target.value;render()},120)});
 $("#fkind").addEventListener("change",e=>{state.kind=e.target.value;render()});
 $("#fgenre").addEventListener("change",e=>{state.genre=e.target.value;render()});
+$("#fdemo").addEventListener("change",e=>{state.demo=e.target.value;render()});
 $("#fsort").addEventListener("change",e=>{state.sort=e.target.value;lsSet("celarchive.sort",state.sort);render()});
 $("#grid").addEventListener("click",async e=>{
   const p=e.target.closest("[data-done]");
@@ -548,6 +573,7 @@ $("#grid").addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.t
 $("#btnAdd").onclick=()=>openEdit(null);
 $("#btnBulk").onclick=openBulk;
 $("#btnXlsx").onclick=openShare;
+$("#btnTerms").onclick=()=>openTerms();
 const menuBtn=$("#btnMenu"),menuPop=$("#menuPop");
 menuBtn.onclick=e=>{e.stopPropagation();menuPop.hidden=!menuPop.hidden;menuBtn.setAttribute("aria-expanded",String(!menuPop.hidden))};
 document.addEventListener("click",e=>{if(!menuPop.hidden&&!e.target.closest(".menu")){menuPop.hidden=true;menuBtn.setAttribute("aria-expanded","false")}});
@@ -597,8 +623,9 @@ function openEdit(it){
         <div class="field c2"><label for="eKind">Kind</label><select id="eKind">${opt(KINDS,d.kind)}</select></div>
         <div class="field c2"><label for="eType">Format</label><select id="eType">${opt(TYPES,d.type)}</select></div>
         <div class="field c2"><label for="eYear">Release year</label><input type="number" id="eYear" min="1900" max="2100" inputmode="numeric" value="${esc(d.year||"")}"></div>
-        <div class="field c3"><label for="eStatus" title="Unfinished: finished a season, then stopped. Dropped: stopped partway through a season.">Status</label><select id="eStatus">${opt(STATUSES,d.status)}</select></div>
-        <div class="field c3"><label for="eWatched">Year you watched it</label><input type="number" id="eWatched" min="1950" max="2100" inputmode="numeric" value="${esc(d.watchedYear||"")}"></div>
+        <div class="field c2"><label for="eStatus" title="Unfinished: finished a season, then stopped. Dropped: stopped partway through a season.">Status</label><select id="eStatus">${opt(STATUSES,d.status)}</select></div>
+        <div class="field c2"><label for="eDemo">Demographic</label><select id="eDemo"><option value="">—</option>${opt(DEMOS,d.demo)}</select></div>
+        <div class="field c2"><label for="eWatched">Year watched</label><input type="number" id="eWatched" min="1950" max="2100" inputmode="numeric" value="${esc(d.watchedYear||"")}"></div>
       </div>
       <div class="field"><span class="lbl">Overall score${isNew?"":" (change it any time)"}</span>
         <div class="scorepick" id="scorePick">${Array.from({length:10},(_,i)=>`<button type="button" data-s="${i+1}" aria-pressed="${score===i+1}">${i+1}</button>`).join("")}</div>
@@ -612,7 +639,7 @@ function openEdit(it){
         <div class="slist" id="sList"></div>
         <div class="shint" id="sHint"></div>
       </div>
-      <div class="field"><span class="lbl">Genres</span>
+      <div class="field"><span class="lbl" style="display:flex;justify-content:space-between;align-items:center">Genres <button type="button" class="linkbtn" id="eTermsG">What do these mean?</button></span>
         <div class="gpick" id="gPick"></div>
         <div style="display:flex;gap:6px;margin-top:4px"><input type="text" id="gCustom" placeholder="Add another genre"><button type="button" class="btn sm" id="gAdd">Add</button></div>
       </div>
@@ -671,6 +698,7 @@ function openEdit(it){
   const drawG=()=>{const all=[...new Set([...GENRES,...genres])];$("#gPick").innerHTML=all.map(g=>`<button type="button" data-g="${esc(g)}" aria-pressed="${genres.includes(g)}">${esc(g)}</button>`).join("")};drawG();
   $("#gPick").onclick=e=>{const b=e.target.closest("[data-g]");if(!b)return;const g=b.dataset.g;genres=genres.includes(g)?genres.filter(x=>x!==g):[...genres,g];b.setAttribute("aria-pressed",String(genres.includes(g)))};
   const addCustom=()=>{const v=$("#gCustom").value.trim();if(!v)return;const g=GENRE_ALIAS[v.toLowerCase()];const vals=Array.isArray(g)?g:[g||v];vals.forEach(x=>{if(!genres.includes(x))genres.push(x)});$("#gCustom").value="";drawG()};
+  $("#eTermsG").onclick=()=>openTerms("genres",true);
   $("#gAdd").onclick=addCustom;$("#gCustom").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();addCustom()}};
   $("#eStatus").onchange=e=>{if(e.target.value==="completed"){seasons.forEach(x=>x.watched=true);drawS();$("#sHint").textContent="";if(!$("#eWatched").value)$("#eWatched").value=new Date().getFullYear()}};
   $("#editForm").onsubmit=e=>{e.preventDefault();save(false)};
@@ -679,7 +707,7 @@ function openEdit(it){
     const title=$("#eTitle").value.trim();if(!title){$("#eTitle").focus();toast("Give the title a name first.");return}
     const status=$("#eStatus").value,type=$("#eType").value;
     const now=Date.now();
-    const out={...d,title,altTitle:$("#eAlt").value.trim()||null,kind:$("#eKind").value,type,year:toInt($("#eYear").value),
+    const out={...d,title,altTitle:$("#eAlt").value.trim()||null,kind:$("#eKind").value,demo:$("#eDemo").value||null,type,year:toInt($("#eYear").value),
       status,watchedYear:toInt($("#eWatched").value),startDate:$("#eStart").value||null,finishDate:$("#eFinish").value||null,score,genres,
       rewatches:toInt($("#eRe").value),favorite:$("#eFav").checked,notes:$("#eNotes").value.trim()||null,updatedAt:now};
     delete out.epWatched;delete out.epTotal;
@@ -749,6 +777,7 @@ function classifyToken(tok,rec){
   const sc=scoreOf(t);if(sc){rec.score=sc;return true}
   const sn=t.match(/^(\d{1,2})\s*seasons?$/i)||t.match(/^seasons?\s*[:=]?\s*(\d{1,2})$/i)||t.match(/^s(?:easons?)?\s*1\s*[-–]\s*s?(\d{1,2})$/i);if(sn){rec.seasonCount=+sn[1];return true}
   const ep=epsOf(t);if(ep){if(ep.w!=null)rec.epWatched=ep.w;if(ep.t!=null)rec.epTotal=ep.t;return true}
+  const dm0=/^(sh[oō]u?nen|seinen|sh[oō]u?jo|josei|kodomo)$/i.test(t)?demoOf(t):null;if(dm0){rec.demo=dm0;return true}
   const g=genreOf(t);if(g){g.forEach(x=>{if(!rec.genres.includes(x))rec.genres.push(x)});return true}
   if(t.includes("/")){const ps=t.split("/").map(genreOf);if(ps.every(Boolean)){ps.flat().forEach(x=>{if(!rec.genres.includes(x))rec.genres.push(x)});return true}}
   if(/^(season|s)\s*\d+$/i.test(t)||/^(part|cour)\s*\d+$/i.test(t)){rec._titleAppend=(rec._titleAppend||[]).concat(t);return true}
@@ -841,6 +870,7 @@ function looksLikeCSV(text){const first=text.split(/\r?\n/)[0]||"";return /(^|[,
 function fromCSV(text){
   const rows=parseCSV(text);const head=rows.shift().map(h=>h.trim().toLowerCase());
   const col=re=>head.findIndex(h=>re.test(h));
+  const di=head.findIndex(h=>/demograph|audience|target/.test(h));
   const ix={title:col(/^(title|name|anime|show)/),alt:col(/(alt|english|japanese|native|other).*title|romaji/),year:col(/^(year|release|aired|premiere)/),score:col(/score|rating|rated/),status:col(/status|state/),genres:col(/genre|tags?/),type:col(/^(type|format)/),kind:col(/kind|origin|country|category/),eps:col(/^(episodes?|eps|total)/),prog:col(/progress|watched\s*ep/),wy:col(/watched|year\s*seen|finished/),notes:col(/notes?|comment|review/)};
   return rows.map(r=>{
     const g=i=>i>=0?(r[i]||"").trim():"";
@@ -858,6 +888,8 @@ function fromCSV(text){
     if(g(ix.prog)){const e=g(ix.prog).match(/(\d+)(?:\s*\/\s*(\d+))?/);if(e){rec.epWatched=+e[1];if(e[2])rec.epTotal=+e[2]}}
     const wy=g(ix.wy).match(/(19|20)\d\d/);if(wy)rec.watchedYear=+wy[0];
     if(g(ix.notes))rec.notes=g(ix.notes);
+    if(di>=0&&demoOf(r[di]))rec.demo=demoOf(r[di]);
+    rec.genres=rec.genres.filter(x=>{const dm=/^(sh[oō]u?nen|seinen|sh[oō]u?jo|josei)$/i.test(x)?demoOf(x):null;if(dm){rec.demo=rec.demo||dm;return false}return true});
     return rec;
   }).filter(Boolean);
 }
@@ -959,6 +991,7 @@ function drawBulk(){
       <div class="field"><label for="sc${i}">Score</label><select id="sc${i}" data-f="score">${scOpts(r.score)}</select></div>
       <div class="field"><label for="y${i}">Year</label><input type="number" id="y${i}" data-f="year" inputmode="numeric" value="${esc(r.year||"")}"></div>
       <div class="field"><label for="k${i}">Kind</label><select id="k${i}" data-f="kind">${kindOpts(r.kind)}</select></div>
+      <div class="field"><label for="dm${i}">Demographic</label><select id="dm${i}" data-f="demo"><option value="">—</option>${DEMOS.map(x=>`<option value="${x.k}"${x.k===r.demo?" selected":""}>${x.label}</option>`).join("")}</select></div>
       <div class="field"><label for="ty${i}">Format</label><select id="ty${i}" data-f="type">${typeOpts(r.type)}</select></div>
       <div class="field"><label for="sn${i}">Seasons</label><input type="number" id="sn${i}" data-f="seasonCount" min="0" inputmode="numeric" value="${esc(r.type==="Movie"?"":(r.seasonCount||1))}"></div>
       <div class="field genres"><label for="g${i}">Genres</label><input type="text" id="g${i}" data-f="genres" value="${esc((r.genres||[]).join(", "))}" placeholder="Action, Fantasy"></div>
@@ -990,7 +1023,7 @@ async function runImport(){
   const now=Date.now();
   const docs=inc.map((r,k)=>{
     const flags=rowFlags(r).filter(f=>!/^Already in your library/.test(f));
-    return {id:newId()+k.toString(36),title:r.title.trim(),altTitle:r.altTitle||null,kind:r.kind||null,type:r.type||null,year:r.year||null,status:r.status,
+    return {id:newId()+k.toString(36),title:r.title.trim(),altTitle:r.altTitle||null,kind:r.kind||null,demo:r.demo||null,type:r.type||null,year:r.year||null,status:r.status,
       score:r.score||null,scoreDate:r.score?now:null,scoreHistory:[],genres:r.genres||[],watchedYear:r.watchedYear||null,notes:r.notes||null,
       seasons:r.type==="Movie"?[]:Array.from({length:Math.max(1,r.seasonCount||1)},(_,j)=>({n:j+1,watched:r.status==="completed"||(r.status==="unfinished"&&j===0)})),
       favorite:false,rewatches:null,startDate:null,finishDate:null,needsReview:flags.length>0,flags,rawLine:r.rawLine||null,
@@ -1013,9 +1046,9 @@ async function exportFile(kind){
   let data,filename;const stamp=new Date().toISOString().slice(0,10);
   if(kind==="json"){data=JSON.stringify({app:"cel-archive",version:1,exportedAt:new Date().toISOString(),items:list},null,2);filename=`cel-archive-backup-${stamp}.json`}
   else{
-    const cols=["title","altTitle","kind","type","year","status","score","previousScores","seasons","seasonEffects","genres","watchedYear","startDate","finishDate","rewatches","favorite","notes"];
+    const cols=["title","altTitle","kind","demographic","type","year","status","score","previousScores","seasons","seasonEffects","genres","watchedYear","startDate","finishDate","rewatches","favorite","notes"];
     const q=v=>{v=Array.isArray(v)?v.join(", "):(v==null?"":String(v));if(cols&&kind)v=v;return /[",\n]/.test(v)?`"${v.replace(/"/g,'""')}"`:v};
-    data=[cols.join(","),...list.map(it=>cols.map(c=>c==="status"?q(ST_LABEL[it.status]):c==="kind"?q(KIND_LABEL[it.kind]||""):c==="previousScores"?q((it.scoreHistory||[]).map(h=>h.score).join(" > ")):c==="seasons"?q(seasonsOf(it).length||""):c==="seasonEffects"?q(seasonsOf(it).filter(x=>x.effect!=null).map(x=>`S${x.n} ${x.effect>0?"+":""}${x.effect}`).join(" | ")):q(it[c])).join(","))].join("\n");
+    data=[cols.join(","),...list.map(it=>cols.map(c=>c==="status"?q(ST_LABEL[it.status]):c==="kind"?q(KIND_LABEL[it.kind]||""):c==="demographic"?q(DEMO_LABEL[it.demo]||""):c==="previousScores"?q((it.scoreHistory||[]).map(h=>h.score).join(" > ")):c==="seasons"?q(seasonsOf(it).length||""):c==="seasonEffects"?q(seasonsOf(it).filter(x=>x.effect!=null).map(x=>`S${x.n} ${x.effect>0?"+":""}${x.effect}`).join(" | ")):q(it[c])).join(","))].join("\n");
     filename=`cel-archive-${stamp}.csv`;
   }
   if(saveBlob(new Blob([data],{type:kind==="json"?"application/json":"text/csv"}),filename)){if(kind==="json"){lsSet("celarchive.lastBackup",String(Date.now()));store.emit()}toast(`Downloaded ${filename}`);return}
@@ -1102,7 +1135,7 @@ function buildWorkbook(ExcelJS,list,opts){
     const fxs=ssA.filter(y=>y.effect!=null&&y.effect!==0).map(y=>`S${y.n} ${y.effect>0?"+":"−"}${Math.abs(y.effect)}`).join(", ");
     const epTxt=(it.type==="Movie"?"Film":(ssA.length?(it.status==="completed"?String(ssA.length):`${ssW} / ${ssA.length}`):""))+(fxs?`  (${fxs})`:"");
     const prevS=(it.scoreHistory||[]).slice(-1)[0];
-    const vals=[k+1,it.title||"",it.altTitle||"",KL[it.kind]||"",it.type||"",it.year||"",STL[it.status]||"",it.score||"",(it.score?SL[Math.round(it.score)]:"")+(prevS&&prevS.score!==it.score?` (was ${prevS.score})`:""),epTxt,(it.genres||[]).join(", "),it.watchedYear||"",it.favorite?"♥":"",it.notes||""];
+    const vals=[k+1,it.title||"",it.altTitle||"",KL[it.kind]||"",it.type||"",it.year||"",STL[it.status]||"",it.score||"",(it.score?SL[Math.round(it.score)]:"")+(prevS&&prevS.score!==it.score?` (was ${prevS.score})`:""),epTxt,[({shounen:"Shounen",seinen:"Seinen",shoujo:"Shoujo",josei:"Josei",kodomo:"Kids",general:"General"})[it.demo],(it.genres||[]).join(", ")].filter(Boolean).join(" · "),it.watchedYear||"",it.favorite?"♥":"",it.notes||""];
     const base=k%2?ZEBRA:PAPER;
     vals.forEach((v,i)=>{
       const cell=r.getCell(i+1);cell.value=v;cell.fill=fill(base);cell.border={bottom:thin};
@@ -1218,6 +1251,72 @@ function openShare(){
     }catch(e){$("#shGo").disabled=false;$("#shGo").textContent="Download .xlsx";toast("Couldn’t build the spreadsheet. Try again.")}
   };
 }
+/* ---------- terms reference ---------- */
+const TERMS=[
+ {id:"demographics",title:"Demographics · who a show is made for",note:"Japanese manga is published in magazines aimed at a specific audience, and the anime keeps that label. It describes the target reader, not the content. Plenty of adults love shounen, and plenty of teens watch seinen.",items:[
+  ["Shounen","少年 · “boy”","Aimed at teen boys (about 12–18). Big battles, friendship, rivals, training arcs, and a hero who keeps getting stronger.","Naruto, Demon Slayer, Jujutsu Kaisen, My Hero Academia"],
+  ["Seinen","青年 · “young man”","Aimed at adult men (18+). Darker or more complex stories, moral grey areas, violence and slower, more psychological storytelling.","Vinland Saga, Tokyo Ghoul, Made in Abyss, Steins;Gate"],
+  ["Shoujo","少女 · “girl”","Aimed at teen girls. Focus on feelings, relationships and first love, often with a softer art style.","My Little Monster, Diabolik Lovers, Yamada-kun Lv999"],
+  ["Josei","女性 · “woman”","Aimed at adult women. More grounded romance and everyday adult life, like work and relationships.","Wotakoi, Koikimo"],
+  ["Kodomo","子供 · “child”","Made for young kids. Simple, upbeat stories, often tied to toys or games.","Beyblade, Pokémon, Dinosaur King"],
+  ["General / all ages","","Not tied to a magazine audience. Used here for original films and shows meant for everyone, like Ghibli and Makoto Shinkai movies.","Spirited Away, Your Name, Wolf Children"]]},
+ {id:"genres",title:"Japanese genre terms",note:"Common labels in anime fandom that don't have a simple English equivalent.",items:[
+  ["Isekai","異世界 · “another world”","The main character is transported or reborn into another world, usually a fantasy one with game-like powers.","Re:Zero, Mushoku Tensei, Slime"],
+  ["Iyashikei","癒し系 · “healing”","Calm, cozy shows meant to relax you. Little conflict, lots of atmosphere and small everyday moments.","Frieren, Today's Menu for the Emiya Family"],
+  ["Mahou Shoujo","魔法少女 · “magical girl”","Girls who transform and fight with magic. Some are sweet, some twist the idea into something dark.","Madoka Magica, Prisma Illya"],
+  ["Mecha","メカ","Giant robots piloted by people, often with war and sci-fi themes.","Code Geass, Evangelion, Darling in the Franxx"],
+  ["Harem","ハーレム","One main character surrounded by several love interests. “Reverse harem” is the same with a female lead.","Quintessential Quintuplets, High School DxD"],
+  ["Ecchi","エッチ","Sexual humor and fan service without being explicit.","Prison School, High School DxD"],
+  ["Yuri","百合 · “lily”","Romance or deep bonds between women. Also called GL (girls' love).",""],
+  ["Yaoi (BL)","やおい · Boys' Love","Romance between men. BL is the more common term today.","Given"],
+  ["Idol","アイドル","About pop idols: training, performing and the industry behind it.","Oshi no Ko"],
+  ["Slice of Life","日常 · nichijou","Everyday life with no big plot. The charm is in the characters and small moments.","Kakushigoto, Wotakoi"],
+  ["Gore","","Graphic violence and blood as a regular part of the show.","Tokyo Ghoul, Another, Chainsaw Man"],
+  ["Cultivation","修仙 · xiuxian","Chinese fantasy where characters train their inner energy to climb ranks of power, sometimes toward immortality. Very common in donghua.",""],
+  ["Wuxia","武侠 · “martial hero”","Chinese martial-arts adventure grounded in history, with swordplay and codes of honor.","Biao Ren: Blades of the Guardians"],
+  ["Xianxia","仙侠 · “immortal hero”","Wuxia plus gods, magic and immortals. Mythic Chinese fantasy.","Mo Dao Zu Shi, Heaven Official's Blessing"]]},
+ {id:"kinds",title:"Kinds of animation",items:[
+  ["Anime","アニメ","Animation made in Japan.",""],
+  ["Donghua (dongman)","动画 / 动漫","Chinese animation. “Donghua” means animation; “dongman” covers animation and comics together.","Link Click, Lord of the Mysteries"],
+  ["Aeni","애니","Korean animation.","Lookism, Lost in Starlight"],
+  ["Cartoon","","Western animation, mostly from the US and Europe.","Arcane, Avatar: The Last Airbender"]]},
+ {id:"formats",title:"Formats",items:[
+  ["TV","","A series that aired on television, usually in seasons of about 12 or 24 episodes.",""],
+  ["Movie","","A standalone film released in theaters or streaming.",""],
+  ["OVA","Original Video Animation","Released straight to home video, not broadcast. Often side stories or extra episodes.",""],
+  ["ONA","Original Net Animation","Released first on the internet or a streaming service. Most donghua are ONAs.",""],
+  ["Special","","A one-off extra episode or short, often bundled with a series.",""],
+  ["Cour","クール","A 3-month broadcast block of about 12–13 episodes. A “2-cour” season runs about 24 episodes.",""]]},
+ {id:"statuses",title:"Your statuses",items:[
+  ["Completed","","You watched everything that's out.",""],
+  ["Watching","","You're in the middle of it now.",""],
+  ["Unfinished","","You finished at least one full season, then stopped.",""],
+  ["Dropped","","You stopped partway through a season.",""],
+  ["On hold","","Paused, but you plan to come back.",""],
+  ["Plan to watch","","On your list, not started.",""]]},
+ {id:"scores",title:"Score scale",note:"The same 1–10 scale MyAnimeList uses.",items:Object.keys(SCORE_LABEL).sort((a,b)=>b-a).map(k=>[`${k} · ${SCORE_LABEL[k]}`,"","",""])}
+];
+function openTerms(focus,fromEdit){
+  const back=fromEdit?document.getElementById("sheetSlot").innerHTML:null;
+  const secs=TERMS.map(sec=>`<section class="gl-sec" id="gl-${sec.id}"><h3>${esc(sec.title)}</h3>${sec.note?`<p class="help">${esc(sec.note)}</p>`:""}
+    <dl class="gl-list">${sec.items.map(([t,sub,d,ex])=>`<div class="gl-item" data-q="${esc((t+" "+sub+" "+d+" "+ex).toLowerCase())}"><dt>${esc(t)}${sub?`<small>${esc(sub)}</small>`:""}</dt>${d?`<dd>${esc(d)}</dd>`:""}${ex?`<dd>e.g. <i>${esc(ex)}</i></dd>`:""}</div>`).join("")}</dl></section>`).join("");
+  if(fromEdit){
+    const wrap=document.createElement("div");wrap.className="scrim";wrap.style.zIndex="60";
+    wrap.innerHTML=`<div class="sheet wide" role="dialog" aria-modal="true"><header><h2>Terms</h2><button class="x" aria-label="Close">×</button></header><div class="body">${secs}</div></div>`;
+    document.body.appendChild(wrap);
+    const close=()=>wrap.remove();wrap.querySelector(".x").onclick=close;wrap.addEventListener("mousedown",e=>{if(e.target===wrap)close()});
+    const el=wrap.querySelector("#gl-"+focus);if(el)setTimeout(()=>el.scrollIntoView&&el.scrollIntoView({block:"start"}),30);
+    return;
+  }
+  openSheet(`<header><h2>Terms</h2><button class="x" data-close aria-label="Close">×</button></header>
+    <div class="body"><div class="field"><label for="glq">Look up a term</label><input type="search" id="glq" placeholder="e.g. seinen, isekai, OVA"></div>${secs}</div>
+    <div class="foot-bar"><span class="sp"></span><button class="btn" data-close>Close</button></div>`,true);
+  $("#glq").oninput=e=>{const q=e.target.value.trim().toLowerCase();
+    document.querySelectorAll(".gl-item").forEach(x=>{const m=!q||x.dataset.q.includes(q);x.hidden=!m;x.classList.toggle("hit",!!q&&m)});
+    document.querySelectorAll(".gl-sec").forEach(sec=>{sec.hidden=![...sec.querySelectorAll(".gl-item")].some(x=>!x.hidden)})};
+  if(focus){const el=document.getElementById("gl-"+focus);if(el)setTimeout(()=>el.scrollIntoView&&el.scrollIntoView({block:"start"}),30)}
+}
+
 /* ---------- boot ---------- */
 store.onChange(()=>{
   const lb=+lsGet("celarchive.lastBackup")||0;
