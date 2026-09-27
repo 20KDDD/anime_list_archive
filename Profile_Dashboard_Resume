@@ -140,6 +140,7 @@ textarea{resize:none;field-sizing:content;min-height:2.3em;line-height:1.45}
 .pc:hover .pi{outline:2px solid color-mix(in srgb,var(--acc) 60%,transparent)}
 .pc.first .pi{outline:2px solid var(--acc);outline-offset:-2px}
 .rk{position:absolute;left:4px;top:4px;font-family:var(--fh);font-weight:700;font-size:11.5px;padding:1px 5px;border-radius:5px;background:rgba(0,0,0,.62);color:var(--acc)}
+.celh{position:absolute;right:4px;top:4px;font-size:11.5px;line-height:1;padding:3px 4px;border-radius:5px;background:rgba(0,0,0,.62);color:var(--acc)}
 .pc.add .pi,.pc.ghost .pi{background:transparent;border:1.5px dashed var(--line);color:var(--faint)}
 .pc.add:hover .pi{border-color:var(--acc);color:var(--acc);outline:none}
 .pc.ghost{pointer-events:none;opacity:.45}
@@ -322,7 +323,7 @@ const SECS={
  quests:{page:'about',t:'Quests',i:'flag',type:'check',ph:'A goal or something you want to do'},
  extras:{page:'about',t:'Extras',i:'checkroom',type:'fields',fields:[F('brands','Favorite brands'),F('shoes','Shoes'),F('fit','Dream fit'),F('car','Dream car'),F('pets','Pets'),F('langs','Languages I speak')]},
  latest:{page:'about',t:'Latest save',i:'history_edu',type:'latest'},
- anime:{page:'favs',t:'Anime and cartoons',i:'live_tv',type:'lists',search:1,noun:'show',item:[F('title','Title'),F('sub','Note',{ph:'Season, studio, why you love it'})],lists:[{k:'now',l:'Now watching',b:'now',shape:'poster',to:'all'},{k:'all',l:'All-time',b:'all',shape:'poster',rank:1}]},
+ anime:{page:'favs',t:'Anime and cartoons',i:'live_tv',type:'lists',search:1,noun:'show',item:[F('title','Title'),F('sub','Note',{ph:'Season, studio, why you love it'})],lists:[{k:'now',l:'Now watching',b:'now',shape:'poster',to:'all'},{k:'all',l:'All-time',b:'all',shape:'poster',rank:1,cel:1}]},
  movies:{page:'favs',t:'Movies',i:'movie',type:'lists',noun:'movie',item:[F('title','Title'),F('sub','Note')],lists:[{k:'now',l:'Right now',b:'now',shape:'poster',to:'all'},{k:'all',l:'All-time',b:'all',shape:'poster',rank:1},{k:'watch',l:'Watchlist',b:'plain',shape:'poster'}]},
  games:{page:'favs',t:'Games',i:'sports_esports',type:'lists',noun:'game',item:[F('title','Game'),F('sub','Note')],lists:[{k:'now',l:'Now playing',b:'now',shape:'poster',to:'all'},{k:'all',l:'All-time',b:'all',shape:'poster',rank:1},{k:'mains',l:'Mains',b:'plain',shape:'row',noun:'main',item:[F('title','Main'),F('sub','Game'),F('tag','Rank',{ph:'Your rank or tier'})]}]},
  music:{page:'favs',t:'Music',i:'music_note',type:'lists',lists:[{k:'repeat',l:'On repeat',b:'now',shape:'row',noun:'song',item:[F('title','Song'),F('sub','Artist'),F('link','Link',{ph:'Spotify or YouTube link'})]},{k:'artists',l:'All-time artists',b:'all',shape:'round',noun:'artist',item:[F('title','Artist')]}],fields:[F('topsong','Top song ever'),F('genres','Genres')]},
@@ -335,7 +336,7 @@ const SECS={
 
 function fresh(){return{v:1,hero:{name:'',title:'',avatar:'',banner:''},f:{},l:{},diary:[],ob:{},obHist:[],
  theme:{preset:'emerald',custom:{...PRESETS.emerald},house:false,font:'game',card:'solid',amb:'fireflies'},
- layout:{order:{},hidden:{},titles:{},accent:{heroes:'#2F7FE0'},custom:[]}}}
+ layout:{order:{},hidden:{},titles:{},accent:{heroes:'#2F7FE0'},custom:[]},cel:{on:true},posters:{}}}
 function merge(a,b){for(const k in b){const x=b[k];if(x&&typeof x==='object'&&!Array.isArray(x)&&a[k]&&typeof a[k]==='object'&&!Array.isArray(a[k]))a[k]=merge(a[k],x);else a[k]=x}return a}
 
 let S=fresh(),canSave=true,page='about',obOpen=false;const filt={};
@@ -397,6 +398,19 @@ function level(){let xp=0;for(const s in S.f)for(const k in S.f[s])if(S.f[s][k]&
  xp+=S.diary.length*25+S.obHist.length*10+(S.ob.title?10:0)+(S.hero.name?10:0)+(S.hero.avatar?10:0)+(S.hero.banner?10:0);
  let lv=1,need=60,rest=xp;while(rest>=need){rest-=need;lv++;need=60+(lv-1)*30}return{lv,xp,pct:Math.round(rest/need*100),left:need-rest}}
 
+/* Cel Archive link: same site on GitHub Pages, so its saved list is readable here */
+const CEL_KEY='celarchive.items.v1',ANI='https://graphql.anilist.co';
+function celFavs(){try{const arr=JSON.parse(localStorage.getItem(CEL_KEY)||'[]');return Array.isArray(arr)?arr.filter(x=>x&&x.favorite&&x.title).sort((a,b)=>(b.score??-1)-(a.score??-1)||String(a.title).localeCompare(b.title)):[]}catch(e){return[]}}
+const celSub=x=>[x.kind?cap(x.kind):'',x.year||'',x.score!=null?`${x.score}/10`:''].filter(Boolean).join(' · ');
+let posterBusy=false;
+async function fillPosters(){if(posterBusy||!S.cel.on)return;const need=celFavs().filter(x=>!(x.title in S.posters));if(!need.length)return;posterBusy=true;
+ try{for(const x of need)if(x.kind==='cartoon')S.posters[x.title]='';const q=need.filter(x=>x.kind!=='cartoon');
+  for(let i=0;i<q.length;i+=10){const grp=q.slice(i,i+10);const query='query{'+grp.map((x,j)=>`a${j}:Media(search:${JSON.stringify(String(x.title))},type:ANIME){coverImage{large}}`).join(' ')+'}';
+   const r=await fetch(ANI,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({query})});const j=await r.json();if(!j||!j.data)break;
+   grp.forEach((x,k)=>{S.posters[x.title]=j.data['a'+k]?.coverImage?.large||''});rerenderSec('anime');if(i+10<q.length)await new Promise(r=>setTimeout(r,800))}
+  save()}catch(e){}posterBusy=false}
+addEventListener('storage',e=>{if(e.key===CEL_KEY&&page==='favs'){rerenderSec('anime');fillPosters()}});
+
 /* sections */
 function def(id){if(SECS[id])return SECS[id];const c=S.layout.custom.find(x=>x.id===id);if(!c)return null;const b={page:c.page,t:c.t,i:'auto_awesome',custom:1};
  if(c.type==='gallery')return{...b,type:'lists',noun:'image',item:[F('title','Title'),F('sub','Note')],lists:[{k:'items',shape:'square'}]};
@@ -428,10 +442,12 @@ function fieldHTML(s,f,autoVal){const v=fv(s,f.k),id=`f-${s}-${f.k}`,dk=`${s}.${
 function listHTML(id,d,L,i){const items=getList(id,L.k);let head='';
  if(L.l)head=`<div class="lh${i===0?' first':''}"><span class="bdg ${L.b||'plain'}">${esc(L.l)}</span>${L.rank?'<span>Ranked, #1 first</span>':''}${L.to?'<span>Tap one to move it to all-time</span>':''}</div>`;
  let list=items;if(L.filter){const cur=filt[id]||'All';head+=`<div class="fchips">${['All',...L.filter].map(x=>`<button class="chip${x===cur?' on':''}" data-filt="${id}.${x}">${x}</button>`).join('')}</div>`;if(cur!=='All')list=items.filter(it=>(it.tag||'Esports')===cur)}
+ if(L.cel){const favs=celFavs();if(favs.length){head+=`<div class="fchips"><button class="chip${S.cel.on?' on':''}" data-celtog>♥ ${S.cel.on?'Showing':'Show'} ${favs.length} Cel Archive favorite${favs.length===1?'':'s'}</button></div>`;
+  if(S.cel.on){const have=new Set(list.map(x=>String(x.title).toLowerCase()));list=[...list,...favs.filter(x=>!have.has(String(x.title).toLowerCase())).map(x=>({id:x.id,title:x.title,sub:celSub(x),img:S.posters[x.title]||'',cel:1}))]}}}
  const ref=it=>`${id}.${L.k}.${it.id}`;
  if(L.shape==='row')return head+`<div class="rows">${list.map(it=>`<div class="rowi"><button class="rowmain" data-edit="${ref(it)}"><span class="th">${it.img?`<img src="${esc(it.img)}" alt="">`:`<span class="ms">${d.i}</span>`}</span><span class="rt"><b>${esc(it.title)}</b>${it.sub?`<small>${esc(it.sub)}</small>`:''}</span>${it.tag?`<span class="tag">${esc(it.tag)}</span>`:''}</button>${it.link?`<a class="lnk" href="${esc(it.link)}" target="_blank" rel="noopener" aria-label="Open link"><span class="ms">open_in_new</span></a>`:''}</div>`).join('')}</div><button class="addrow" data-add="${id}.${L.k}"><span class="ms">add</span>Add ${esc(L.noun||d.noun||'')}</button>`;
  const ghosts=Math.max(0,(L.shape==='poster'?4:3)-list.length-1);
- return head+`<div class="grid ${L.shape}">${list.map((it,n)=>`<button class="pc${L.rank&&n===0?' first':''}" data-edit="${ref(it)}" title="${esc(it.title)}"><span class="pi">${it.img?`<img src="${esc(it.img)}" alt="" loading="lazy">`:`<span class="ini">${esc(initials(it.title))}</span>`}${L.rank?`<span class="rk">#${n+1}</span>`:''}</span><span class="cap">${esc(it.title)}</span></button>`).join('')}<button class="pc add" data-add="${id}.${L.k}" aria-label="Add ${esc(L.noun||d.noun||'')}"><span class="pi"><span class="ms">add</span></span><span class="cap">&nbsp;</span></button>${'<span class="pc ghost"><span class="pi"></span></span>'.repeat(ghosts)}</div>`}
+ return head+`<div class="grid ${L.shape}">${list.map((it,n)=>`<button class="pc${L.rank&&n===0?' first':''}" ${it.cel?`data-cel="${id}.${L.k}.${esc(it.id)}"`:`data-edit="${ref(it)}"`} title="${esc(it.title)}${it.cel?' (from Cel Archive)':''}"><span class="pi">${it.img?`<img src="${esc(it.img)}" alt="" loading="lazy">`:`<span class="ini">${esc(initials(it.title))}</span>`}${L.rank?`<span class="rk">#${n+1}</span>`:''}${it.cel?'<span class="celh" aria-hidden="true">♥</span>':''}</span><span class="cap">${esc(it.title)}</span></button>`).join('')}<button class="pc add" data-add="${id}.${L.k}" aria-label="Add ${esc(L.noun||d.noun||'')}"><span class="pi"><span class="ms">add</span></span><span class="cap">&nbsp;</span></button>${'<span class="pc ghost"><span class="pi"></span></span>'.repeat(ghosts)}</div>`}
 function textHTML(id,d,check){const items=getList(id,'items');return `<div class="tl">${items.map(it=>`<div class="tli${it.done?' done':''}">${check?`<button class="ck" data-ck="${id}.${it.id}" aria-label="Mark done"><span class="ms">${it.done?'check_box':'check_box_outline_blank'}</span></button>`:'<span class="dot"></span>'}<textarea rows="1" data-tl="${id}.${it.id}" placeholder="${esc(d.ph)}" aria-label="${esc(d.t)}">${esc(it.text)}</textarea><button class="x" data-tldel="${id}.${it.id}" aria-label="Remove"><span class="ms">close</span></button></div>`).join('')}</div><button class="addrow" data-tladd="${id}"><span class="ms">add</span>${check?'Add quest':'Add'}</button>`}
 function latestHTML(){const e=[...S.diary].sort(sortEntries)[0];if(!e)return `<p class="empty-note">No save files yet.</p><button class="addrow" data-act="newentry"><span class="ms">edit</span>Write your first entry</button>`;
  const m=MOODS.find(x=>x[0]===e.mood);return `<button class="latest" data-entry="${e.id}">${e.photos?.[0]?`<img src="${esc(e.photos[0])}" alt="">`:''}<span class="rt"><small>${fmtDate(e.date)}</small><b>${esc(e.title||'Untitled')}</b><small>${esc((e.text||'').slice(0,90))}</small></span></button>${m?`<span class="moodc" style="--mc:${m[1]};display:inline-block;margin-top:8px">${cap(m[0])}</span>`:''}`}
@@ -480,7 +496,7 @@ function customizeHTML(){const t=S.theme,cur=curColors(),house=(S.f.persona||{})
 /* page render */
 function render(){document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('on',b.dataset.tab===page));const m=$('#main');const board=p=>`<div class="board">${order(p).filter(id=>!S.layout.hidden[id]).map(secHTML).join('')}</div>`;
  if(page==='about')m.innerHTML=heroHTML()+obHTML()+board('about');
- else if(page==='favs')m.innerHTML=`<div class="pagehead"><div><h1>Favorites</h1><p>What you're into right now, and your all-time favorites.</p></div></div>`+board('favs');
+ else if(page==='favs'){m.innerHTML=`<div class="pagehead"><div><h1>Favorites</h1><p>What you're into right now, and your all-time favorites.</p></div></div>`+board('favs');fillPosters()}
  else if(page==='diary')m.innerHTML=diaryHTML();else m.innerHTML=customizeHTML()}
 function rerenderSec(id){const el=document.getElementById('s-'+id);if(el)el.outerHTML=secHTML(id)}
 function rerenderOb(){const el=$('#ob');if(el)el.outerHTML=obHTML()}
@@ -491,12 +507,13 @@ function closeModal(){$('.scrim')?.remove();document.body.classList.remove('nosc
 addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
 function arm(b){if(b.classList.contains('armed'))return true;b.classList.add('armed');const old=b.innerHTML;b.textContent='Tap again to confirm';setTimeout(()=>{if(b.isConnected){b.classList.remove('armed');b.innerHTML=old}},3000);return false}
 
-function openItem(s,k,id,preImg){const d=def(s),L=d.lists.find(x=>x.k===k),arr=getList(s,k),idx=id?arr.findIndex(x=>x.id===id):-1,orig=idx>=0?arr[idx]:null;
- const fields=L.item||d.item,noun=L.noun||d.noun||'item';const tmp=orig?{...orig}:{id:uid(),title:'',sub:'',img:preImg||'',link:'',tag:''};
+function openItem(s,k,id,pre){pre=pre||{};const d=def(s),L=d.lists.find(x=>x.k===k),arr=getList(s,k),idx=id?arr.findIndex(x=>x.id===id):-1,orig=idx>=0?arr[idx]:null;
+ const fields=L.item||d.item,noun=L.noun||d.noun||'item';const tmp=orig?{...orig}:{id:uid(),title:pre.title||'',sub:pre.sub||'',img:pre.img||'',link:'',tag:''};
  if(L.filter&&!tmp.tag)tmp.tag=filt[s]&&filt[s]!=='All'?filt[s]:L.filter[0];
  const target=L.to?d.lists.find(x=>x.k===L.to):null;
  const m=modal(`<div class="mh"><h3>${orig?'Edit':'Add'} ${esc(noun)}</h3><button class="ib" data-close aria-label="Close"><span class="ms">close</span></button></div>
- ${d.search&&!orig?`<div class="srch"><input id="q" placeholder="Search anime by name" aria-label="Search anime"><button class="btn" id="qb"><span class="ms">search</span>Search</button></div><div class="qr" id="qr"></div>`:''}
+ ${pre.title&&!orig?'<p class="note" style="margin:-4px 0 12px">From your Cel Archive favorites. Save it to pin it into your ranked list, where you can reorder it, change the poster, and add a note.</p>':''}
+ ${d.search&&!orig&&!pre.title?`<div class="srch"><input id="q" placeholder="Search anime by name" aria-label="Search anime"><button class="btn" id="qb"><span class="ms">search</span>Search</button></div><div class="qr" id="qr"></div>`:''}
  <div class="mimg"><div class="prev ${L.shape==='row'?'row':L.shape}" id="prev"></div><div class="mimgact"><label class="btn sm"><span class="ms">upload</span>Upload image<input type="file" accept="image/*" id="mi" hidden></label><button class="btn sm" id="mclr">Remove image</button><p class="note">You can also drag or paste an image here.</p></div></div>
  <div class="fields">${fields.map((f,i)=>{const mid='m-'+f.k,v=tmp[f.k]||'';const ctl=f.type==='select'?`<select id="${mid}" data-mk="${f.k}">${f.opts.map(o=>`<option${o===v?' selected':''}>${esc(o)}</option>`).join('')}</select>`:`<input id="${mid}" data-mk="${f.k}" value="${esc(v)}" placeholder="${esc(f.ph||'')}">`;return `<div class="fld${i===0||f.k==='link'||f.k==='sub'&&fields.length<3?' wide':''}"><label for="${mid}">${esc(f.l)}</label>${ctl}</div>`}).join('')}</div>
  <p class="err" id="merr"></p>
@@ -575,7 +592,7 @@ document.addEventListener('change',async e=>{const el=e.target;
  if(el.id==='impfile'&&el.files[0]){const text=await el.files[0].text();el.value='';doImport(text,$('#imp-err'))}});
 document.addEventListener('dragover',e=>{if(e.target.closest('.pc.add,.addrow[data-add],.imgslot,.spotimg,.avatar,.banner'))e.preventDefault()});
 document.addEventListener('drop',async e=>{const f=[...(e.dataTransfer?.files||[])].find(f=>f.type.startsWith('image/'));if(!f)return;const t=e.target.closest('[data-add],.imgslot,.spotimg,.avatar,.banner');if(!t)return;e.preventDefault();
- try{if(t.dataset.add){const [s,k]=split(t.dataset.add);openItem(s,k,null,await readImg(f,700));return}
+ try{if(t.dataset.add){const [s,k]=split(t.dataset.add);openItem(s,k,null,{img:await readImg(f,700)});return}
   const inp=t.querySelector('input[data-up]');if(!inp)return;const dt=new DataTransfer();dt.items.add(f);inp.files=dt.files;inp.dispatchEvent(new Event('change',{bubbles:true}))}catch(err){toast("That file couldn't be read as an image.")}});
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const ds=b.dataset;
  if('close' in ds){closeModal();return}
@@ -584,6 +601,8 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
  if(ds.add){const [s,k]=split(ds.add);openItem(s,k);return}
  if(ds.edit){const [s,r]=split(ds.edit);const [k,id]=split(r);openItem(s,k,id);return}
  if(ds.entry){openEntry(ds.entry);return}
+ if(ds.cel){const [s,r]=split(ds.cel);const [k,id]=split(r);const x=celFavs().find(v=>v.id===id);if(x)openItem(s,k,null,{title:x.title,sub:celSub(x),img:S.posters[x.title]||''});return}
+ if('celtog' in ds){S.cel.on=!S.cel.on;save();rerenderSec('anime');fillPosters();return}
  if(ds.tladd){getList(ds.tladd,'items').push({id:uid(),text:'',done:false});rerenderSec(ds.tladd);save();const ts=document.querySelectorAll(`#s-${ds.tladd} textarea`);ts[ts.length-1]?.focus();return}
  if(ds.tldel){const [s,id]=split(ds.tldel);S.l[s].items=getList(s,'items').filter(x=>x.id!==id);rerenderSec(s);updateHero();save();return}
  if(ds.ck){const [s,id]=split(ds.ck);const it=getList(s,'items').find(x=>x.id===id);if(it){it.done=!it.done;rerenderSec(s);updateHero();save();if(it.done)toast('Quest complete. +20 XP')}return}
