@@ -193,10 +193,9 @@ details.opt[open] summary{margin-bottom:10px}
 .taste .thead{display:flex;align-items:baseline;gap:10px}
 .taste .thead h2{font-family:var(--display);font-weight:400;font-size:20px;margin-right:auto}
 .taste .thead button{border:none;background:none;color:var(--muted);font-size:13px;padding:4px}
-.tcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
 .tcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
 .tcard .k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
-.tcard .v{font-family:var(--display);font-size:21px;line-height:1.2;overflow-wrap:anywhere}
+.tcard .v{font-family:var(--display);font-size:19px;line-height:1.2;overflow-wrap:anywhere}
 .tcard .s{font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
 .tcard.hero{border-color:var(--accent);background:linear-gradient(135deg,var(--accent-soft),var(--surface) 70%)}
 .gbars{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
@@ -231,6 +230,20 @@ details.opt[open] summary{margin-bottom:10px}
 .presults button img{width:100%;aspect-ratio:2/3;object-fit:cover;border-radius:5px}
 .presults button small{color:var(--muted);font-family:var(--mono);font-size:10px}
 .presults button:hover{border-color:var(--accent)}
+.tcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+button.tcard{font:inherit;color:inherit;text-align:left;cursor:pointer;position:relative;width:100%}
+.tcard.click:hover{border-color:var(--accent)}
+.tcard .go{position:absolute;top:10px;right:12px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.tcard .k{padding-right:40px}
+.dlist{display:flex;flex-direction:column;gap:6px}
+.drow{display:grid;grid-template-columns:42px 1fr auto;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px 12px 6px 6px;text-align:left;font:inherit;color:var(--ink)}
+.drow:hover{border-color:var(--accent)}
+.drow img,.drow .dph{width:42px;aspect-ratio:2/3;border-radius:5px;object-fit:cover;background:var(--surface-2);display:block}
+.drow .dt{display:flex;flex-direction:column;min-width:0}
+.drow .dt b{font-size:14.5px;overflow-wrap:anywhere}
+.drow .dt small{font-size:12px;color:var(--muted)}
+.drow .ds{font-family:var(--display);font-size:20px;min-width:28px;text-align:right}
+.drow .ds.none{color:var(--line)}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:80;max-width:calc(100% - 32px);box-shadow:var(--shadow)}
 .menu{position:relative}
 .menu .pop{position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px;display:flex;flex-direction:column;min-width:220px;z-index:30}
@@ -256,9 +269,9 @@ details.opt[open] summary{margin-bottom:10px}
       <div class="menu">
         <button class="btn ghost" id="btnMenu" aria-haspopup="true" aria-expanded="false">More ▾</button>
         <div class="pop" id="menuPop" hidden>
-          <button id="mExportJson">Download backup (.json)</button>
+          <button id="mExportJson">Save backup file (move to another device)</button>
           <button id="mExportCsv">Download spreadsheet (.csv)</button>
-          <button id="mImportJson">Restore from backup…</button>
+          <button id="mImportJson">Load backup file…</button>
           <button id="mPosters">Find missing posters</button>
           <hr>
           <button id="mDeleteAll" style="color:var(--st-dropped)">Delete entire library…</button>
@@ -369,7 +382,8 @@ const store={
       this.emit();
     }
   },
-  persistLocal(){lsSet(LS_KEY,JSON.stringify([...this.items.values()]))},
+  persistLocal(){clearTimeout(this._pt);this._pt=setTimeout(()=>this.flush(),150)},
+  flush(){clearTimeout(this._pt);this._pt=null;if(this.mode==="local")lsSet(LS_KEY,JSON.stringify([...this.items.values()]))},
   async put(item){
     const clean=JSON.parse(JSON.stringify(item));
     if(this.mode==="cloud"){await this.col.doc(item.id).set(clean)}
@@ -380,7 +394,7 @@ const store={
     else{this.items.delete(id);this.persistLocal();this.emit()}
   },
   onChange(fn){this.listeners.push(fn)},
-  emit(){this.loaded=true;this.listeners.forEach(f=>f())}
+  emit(){this.loaded=true;if(this._et)return;this._et=setTimeout(()=>{this._et=null;this.listeners.forEach(f=>f())},40)}
 };
 async function withRetry(fn){
   for(let a=0;;a++){
@@ -458,57 +472,91 @@ function renderBand(){
       <div class="axis">${counts.map((_,i)=>`<span>${i+1}</span>`).join("")}</div>
     </div>`;
 }
+let TASTE_SETS={};
 function renderTaste(){
   const el=$("#taste");
   const src=isExampleMode()?EXAMPLES:items();
   const done=src.filter(x=>x.status==="completed");
-  if(done.length<1){el.innerHTML="";return}
+  if(!done.length){el.innerHTML="";TASTE_SETS={};return}
   const hidden=lsGet("celarchive.tasteHidden")==="1";
   const avgOf=a=>a.length?a.reduce((t,x)=>t+x.score,0)/a.length:null;
   const f1=v=>v==null?"—":v.toFixed(1);
   const rated=done.filter(x=>x.score);
-  const g={};done.forEach(x=>(x.genres||[]).forEach(n=>{(g[n]=g[n]||{n,all:[],sc:[]}).all.push(x);if(x.score)g[n].sc.push(x)}));
-  const gl=Object.values(g).sort((a,b)=>b.all.length-a.all.length||(avgOf(b.sc)||0)-(avgOf(a.sc)||0));
-  const dg={};done.filter(x=>x.demo).forEach(x=>{(dg[x.demo]=dg[x.demo]||{n:x.demo,all:[],sc:[]}).all.push(x);if(x.score)dg[x.demo].sc.push(x)});
-  const dgl=Object.values(dg).sort((a,b)=>b.all.length-a.all.length);
-  const minN=Math.max(2,Math.round(rated.length*0.04));
-  const bestG=[...gl].filter(x=>x.sc.length>=minN).sort((a,b)=>avgOf(b.sc)-avgOf(a.sc))[0];
-  const kinds=["anime","donghua","cartoon","aeni","other"].map(k=>({k,sc:rated.filter(x=>x.kind===k)})).filter(x=>x.sc.length);
-  const bestK=[...kinds].filter(x=>x.sc.length>=2).sort((a,b)=>avgOf(b.sc)-avgOf(a.sc))[0]||kinds[0];
+  const bySc=(a,b)=>(b.score||0)-(a.score||0)||String(a.title).localeCompare(String(b.title));
+  const group=(arr,fn)=>{const m={};arr.forEach(x=>[].concat(fn(x)??[]).forEach(k=>{if(k==null||k==="")return;(m[k]=m[k]||{k,all:[],sc:[]}).all.push(x);if(x.score)m[k].sc.push(x)}));return Object.values(m)};
+  const byCount=(a,b)=>b.all.length-a.all.length||(avgOf(b.sc)||0)-(avgOf(a.sc)||0);
+  const minN=Math.max(3,Math.round(rated.length*0.03));
+  const byAvg=l=>[...l].filter(x=>x.sc.length>=minN).sort((a,b)=>avgOf(b.sc)-avgOf(a.sc)||b.sc.length-a.sc.length)[0];
+  const gl=group(done,x=>x.genres).sort(byCount);
+  const dl=group(done,x=>x.demo).sort(byCount);
+  const kl=group(done,x=>x.kind).sort(byCount);
+  const erl=group(done,x=>x.year?Math.floor(x.year/10)*10:null);
+  const topG=gl[0],bestG=byAvg(gl),topD=dl[0],bestD=byAvg(dl),bestK=byAvg(kl)||kl[0];
+  const topE=[...erl].sort(byCount)[0],favE=byAvg(erl);
   const mv=done.filter(x=>x.type==="Movie"),sr=done.filter(x=>x.type!=="Movie");
-  const dec={};done.filter(x=>x.year).forEach(x=>{const d=Math.floor(x.year/10)*10;(dec[d]=dec[d]||{d,all:[],sc:[]}).all.push(x);if(x.score)dec[d].sc.push(x)});
-  const dl=Object.values(dec);
-  const topD=[...dl].sort((a,b)=>b.all.length-a.all.length)[0];
-  const bestD=[...dl].filter(x=>x.sc.length>=3).sort((a,b)=>avgOf(b.sc)-avgOf(a.sc))[0];
-  const tens=rated.filter(x=>Math.round(x.score)===10);
+  const tens=rated.filter(x=>Math.round(x.score)===10).sort(bySc);
+  const favs=src.filter(x=>x.favorite).sort(bySc);
+  const multi=done.filter(x=>seasonsOf(x).length>=3).sort((a,b)=>seasonsOf(b).length-seasonsOf(a).length||bySc(a,b));
+  const longest=[...done].sort((a,b)=>seasonsOf(b).length-seasonsOf(a).length)[0];
+  const withYear=done.filter(x=>x.year).sort((a,b)=>a.year-b.year||bySc(a,b));
+  const oldest=withYear[0],classics=withYear.filter(x=>x.year<2000);
+  const nowY=new Date().getFullYear();
+  const recent=withYear.filter(x=>x.year>=nowY-3).sort((a,b)=>b.year-a.year||bySc(a,b));
+  const unf=src.filter(x=>["unfinished","dropped","on_hold"].includes(x.status)).sort(bySc);
+  const changed=src.filter(x=>(x.scoreHistory||[]).length).sort(bySc);
+  const up=changed.filter(x=>x.score>x.scoreHistory.slice(-1)[0].score).length;
+  const harsh=rated.filter(x=>x.score<=6).sort((a,b)=>a.score-b.score||String(a.title).localeCompare(b.title));
   const mean=avgOf(rated);
   const hi=rated.length?Math.round(rated.filter(x=>x.score>=8).length/rated.length*100):0;
-  const lo=rated.length?Math.round(rated.filter(x=>x.score<=6).length/rated.length*100):0;
+  const lo=rated.length?Math.round(harsh.length/rated.length*100):0;
   const critic=mean==null?"—":mean>=8?"Generous":mean>=7?"Balanced":"Tough critic";
-  const changed=src.filter(x=>(x.scoreHistory||[]).length);
-  const up=changed.filter(x=>x.score>(x.scoreHistory.slice(-1)[0].score)).length;
-  const card=(k,v,s,hero)=>`<div class="tcard${hero?" hero":""}"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${s}</span></div>`;
+  const names=(l,n)=>l.length?esc(l.slice(0,n).map(x=>x.title).join(", "))+(l.length>n?` +${l.length-n} more`:""):"";
+  const sets={};
+  const card=(key,k,v,s,list,title,hero)=>{const on=!!(list&&list.length);if(on)sets[key]={title:title||k,items:list};
+    return `<${on?`button type="button" data-set="${key}"`:"div"} class="tcard${hero?" hero":""}${on?" click":""}"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${s}</span>${on?`<span class="go" aria-hidden="true">${list.length} ›</span>`:""}</${on?"button":"div"}>`};
   const cards=[
-    gl[0]?card("Most watched genre",esc(gl[0].n),`${gl[0].all.length} of ${done.length} watched · avg ${f1(avgOf(gl[0].sc))}`,true):"",
-    dgl[0]?card("Most watched demographic",esc(DEMO_LABEL[dgl[0].n]),`${dgl[0].all.length} of ${done.length} watched · avg ${f1(avgOf(dgl[0].sc))}`,true):"",
-    bestG?card("Highest-rated genre",esc(bestG.n),`avg ${f1(avgOf(bestG.sc))} across ${bestG.sc.length} titles`):"",
-    bestK?card("You rate highest",esc(KIND_LABEL[bestK.k]),kinds.map(x=>`${KIND_LABEL[x.k].split(" ")[0]} ${f1(avgOf(x.sc))}`).join(" · ")):"",
-    card("Series vs movies",`${sr.length} / ${mv.length}`,`series avg ${f1(avgOf(sr.filter(x=>x.score)))} · movies avg ${f1(avgOf(mv.filter(x=>x.score)))}`),
-    topD?card("Favorite era",`${topD.d}s`,`${topD.all.length} titles${bestD&&bestD.d!==topD.d?` · best rated: ${bestD.d}s (${f1(avgOf(bestD.sc))})`:bestD?` · avg ${f1(avgOf(bestD.sc))}`:""}`):"",
-    card("Masterpieces",tens.length,tens.length?esc(tens.slice(0,3).map(x=>x.title).join(", "))+(tens.length>3?` +${tens.length-3} more`:""):"No 10s yet"),
-    card("Critic style",critic,`mean ${f1(mean)} · ${hi}% rated 8+ · ${lo}% 6 or below`),
-    changed.length?card("Changed your mind",changed.length,`${up} went up · ${changed.length-up} went down`):""
+    topG?card("g1","Most watched genre",esc(topG.k),`${topG.all.length} of ${done.length} watched · avg ${f1(avgOf(topG.sc))}`,[...topG.all].sort(bySc),`${topG.k}`,true):card("g1","Most watched genre","—","Add genres to see this"),
+    topD?card("d1","Most watched demographic",esc(DEMO_LABEL[topD.k]),`${topD.all.length} of ${done.length} watched · avg ${f1(avgOf(topD.sc))}`,[...topD.all].sort(bySc),DEMO_LABEL[topD.k],true):card("d1","Most watched demographic","—","Set demographics to see this"),
+    bestG?card("g2","Highest-rated genre",esc(bestG.k),`avg ${f1(avgOf(bestG.sc))} across ${bestG.sc.length} rated`,[...bestG.all].sort(bySc),`${bestG.k} · highest rated`):card("g2","Highest-rated genre","—","Needs a few more ratings"),
+    bestD?card("d2","Highest-rated demographic",esc(DEMO_LABEL[bestD.k]),`avg ${f1(avgOf(bestD.sc))} across ${bestD.sc.length} rated`,[...bestD.all].sort(bySc),`${DEMO_LABEL[bestD.k]} · highest rated`):card("d2","Highest-rated demographic","—","Needs a few more ratings"),
+    bestK?card("k1","You rate highest",esc(KIND_LABEL[bestK.k]||"—"),kl.filter(x=>x.sc.length).map(x=>`${(KIND_LABEL[x.k]||"").split(" ")[0]} ${f1(avgOf(x.sc))}`).join(" · "),[...bestK.all].sort(bySc),KIND_LABEL[bestK.k]):card("k1","You rate highest","—",""),
+    topE?card("e1","Most watched era",`${topE.k}s`,`${topE.all.length} titles · avg ${f1(avgOf(topE.sc))}`,[...topE.all].sort(bySc),`${topE.k}s · most watched`):card("e1","Most watched era","—","Add release years to see this"),
+    favE?card("e2","Favorite era",`${favE.k}s`,`highest avg: ${f1(avgOf(favE.sc))} across ${favE.sc.length} rated${topE&&favE.k===topE.k?" · also your most watched":""}`,[...favE.all].sort(bySc),`${favE.k}s · favorite era`):card("e2","Favorite era","—","Needs a few more ratings"),
+    card("m1","Series vs movies",`${sr.length} / ${mv.length}`,`series avg ${f1(avgOf(sr.filter(x=>x.score)))} · movies avg ${f1(avgOf(mv.filter(x=>x.score)))}`,[...mv].sort(bySc),"Your movies"),
+    card("t10","Masterpieces",tens.length,tens.length?names(tens,3):"No 10s yet",tens,"Your 10/10s"),
+    card("fav","Favorites",favs.length,favs.length?names(favs,3):"Tap ♡ on a card to add one",favs,"Your favorites"),
+    longest&&seasonsOf(longest).length>1?card("long","Longest journey",esc(longest.title),`${seasonsOf(longest).length} seasons · ${multi.length} shows with 3+`,multi.length?multi:[longest],"Shows with 3+ seasons"):card("long","Longest journey","—","Add season counts to see this"),
+    oldest?card("old","Oldest classic",esc(oldest.title),`${oldest.year} · ${classics.length} from before 2000`,withYear.slice(0,Math.max(12,classics.length)),"Oldest you've watched"):card("old","Oldest classic","—",""),
+    card("rec","Keeping up",recent.length,`titles released ${nowY-3}–${nowY}`,recent,`Released ${nowY-3}–${nowY}`),
+    card("unf","Unfinished business",unf.length,unf.length?`${unf.filter(x=>x.status==="unfinished").length} unfinished · ${unf.filter(x=>x.status==="dropped").length} dropped · ${unf.filter(x=>x.status==="on_hold").length} on hold`:"Nothing left hanging",unf,"Unfinished, dropped and on hold"),
+    card("chg","Changed your mind",changed.length,changed.length?`${up} went up · ${changed.length-up} went down`:"No score changes yet",changed,"Scores you've changed"),
+    card("crit","Critic style",critic,`mean ${f1(mean)} · ${hi}% rated 8+ · ${lo}% 6 or below`,harsh,"You rated these 6 or below")
   ].join("");
   const top=gl.slice(0,8),maxC=Math.max(1,...top.map(x=>x.all.length));
+  top.forEach(x=>{sets["bg:"+x.k]={title:x.k,items:[...x.all].sort(bySc)}});
+  dl.forEach(x=>{sets["bd:"+x.k]={title:DEMO_LABEL[x.k],items:[...x.all].sort(bySc)}});
+  const bar=(key,name,n,mx,avg)=>`<button type="button" class="grow" data-set="${esc(key)}" aria-label="Show ${esc(name)} titles"><span class="gname">${esc(name)}</span><span class="gtrack"><b style="width:${n/mx*100}%"></b></span><span class="gn">${n}</span><span class="ga">${f1(avg)}</span></button>`;
+  TASTE_SETS=sets;
   el.innerHTML=`<div class="thead"><h2>Your taste</h2><button type="button" class="linkbtn" data-terms="demographics">What do these terms mean?</button><button type="button" id="tasteTog" aria-expanded="${!hidden}">${hidden?"Show":"Hide"}</button></div>
-    ${hidden?"":`<div class="tcards">${cards}</div>
-    ${top.length?`<div class="gbars"><span class="k"><span>Genres you watch most</span><span>titles · avg</span></span>
-      ${top.map(x=>`<button type="button" class="grow" data-genre="${esc(x.n)}" aria-label="Show ${esc(x.n)} titles"><span class="gname">${esc(x.n)}</span><span class="gtrack"><b style="width:${x.all.length/maxC*100}%"></b></span><span class="gn">${x.all.length}</span><span class="ga">${f1(avgOf(x.sc))}</span></button>`).join("")}</div>`:""}`}`;
-  if(!hidden&&dgl.length){const mx=Math.max(...dgl.map(x=>x.all.length));el.insertAdjacentHTML("beforeend",`<div class="gbars"><span class="k"><span>Demographics you watch</span><span>titles · avg</span></span>${dgl.map(x=>`<button type="button" class="grow" data-demo="${x.n}" aria-label="Show ${esc(DEMO_LABEL[x.n])} titles"><span class="gname">${esc(DEMO_LABEL[x.n])}</span><span class="gtrack"><b style="width:${x.all.length/mx*100}%"></b></span><span class="gn">${x.all.length}</span><span class="ga">${f1(avgOf(x.sc))}</span></button>`).join("")}</div>`)}
+    ${hidden?"":`<p class="help" style="margin:0">Tap any block or bar to see the shows behind it.</p><div class="tcards">${cards}</div>
+    ${top.length?`<div class="gbars"><span class="k"><span>Genres you watch most</span><span>titles · avg</span></span>${top.map(x=>bar("bg:"+x.k,x.k,x.all.length,maxC,avgOf(x.sc))).join("")}</div>`:""}
+    ${dl.length?`<div class="gbars"><span class="k"><span>Demographics you watch</span><span>titles · avg</span></span>${dl.map(x=>bar("bd:"+x.k,DEMO_LABEL[x.k],x.all.length,dl[0].all.length,avgOf(x.sc))).join("")}</div>`:""}`}`;
   $("#tasteTog").onclick=()=>{lsSet("celarchive.tasteHidden",hidden?"0":"1");renderTaste()};
 }
-$("#taste").addEventListener("click",e=>{const tm=e.target.closest("[data-terms]");if(tm){openTerms(tm.dataset.terms);return}const d=e.target.closest("[data-demo]");if(d&&!isExampleMode()){state.demo=d.dataset.demo;state.genre="";state.status="all";render();$("#fdemo").scrollIntoView({behavior:"smooth",block:"start"});return}
-  const b=e.target.closest("[data-genre]");if(!b||isExampleMode())return;state.demo="";state.genre=b.dataset.genre;state.status="all";render();$("#fgenre").scrollIntoView({behavior:"smooth",block:"start"})});
+function openSet(key){
+  const set=TASTE_SETS[key];if(!set)return;
+  openSheet(`<header><h2>${esc(set.title)}</h2><span class="mono" style="color:var(--muted);font-size:13px">${set.items.length} title${set.items.length===1?"":"s"}</span><button class="x" data-close aria-label="Close">×</button></header>
+    <div class="body"><div class="dlist">${set.items.map(it=>`<button type="button" class="drow" data-id="${esc(it.id)}">
+      ${it.poster?`<img src="${esc(it.poster)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'dph'}))">`:`<span class="dph"></span>`}
+      <span class="dt"><b>${it.favorite?`<span class="fav">♥</span> `:""}${esc(it.title)}</b><small>${[KIND_LABEL[it.kind],DEMO_LABEL[it.demo],it.type,it.year,it.status!=="completed"?ST_LABEL[it.status]:""].filter(Boolean).map(esc).join(" · ")}</small></span>
+      <span class="ds${it.score?"":" none"}">${it.score||"–"}</span></button>`).join("")}</div></div>
+    <div class="foot-bar"><span class="sp help">Tap a show to open it.</span><button class="btn" data-close>Close</button></div>`,true);
+  document.querySelector(".dlist").onclick=e=>{const b=e.target.closest("[data-id]");if(!b)return;const it=store.items.get(b.dataset.id);if(!it){toast("That’s an example card. Add your own titles to use this.");return}openEdit(it)};
+}
+$("#taste").addEventListener("click",e=>{
+  const tm=e.target.closest("[data-terms]");if(tm){openTerms(tm.dataset.terms);return}
+  const b=e.target.closest("[data-set]");if(b)openSet(b.dataset.set);
+});
 function renderTabs(){
   const src=isExampleMode()?EXAMPLES:items();
   const review=src.filter(x=>x.needsReview).length;
@@ -1113,13 +1161,47 @@ async function exportFile(kind){
 }
 $("#fileJson").addEventListener("change",async e=>{
   const f=e.target.files[0];e.target.value="";if(!f)return;
-  let parsed;try{parsed=JSON.parse(await f.text())}catch(err){toast("That file isn’t a valid backup (.json).");return}
+  let parsed;try{parsed=JSON.parse(await f.text())}catch(err){toast("That file isn’t a Cel Archive backup (.json). Save one from More → Save backup file on your other device.");return}
   const arr=Array.isArray(parsed)?parsed:parsed&&parsed.items;
   if(!Array.isArray(arr)||!arr.length){toast("No titles found in that backup.");return}
   const docs=arr.filter(x=>x&&x.title).map(x=>({...x,id:typeof x.id==="string"&&/^[\w\-.~:@+]+$/.test(x.id)?x.id:newId()}));
-  toast(`Restoring ${docs.length} titles…`);
-  const failed=await writeMany(docs,null,4);
-  toast(failed.length?`${docs.length-failed.length} restored, ${failed.length} failed.`:`Restored ${docs.length} titles`);
+  const byTitle=new Map(items().map(x=>[norm(x.title),x]));
+  let newer=0,added=0,older=0;
+  docs.forEach(d=>{const ex=store.items.get(d.id)||byTitle.get(norm(d.title));if(!ex)added++;else if((d.updatedAt||0)>(ex.updatedAt||0))newer++;else older++});
+  const when=parsed&&parsed.exportedAt?new Date(parsed.exportedAt).toLocaleString(undefined,{dateStyle:"medium",timeStyle:"short"}):"";
+  openSheet(`<header><h2>Load backup</h2><button class="x" data-close aria-label="Close">×</button></header>
+    <div class="body">
+      <p class="help" style="margin:0">Backup${when?` saved ${esc(when)}`:""} with <b>${docs.length}</b> titles. This device has <b>${store.items.size}</b>.</p>
+      <div class="isum"><span><b>${added}</b> new here</span><span><b>${newer}</b> edited more recently in the backup</span><span><b>${older}</b> already up to date here</span></div>
+      <div class="flagbox" style="border-color:var(--line)">
+        <b>Merge (recommended)</b>
+        <span class="help">Adds the new titles and updates shows you changed more recently on the other device. Matches shows by title, so nothing gets doubled. Nothing here is deleted.</span>
+      </div>
+      <div class="flagbox" style="border-color:var(--line)">
+        <b>Replace</b>
+        <span class="help">Makes this device an exact copy of the backup. Anything only on this device is deleted.</span>
+      </div>
+      <div class="progressline" id="rsProg" hidden><b></b></div>
+    </div>
+    <div class="foot-bar"><button class="btn danger" id="rsReplace">Replace</button><span class="sp"></span><button class="btn" data-close>Cancel</button><button class="btn primary" id="rsMerge">Merge</button></div>`);
+  const run=async mode=>{
+    $("#rsMerge").disabled=$("#rsReplace").disabled=true;const prog=$("#rsProg");prog.hidden=false;const bar=prog.querySelector("b");
+    let list=[];
+    if(mode==="replace"){
+      const keep=new Set(docs.map(d=>d.id));const gone=[...store.items.keys()].filter(id=>!keep.has(id));
+      for(const id of gone){try{await withRetry(()=>store.remove(id))}catch(e){}}
+      list=docs;
+    }else{
+      const map=new Map(items().map(x=>[norm(x.title),x]));
+      docs.forEach(d=>{const ex=store.items.get(d.id)||map.get(norm(d.title));
+        if(!ex)list.push(d);else if((d.updatedAt||0)>(ex.updatedAt||0))list.push({...d,id:ex.id})});
+    }
+    const failed=await writeMany(list,(n,t)=>{bar.style.width=Math.round(n/t*100)+"%"},4);
+    closeSheet();
+    toast(failed.length?`${list.length-failed.length} saved, ${failed.length} failed. ${errMsg(failed[0].e)}`:mode==="replace"?`This device now matches the backup (${docs.length} titles).`:`Merged: ${added} added, ${newer} updated.`);
+  };
+  $("#rsMerge").onclick=()=>run("merge");
+  let armed=false;$("#rsReplace").onclick=()=>{if(!armed){armed=true;$("#rsReplace").classList.add("armed");$("#rsReplace").textContent="Tap again to replace";return}run("replace")};
 });
 function openDeleteAll(){
   const n=store.items.size;if(!n){toast("Your library is already empty.");return}
@@ -1417,6 +1499,8 @@ function openTerms(focus,fromEdit){
 }
 
 /* ---------- boot ---------- */
+window.addEventListener("pagehide",()=>store.flush());
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")store.flush()});
 store.onChange(()=>{
   const lb=+lsGet("celarchive.lastBackup")||0;
   const days=lb?Math.floor((Date.now()-lb)/864e5):null;
