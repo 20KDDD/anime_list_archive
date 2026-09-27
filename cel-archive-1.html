@@ -9,7 +9,7 @@
 :root{
   --bg:#EDEFE8; --surface:#FAFBF6; --surface-2:#E3E6DD; --ink:#171A28; --muted:#5B6070; --line:#CFD3C8;
   --accent:#D3305A; --accent-ink:#FFFFFF; --accent-soft:#F7D9E1;
-  --st-watching:#23805A; --st-completed:#2C5FB3; --st-on_hold:#B07D12; --st-dropped:#A83246; --st-plan:#6A6E7C;
+  --st-watching:#23805A; --st-completed:#2C5FB3; --st-on_hold:#B07D12; --st-dropped:#A83246; --st-plan:#6A6E7C; --st-unfinished:#7A4FB5;
   --shadow:0 1px 0 rgba(23,26,40,.06),0 6px 18px -10px rgba(23,26,40,.25);
   --display:"Dela Gothic One","Arial Black",Impact,sans-serif;
   --body:"Zen Kaku Gothic New",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -19,14 +19,14 @@
   color-scheme:dark;
   --bg:#11131B; --surface:#1A1D28; --surface-2:#232736; --ink:#ECEEF4; --muted:#9BA1B4; --line:#2E3345;
   --accent:#FF5C82; --accent-ink:#1A0B10; --accent-soft:#3A1B26;
-  --st-watching:#4CC38E; --st-completed:#6F9BF0; --st-on_hold:#E0AE45; --st-dropped:#F07086; --st-plan:#A0A5B5;
+  --st-watching:#4CC38E; --st-completed:#6F9BF0; --st-on_hold:#E0AE45; --st-dropped:#F07086; --st-plan:#A0A5B5; --st-unfinished:#B08CF0;
   --shadow:0 1px 0 rgba(0,0,0,.3),0 8px 22px -12px rgba(0,0,0,.7);
 }}
 :root[data-theme="dark"]{
   color-scheme:dark;
   --bg:#11131B; --surface:#1A1D28; --surface-2:#232736; --ink:#ECEEF4; --muted:#9BA1B4; --line:#2E3345;
   --accent:#FF5C82; --accent-ink:#1A0B10; --accent-soft:#3A1B26;
-  --st-watching:#4CC38E; --st-completed:#6F9BF0; --st-on_hold:#E0AE45; --st-dropped:#F07086; --st-plan:#A0A5B5;
+  --st-watching:#4CC38E; --st-completed:#6F9BF0; --st-on_hold:#E0AE45; --st-dropped:#F07086; --st-plan:#A0A5B5; --st-unfinished:#B08CF0;
   --shadow:0 1px 0 rgba(0,0,0,.3),0 8px 22px -12px rgba(0,0,0,.7);
 }
 *{box-sizing:border-box}
@@ -189,6 +189,24 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
 .shint{font-size:13px;color:var(--accent);min-height:0}
 details.opt summary{cursor:pointer;font-size:13px;color:var(--muted);font-weight:500}
 details.opt[open] summary{margin-bottom:10px}
+.taste{margin-bottom:18px;display:flex;flex-direction:column;gap:10px}
+.taste .thead{display:flex;align-items:baseline;gap:10px}
+.taste .thead h2{font-family:var(--display);font-weight:400;font-size:20px;margin-right:auto}
+.taste .thead button{border:none;background:none;color:var(--muted);font-size:13px;padding:4px}
+.tcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.tcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.tcard .k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.tcard .v{font-family:var(--display);font-size:21px;line-height:1.2;overflow-wrap:anywhere}
+.tcard .s{font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.tcard.hero{border-color:var(--accent);background:linear-gradient(135deg,var(--accent-soft),var(--surface) 70%)}
+.gbars{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.gbars .k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700;display:flex;justify-content:space-between}
+.grow{display:grid;grid-template-columns:minmax(80px,120px) 1fr auto auto;gap:10px;align-items:center;border:none;background:none;padding:2px 0;text-align:left;font-size:13.5px}
+.grow:hover .gname{text-decoration:underline}
+.grow .gtrack{height:10px;border-radius:5px;background:var(--surface-2);overflow:hidden}
+.grow .gtrack b{display:block;height:100%;background:var(--accent);border-radius:5px}
+.grow .gn{font-family:var(--mono);font-size:12px;color:var(--muted);min-width:24px;text-align:right}
+.grow .ga{font-family:var(--mono);font-size:12px;min-width:34px;text-align:right}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:80;max-width:calc(100% - 32px);box-shadow:var(--shadow)}
 .menu{position:relative}
 .menu .pop{position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px;display:flex;flex-direction:column;min-width:220px;z-index:30}
@@ -224,6 +242,7 @@ details.opt[open] summary{margin-bottom:10px}
   </header>
 
   <section class="band" id="band" aria-label="Library summary"></section>
+  <section class="taste" id="taste" aria-label="Your taste"></section>
 
   <div class="tabs" id="tabs" role="toolbar" aria-label="Filter by status"></div>
   <div class="filters">
@@ -258,6 +277,7 @@ details.opt[open] summary{margin-bottom:10px}
 const STATUSES=[
   {k:"watching",label:"Watching"},
   {k:"completed",label:"Completed"},
+  {k:"unfinished",label:"Unfinished"},
   {k:"on_hold",label:"On hold"},
   {k:"dropped",label:"Dropped"},
   {k:"plan",label:"Plan to watch"}];
@@ -404,6 +424,52 @@ function renderBand(){
       <div class="axis">${counts.map((_,i)=>`<span>${i+1}</span>`).join("")}</div>
     </div>`;
 }
+function renderTaste(){
+  const el=$("#taste");
+  const src=isExampleMode()?EXAMPLES:items();
+  const done=src.filter(x=>x.status==="completed");
+  if(done.length<1){el.innerHTML="";return}
+  const hidden=lsGet("celarchive.tasteHidden")==="1";
+  const avgOf=a=>a.length?a.reduce((t,x)=>t+x.score,0)/a.length:null;
+  const f1=v=>v==null?"—":v.toFixed(1);
+  const rated=done.filter(x=>x.score);
+  const g={};done.forEach(x=>(x.genres||[]).forEach(n=>{(g[n]=g[n]||{n,all:[],sc:[]}).all.push(x);if(x.score)g[n].sc.push(x)}));
+  const gl=Object.values(g).sort((a,b)=>b.all.length-a.all.length||(avgOf(b.sc)||0)-(avgOf(a.sc)||0));
+  const minN=Math.max(2,Math.round(rated.length*0.04));
+  const bestG=[...gl].filter(x=>x.sc.length>=minN).sort((a,b)=>avgOf(b.sc)-avgOf(a.sc))[0];
+  const kinds=["anime","donghua","cartoon","aeni","other"].map(k=>({k,sc:rated.filter(x=>x.kind===k)})).filter(x=>x.sc.length);
+  const bestK=[...kinds].filter(x=>x.sc.length>=2).sort((a,b)=>avgOf(b.sc)-avgOf(a.sc))[0]||kinds[0];
+  const mv=done.filter(x=>x.type==="Movie"),sr=done.filter(x=>x.type!=="Movie");
+  const dec={};done.filter(x=>x.year).forEach(x=>{const d=Math.floor(x.year/10)*10;(dec[d]=dec[d]||{d,all:[],sc:[]}).all.push(x);if(x.score)dec[d].sc.push(x)});
+  const dl=Object.values(dec);
+  const topD=[...dl].sort((a,b)=>b.all.length-a.all.length)[0];
+  const bestD=[...dl].filter(x=>x.sc.length>=3).sort((a,b)=>avgOf(b.sc)-avgOf(a.sc))[0];
+  const tens=rated.filter(x=>Math.round(x.score)===10);
+  const mean=avgOf(rated);
+  const hi=rated.length?Math.round(rated.filter(x=>x.score>=8).length/rated.length*100):0;
+  const lo=rated.length?Math.round(rated.filter(x=>x.score<=6).length/rated.length*100):0;
+  const critic=mean==null?"—":mean>=8?"Generous":mean>=7?"Balanced":"Tough critic";
+  const changed=src.filter(x=>(x.scoreHistory||[]).length);
+  const up=changed.filter(x=>x.score>(x.scoreHistory.slice(-1)[0].score)).length;
+  const card=(k,v,s,hero)=>`<div class="tcard${hero?" hero":""}"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${s}</span></div>`;
+  const cards=[
+    gl[0]?card("Top genre",esc(gl[0].n),`${gl[0].all.length} of ${done.length} watched · avg ${f1(avgOf(gl[0].sc))}`,true):"",
+    bestG?card("Highest-rated genre",esc(bestG.n),`avg ${f1(avgOf(bestG.sc))} across ${bestG.sc.length} titles`):"",
+    bestK?card("You rate highest",esc(KIND_LABEL[bestK.k]),kinds.map(x=>`${KIND_LABEL[x.k].split(" ")[0]} ${f1(avgOf(x.sc))}`).join(" · ")):"",
+    card("Series vs movies",`${sr.length} / ${mv.length}`,`series avg ${f1(avgOf(sr.filter(x=>x.score)))} · movies avg ${f1(avgOf(mv.filter(x=>x.score)))}`),
+    topD?card("Favorite era",`${topD.d}s`,`${topD.all.length} titles${bestD&&bestD.d!==topD.d?` · best rated: ${bestD.d}s (${f1(avgOf(bestD.sc))})`:bestD?` · avg ${f1(avgOf(bestD.sc))}`:""}`):"",
+    card("Masterpieces",tens.length,tens.length?esc(tens.slice(0,3).map(x=>x.title).join(", "))+(tens.length>3?` +${tens.length-3} more`:""):"No 10s yet"),
+    card("Critic style",critic,`mean ${f1(mean)} · ${hi}% rated 8+ · ${lo}% 6 or below`),
+    changed.length?card("Changed your mind",changed.length,`${up} went up · ${changed.length-up} went down`):""
+  ].join("");
+  const top=gl.slice(0,8),maxC=Math.max(1,...top.map(x=>x.all.length));
+  el.innerHTML=`<div class="thead"><h2>Your taste</h2><button type="button" id="tasteTog" aria-expanded="${!hidden}">${hidden?"Show":"Hide"}</button></div>
+    ${hidden?"":`<div class="tcards">${cards}</div>
+    ${top.length?`<div class="gbars"><span class="k"><span>Genres you watch most</span><span>titles · avg</span></span>
+      ${top.map(x=>`<button type="button" class="grow" data-genre="${esc(x.n)}" aria-label="Show ${esc(x.n)} titles"><span class="gname">${esc(x.n)}</span><span class="gtrack"><b style="width:${x.all.length/maxC*100}%"></b></span><span class="gn">${x.all.length}</span><span class="ga">${f1(avgOf(x.sc))}</span></button>`).join("")}</div>`:""}`}`;
+  $("#tasteTog").onclick=()=>{lsSet("celarchive.tasteHidden",hidden?"0":"1");renderTaste()};
+}
+$("#taste").addEventListener("click",e=>{const b=e.target.closest("[data-genre]");if(!b||isExampleMode())return;state.genre=b.dataset.genre;state.status="all";render();$("#fgenre").scrollIntoView({behavior:"smooth",block:"start"})});
 function renderTabs(){
   const src=isExampleMode()?EXAMPLES:items();
   const review=src.filter(x=>x.needsReview).length;
@@ -453,7 +519,7 @@ function cardHTML(it){
 }
 function render(){
   if(!store.loaded){$("#grid").innerHTML="";$("#emptySlot").innerHTML=`<div class="loading">Opening your library…</div>`;return}
-  renderBand();renderTabs();renderSelects();
+  renderBand();renderTaste();renderTabs();renderSelects();
   const list=viewItems();
   $("#bannerSlot").innerHTML=isExampleMode()?`<div class="banner"><p><b>Your library is empty.</b> The three cards below are examples so you can see how entries look. Add a title, or paste your Google Doc list into Bulk import. Everything saves in this browser, so download a backup from More now and then.</p><button class="btn primary sm" id="bannerBulk">Bulk import</button></div>`:"";
   $("#grid").innerHTML=list.map(cardHTML).join("");
@@ -531,7 +597,7 @@ function openEdit(it){
         <div class="field c2"><label for="eKind">Kind</label><select id="eKind">${opt(KINDS,d.kind)}</select></div>
         <div class="field c2"><label for="eType">Format</label><select id="eType">${opt(TYPES,d.type)}</select></div>
         <div class="field c2"><label for="eYear">Release year</label><input type="number" id="eYear" min="1900" max="2100" inputmode="numeric" value="${esc(d.year||"")}"></div>
-        <div class="field c3"><label for="eStatus">Status</label><select id="eStatus">${opt(STATUSES,d.status)}</select></div>
+        <div class="field c3"><label for="eStatus" title="Unfinished: finished a season, then stopped. Dropped: stopped partway through a season.">Status</label><select id="eStatus">${opt(STATUSES,d.status)}</select></div>
         <div class="field c3"><label for="eWatched">Year you watched it</label><input type="number" id="eWatched" min="1950" max="2100" inputmode="numeric" value="${esc(d.watchedYear||"")}"></div>
       </div>
       <div class="field"><span class="lbl">Overall score${isNew?"":" (change it any time)"}</span>
@@ -641,6 +707,7 @@ function openEdit(it){
 
 /* ---------- bulk parser ---------- */
 const STATUS_WORDS=[
+  [/\b(unfinished|stopped\s*after|finished\s*(?:the\s*)?season)\b/i,"unfinished"],
   [/\b(plan(?:ned)?\s*to\s*watch|ptw|to[\s-]?watch|want\s*to\s*watch|watchlist|backlog|not\s*started)\b/i,"plan"],
   [/\b(on[\s-]?hold|paused|hiatus)\b/i,"on_hold"],
   [/\b(dropped|abandoned|quit|gave\s*up)\b/i,"dropped"],
@@ -785,7 +852,7 @@ function fromCSV(text){
     if(g(ix.status)){const s=statusOf(g(ix.status));if(s)rec.status=s;else rec.flags.push(`Unknown status “${g(ix.status)}”`)}
     g(ix.genres).split(/[,;/|]/).forEach(t=>{t=t.trim();if(!t)return;const gg=genreOf(t);(gg||[t]).forEach(x=>{if(!rec.genres.includes(x))rec.genres.push(x)})});
     if(g(ix.type))rec.type=typeOf(g(ix.type))||TYPES.find(t=>t.toLowerCase()===g(ix.type).toLowerCase())||undefined;
-    if(g(ix.kind))rec.kind=kindOf(g(ix.kind))||(/japan/i.test(g(ix.kind))?"anime":/china/i.test(g(ix.kind))?"donghua":/korea/i.test(g(ix.kind))?"aeni":/us|america|west/i.test(g(ix.kind))?"cartoon":undefined);
+    if(g(ix.kind))rec.kind=kindOf(g(ix.kind))||(/japan/i.test(g(ix.kind))?"anime":/china/i.test(g(ix.kind))?"donghua":/korea/i.test(g(ix.kind))?"aeni":/us|america|west/i.test(g(ix.kind))?"cartoon":/other|filipin/i.test(g(ix.kind))?"other":undefined);
     {const si=head.findIndex(h=>/^seasons?$/.test(h));if(si>=0&&toInt(r[si])!=null)rec.seasonCount=toInt(r[si])}
     if(toInt(g(ix.eps))!=null)rec.epTotal=toInt(g(ix.eps));
     if(g(ix.prog)){const e=g(ix.prog).match(/(\d+)(?:\s*\/\s*(\d+))?/);if(e){rec.epWatched=+e[1];if(e[2])rec.epTotal=+e[2]}}
@@ -925,7 +992,7 @@ async function runImport(){
     const flags=rowFlags(r).filter(f=>!/^Already in your library/.test(f));
     return {id:newId()+k.toString(36),title:r.title.trim(),altTitle:r.altTitle||null,kind:r.kind||null,type:r.type||null,year:r.year||null,status:r.status,
       score:r.score||null,scoreDate:r.score?now:null,scoreHistory:[],genres:r.genres||[],watchedYear:r.watchedYear||null,notes:r.notes||null,
-      seasons:r.type==="Movie"?[]:Array.from({length:Math.max(1,r.seasonCount||1)},(_,j)=>({n:j+1,watched:r.status==="completed"})),
+      seasons:r.type==="Movie"?[]:Array.from({length:Math.max(1,r.seasonCount||1)},(_,j)=>({n:j+1,watched:r.status==="completed"||(r.status==="unfinished"&&j===0)})),
       favorite:false,rewatches:null,startDate:null,finishDate:null,needsReview:flags.length>0,flags,rawLine:r.rawLine||null,
       createdAt:now,updatedAt:now-k,source:"bulk"}});
   const go=$("#bGo");go.disabled=true;$("#bBack").disabled=true;
@@ -988,14 +1055,14 @@ function openDeleteAll(){
 /* XLSX-BUILDER-START */
 function buildWorkbook(ExcelJS,list,opts){
   opts=opts||{};
-  const STL={watching:"Watching",completed:"Completed",on_hold:"On hold",dropped:"Dropped",plan:"Plan to watch"};
-  const STC={watching:["FF23805A","FFE3F2EA"],completed:["FF2C5FB3","FFE2EAF8"],on_hold:["FF9A6C0C","FFF8EED6"],dropped:["FFA83246","FFF6E0E4"],plan:["FF5F6371","FFECEDF0"]};
+  const STL={watching:"Watching",completed:"Completed",unfinished:"Unfinished",on_hold:"On hold",dropped:"Dropped",plan:"Plan to watch"};
+  const STC={watching:["FF23805A","FFE3F2EA"],completed:["FF2C5FB3","FFE2EAF8"],unfinished:["FF7A4FB5","FFEFE7F9"],on_hold:["FF9A6C0C","FFF8EED6"],dropped:["FFA83246","FFF6E0E4"],plan:["FF5F6371","FFECEDF0"]};
   const KL={anime:"Anime",donghua:"Donghua",cartoon:"Cartoon",aeni:"Aeni (Korean)",other:"Other"};
   const SL={10:"Masterpiece",9:"Great",8:"Very good",7:"Good",6:"Fine",5:"Average",4:"Bad",3:"Very bad",2:"Horrible",1:"Appalling"};
   const SCOREFILL={10:"FF1E7A4F",9:"FF2E8B57",8:"FF5BA85B",7:"FF94BF4E",6:"FFC9C443",5:"FFE0B040",4:"FFE08A3C",3:"FFD9663A",2:"FFC94A3A",1:"FFA8323A"};
   const INK="FF171A28",ACC="FFD3305A",PAPER="FFFAFBF6",ZEBRA="FFF1F3EC",LINE="FFD5D9CF",MUTED="FF5B6070";
   const FONT="Arial";
-  const order={watching:0,completed:1,on_hold:2,dropped:3,plan:4};
+  const order={watching:0,completed:1,unfinished:2,on_hold:3,dropped:4,plan:5};
   const rows=[...list].sort((a,b)=>(order[a.status]??9)-(order[b.status]??9)||(b.score||0)-(a.score||0)||String(a.title).localeCompare(String(b.title)));
   const scored=list.filter(x=>x.score);
   const mean=scored.length?scored.reduce((s,x)=>s+x.score,0)/scored.length:null;
