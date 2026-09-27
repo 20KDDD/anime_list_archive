@@ -1,0 +1,1167 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<title>Cel Archive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=IBM+Plex+Mono:wght@400;500&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#EDEFE8; --surface:#FAFBF6; --surface-2:#E3E6DD; --ink:#171A28; --muted:#5B6070; --line:#CFD3C8;
+  --accent:#D3305A; --accent-ink:#FFFFFF; --accent-soft:#F7D9E1;
+  --st-watching:#23805A; --st-completed:#2C5FB3; --st-on_hold:#B07D12; --st-dropped:#A83246; --st-plan:#6A6E7C;
+  --shadow:0 1px 0 rgba(23,26,40,.06),0 6px 18px -10px rgba(23,26,40,.25);
+  --display:"Dela Gothic One","Arial Black",Impact,sans-serif;
+  --body:"Zen Kaku Gothic New",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --bg:#11131B; --surface:#1A1D28; --surface-2:#232736; --ink:#ECEEF4; --muted:#9BA1B4; --line:#2E3345;
+  --accent:#FF5C82; --accent-ink:#1A0B10; --accent-soft:#3A1B26;
+  --st-watching:#4CC38E; --st-completed:#6F9BF0; --st-on_hold:#E0AE45; --st-dropped:#F07086; --st-plan:#A0A5B5;
+  --shadow:0 1px 0 rgba(0,0,0,.3),0 8px 22px -12px rgba(0,0,0,.7);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#11131B; --surface:#1A1D28; --surface-2:#232736; --ink:#ECEEF4; --muted:#9BA1B4; --line:#2E3345;
+  --accent:#FF5C82; --accent-ink:#1A0B10; --accent-soft:#3A1B26;
+  --st-watching:#4CC38E; --st-completed:#6F9BF0; --st-on_hold:#E0AE45; --st-dropped:#F07086; --st-plan:#A0A5B5;
+  --shadow:0 1px 0 rgba(0,0,0,.3),0 8px 22px -12px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;padding-inline:16px;padding-block:0 64px}
+.wrap{max-width:1180px;margin:0 auto}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3{text-wrap:balance;margin:0}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* header */
+header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;padding-block:22px 14px}
+.brand{display:flex;align-items:baseline;gap:10px;margin-right:auto}
+.brand h1{font-family:var(--display);font-weight:400;font-size:clamp(26px,5vw,36px);letter-spacing:.01em;line-height:1}
+.brand .perf{display:inline-flex;gap:3px;transform:translateY(-4px)}
+.brand .perf i{width:7px;height:10px;border-radius:2px;background:var(--accent)}
+.brand .perf i:nth-child(2){opacity:.6}.brand .perf i:nth-child(3){opacity:.3}
+.sync{font-family:var(--mono);font-size:11.5px;color:var(--muted);letter-spacing:.02em;display:flex;align-items:center;gap:6px}
+.sync::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.sync.ok::before{background:var(--st-watching)}
+.sync.local::before{background:var(--st-on_hold)}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 14px;font-weight:500;font-size:14px}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+.btn.primary:hover{filter:brightness(1.05)}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--st-dropped);border-color:color-mix(in srgb,var(--st-dropped) 45%,var(--line))}
+.btn.danger.armed{background:var(--st-dropped);color:#fff;border-color:var(--st-dropped)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.sm{padding:5px 10px;font-size:13px;border-radius:8px}
+
+/* stats band */
+.band{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) minmax(0,1.6fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:18px}
+.stat{background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.stat .k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.stat .v{font-family:var(--display);font-size:28px;line-height:1.15;font-variant-numeric:tabular-nums}
+.stat .s{font-size:12px;color:var(--muted)}
+.hist{background:var(--surface);padding:12px 16px 10px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.hist .bars{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;align-items:end;height:74px}
+.hist .bar{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;gap:2px}
+.hist .bar span{font-family:var(--mono);font-size:10px;color:var(--muted);line-height:1}
+.hist .bar b{display:block;width:100%;border-radius:3px 3px 1px 1px;background:var(--accent);min-height:2px;opacity:.85}
+.hist .bar b.zero{background:var(--line);opacity:1}
+.hist .axis{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;font-family:var(--mono);font-size:10.5px;color:var(--muted);text-align:center;border-top:1px solid var(--line);padding-top:3px}
+@media (max-width:860px){.band{grid-template-columns:repeat(2,minmax(0,1fr))}.hist{grid-column:1/-1}}
+
+/* toolbar */
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;scrollbar-width:none}
+.tab{flex:0 0 auto;border:1px solid var(--line);background:transparent;border-radius:999px;padding:6px 12px;font-size:13.5px;font-weight:500;display:inline-flex;gap:7px;align-items:center;color:var(--muted)}
+.tab .n{font-family:var(--mono);font-size:11.5px}
+.tab .dot{width:8px;height:8px;border-radius:50%}
+.tab[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tab.review{border-style:dashed}
+.filters{display:grid;grid-template-columns:minmax(0,2fr) repeat(3,minmax(0,1fr));gap:8px;margin-bottom:16px}
+@media (max-width:700px){.filters{grid-template-columns:1fr 1fr}.filters .search{grid-column:1/-1}}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field>label,.lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+input[type=text],input[type=number],input[type=search],input[type=date],select,textarea{width:100%;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:14px}
+textarea{resize:vertical}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
+
+/* grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+.card{position:relative;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 14px 12px 20px;display:flex;flex-direction:column;gap:8px;box-shadow:var(--shadow);overflow:hidden;min-width:0}
+.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--st,var(--line))}
+.card:hover{border-color:var(--muted)}
+.card .meta{font-family:var(--mono);font-size:11.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 8px}
+.card .row1{display:flex;gap:10px;align-items:flex-start}
+.card .ttl{flex:1;min-width:0}
+.card h3{font-size:16.5px;font-weight:700;line-height:1.3;overflow-wrap:anywhere}
+.card .alt{font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.score{flex:0 0 auto;text-align:center;min-width:48px}
+.score .num{font-family:var(--display);font-size:26px;line-height:1}
+.score .lab{font-size:10px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.score.none .num{color:var(--line)}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{font-size:11.5px;padding:2px 8px;border-radius:999px;background:var(--surface-2);color:var(--ink)}
+.flag{font-size:11.5px;padding:2px 8px;border-radius:999px;border:1px dashed var(--st-on_hold);color:var(--st-on_hold)}
+.foot{display:flex;align-items:center;gap:10px;margin-top:auto;padding-top:4px}
+.pill{font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;color:var(--st);background:color-mix(in srgb,var(--st) 14%,transparent);white-space:nowrap}
+.prog{flex:1;display:flex;align-items:center;gap:8px;min-width:0}
+.prog .track{flex:1;height:5px;border-radius:3px;background:var(--surface-2);overflow:hidden}
+.prog .track b{display:block;height:100%;background:var(--st)}
+.prog .t{font-family:var(--mono);font-size:11.5px;color:var(--muted);white-space:nowrap}
+.plus{border:1px solid var(--line);background:var(--surface);border-radius:8px;font-family:var(--mono);font-size:12px;padding:2px 8px}
+.fav{color:var(--accent);font-size:15px;line-height:1}
+.example-tag{position:absolute;top:10px;right:10px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:var(--accent-soft);color:var(--accent);padding:2px 6px;border-radius:4px}
+.card.example{opacity:.8;border-style:dashed}
+.banner{border:1px dashed var(--accent);background:var(--accent-soft);border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.banner p{margin:0;max-width:70ch}
+.empty{padding:40px 16px;text-align:center;color:var(--muted)}
+.loading{padding:60px 16px;text-align:center;color:var(--muted);font-family:var(--mono);font-size:13px}
+
+/* sheets */
+.scrim{position:fixed;inset:0;background:rgba(10,12,20,.5);z-index:50;display:flex;justify-content:center;align-items:flex-start;overflow-y:auto;padding:max(16px,env(safe-area-inset-top,0px)) 12px max(16px,env(safe-area-inset-bottom,0px))}
+.sheet{background:var(--bg);border:1px solid var(--line);border-radius:16px;width:100%;max-width:720px;margin-block:auto;box-shadow:0 20px 60px -20px rgba(0,0,0,.5);display:flex;flex-direction:column}
+.sheet.wide{max-width:1000px}
+.sheet header{display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--line)}
+.sheet header h2{font-family:var(--display);font-weight:400;font-size:20px;margin-right:auto}
+.sheet .body{padding:16px 18px;display:flex;flex-direction:column;gap:14px}
+.sheet .foot-bar{display:flex;flex-wrap:wrap;gap:8px;padding:14px 18px;border-top:1px solid var(--line);align-items:center}
+.sheet .foot-bar .sp{margin-right:auto}
+.x{border:none;background:transparent;font-size:22px;line-height:1;color:var(--muted);padding:4px 8px}
+.form-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
+.c6{grid-column:span 6}.c3{grid-column:span 3}.c2{grid-column:span 2}
+@media (max-width:560px){.c3,.c2{grid-column:span 3}}
+.gpick{display:flex;flex-wrap:wrap;gap:6px}
+.gpick button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 10px;font-size:12.5px}
+.gpick button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.scorepick{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
+.scorepick button{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 0;font-family:var(--mono);font-weight:500}
+.scorepick button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.scorehint{font-size:12.5px;color:var(--muted);min-height:1.2em}
+.check{display:inline-flex;align-items:center;gap:8px;font-size:14px}
+.check input{width:18px;height:18px;accent-color:var(--accent)}
+.flagbox{border:1px dashed var(--st-on_hold);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.flagbox ul{margin:0;padding-left:18px;font-size:13.5px}
+.help{font-size:13px;color:var(--muted);margin:0;max-width:75ch}
+.help code,.raw{font-family:var(--mono);font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4px}
+
+/* import rows */
+.irows{display:flex;flex-direction:column;gap:8px}
+.irow{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;grid-template-columns:auto minmax(0,3fr) repeat(6,minmax(0,1fr));gap:8px;align-items:end}
+.irow.off{opacity:.45}
+.irow.flagged{border-color:color-mix(in srgb,var(--st-on_hold) 60%,var(--line))}
+.irow .inc{align-self:center}
+.irow .field>label{font-size:10px}
+.irow input,.irow select{padding:6px 8px;font-size:13.5px}
+.irow .under{grid-column:2/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px;color:var(--muted)}
+.irow .genres{grid-column:2/-1}
+@media (max-width:760px){.irow{grid-template-columns:auto repeat(2,minmax(0,1fr))}.irow .tt{grid-column:2/-1}.irow .under,.irow .genres{grid-column:1/-1}}
+.isum{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;font-size:13.5px}
+.isum b{font-family:var(--mono)}
+.progressline{height:4px;border-radius:2px;background:var(--surface-2);overflow:hidden}
+.progressline b{display:block;height:100%;background:var(--accent);width:0;transition:width .2s}
+
+.was{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:2px}
+.seasons{display:flex;flex-wrap:wrap;gap:4px}
+.seasons span{font-family:var(--mono);font-size:11px;border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--muted);display:inline-flex;gap:5px}
+.seasons span b{color:var(--ink);font-weight:500}
+.seasons span.up b{color:var(--st-watching)}.seasons span.down b{color:var(--st-dropped)}
+.past{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}
+.past ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.past li{font-size:13.5px;display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:baseline}
+.past li .sc{font-family:var(--display);font-size:18px;grid-row:span 2}
+.past li .when{font-size:12px;color:var(--muted)}
+.past li .q{grid-column:2;font-size:13px;color:var(--ink)}
+.past li.now .sc{color:var(--accent)}
+.shead{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.shead .lbl{margin-right:auto}
+.shead input{width:72px}
+.slist{display:flex;flex-direction:column;gap:6px}
+.srow{display:grid;grid-template-columns:80px auto 170px minmax(0,1fr);gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.srow .sn{font-weight:700;font-size:13.5px}
+.srow select,.srow input[type=text]{padding:6px 8px;font-size:13.5px}
+.srow.new{border-color:var(--accent)}
+@media (max-width:520px){.srow{grid-template-columns:auto auto 1fr}.srow input[type=text]{grid-column:1/-1}}
+.shint{font-size:13px;color:var(--accent);min-height:0}
+details.opt summary{cursor:pointer;font-size:13px;color:var(--muted);font-weight:500}
+details.opt[open] summary{margin-bottom:10px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:80;max-width:calc(100% - 32px);box-shadow:var(--shadow)}
+.menu{position:relative}
+.menu .pop{position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px;display:flex;flex-direction:column;min-width:220px;z-index:30}
+.menu .pop button{border:none;background:transparent;text-align:left;padding:9px 10px;border-radius:8px;font-size:14px}
+.menu .pop button:hover{background:var(--surface-2)}
+.menu .pop hr{border:none;border-top:1px solid var(--line);margin:4px 0}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+</head><body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <span class="perf" aria-hidden="true"><i></i><i></i><i></i></span>
+      <h1>Cel Archive</h1>
+    </div>
+    <span class="sync" id="sync">Connecting…</span>
+    <div class="actions">
+      <button class="btn primary" id="btnAdd">+ Add title</button>
+      <button class="btn" id="btnBulk">Bulk import</button>
+      <button class="btn" id="btnXlsx">Share as Excel</button>
+      <div class="menu">
+        <button class="btn ghost" id="btnMenu" aria-haspopup="true" aria-expanded="false">More ▾</button>
+        <div class="pop" id="menuPop" hidden>
+          <button id="mExportJson">Download backup (.json)</button>
+          <button id="mExportCsv">Download spreadsheet (.csv)</button>
+          <button id="mImportJson">Restore from backup…</button>
+          <hr>
+          <button id="mDeleteAll" style="color:var(--st-dropped)">Delete entire library…</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="band" id="band" aria-label="Library summary"></section>
+
+  <div class="tabs" id="tabs" role="toolbar" aria-label="Filter by status"></div>
+  <div class="filters">
+    <div class="field search"><label for="fq">Search</label><input type="search" id="fq" placeholder="Title, notes, genre…"></div>
+    <div class="field"><label for="fkind">Kind</label><select id="fkind"></select></div>
+    <div class="field"><label for="fgenre">Genre</label><select id="fgenre"></select></div>
+    <div class="field"><label for="fsort">Sort</label><select id="fsort">
+      <option value="updated">Recently updated</option>
+      <option value="title">Title A–Z</option>
+      <option value="score">Score, high to low</option>
+      <option value="year_desc">Release year, newest</option>
+      <option value="year_asc">Release year, oldest</option>
+      <option value="watched">Year watched, newest</option>
+    </select></div>
+  </div>
+
+  <div id="bannerSlot"></div>
+  <div id="grid" class="grid"></div>
+  <div id="emptySlot"></div>
+</div>
+
+<div id="sheetSlot"></div>
+<input type="file" id="fileText" accept=".txt,.csv,.tsv,.md,text/plain,text/csv" hidden>
+<input type="file" id="fileJson" accept=".json,application/json" hidden>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- vocabulary ---------- */
+const STATUSES=[
+  {k:"watching",label:"Watching"},
+  {k:"completed",label:"Completed"},
+  {k:"on_hold",label:"On hold"},
+  {k:"dropped",label:"Dropped"},
+  {k:"plan",label:"Plan to watch"}];
+const ST_LABEL=Object.fromEntries(STATUSES.map(s=>[s.k,s.label]));
+const KINDS=[
+  {k:"anime",label:"Anime"},
+  {k:"donghua",label:"Donghua (dongman)"},
+  {k:"cartoon",label:"Cartoon"},
+  {k:"aeni",label:"Aeni (Korean)"},
+  {k:"other",label:"Other animation"}];
+const KIND_LABEL=Object.fromEntries(KINDS.map(s=>[s.k,s.label]));
+const TYPES=["TV","Movie","OVA","ONA","Special","Short","Web series"];
+const GENRES=["Action","Adventure","Comedy","Drama","Fantasy","Romance","Sci-Fi","Slice of Life","Mystery","Horror","Thriller","Psychological","Supernatural","Sports","Mecha","Music","Isekai","Historical","Martial Arts","Cultivation","Wuxia","Xianxia","Military","School","Shounen","Seinen","Shoujo","Josei","Kids","Family","Parody","Space","Detective","Vampire"];
+const GENRE_ALIAS={"sci fi":"Sci-Fi","scifi":"Sci-Fi","sci-fi":"Sci-Fi","science fiction":"Sci-Fi","sol":"Slice of Life","slice-of-life":"Slice of Life","slice of life":"Slice of Life","romcom":["Romance","Comedy"],"rom com":["Romance","Comedy"],"rom-com":["Romance","Comedy"],"shonen":"Shounen","shounen":"Shounen","shojo":"Shoujo","shoujo":"Shoujo","psych":"Psychological","sport":"Sports","martial art":"Martial Arts","martial arts":"Martial Arts","xianxia":"Xianxia","cultivation":"Cultivation","romantic":"Romance","funny":"Comedy","scary":"Horror","mech":"Mecha","robots":"Mecha","magic":"Fantasy","superpower":"Supernatural","super power":"Supernatural"};
+GENRES.forEach(g=>{GENRE_ALIAS[g.toLowerCase()]=g});
+const SCORE_LABEL={10:"Masterpiece",9:"Great",8:"Very good",7:"Good",6:"Fine",5:"Average",4:"Bad",3:"Very bad",2:"Horrible",1:"Appalling"};
+
+const EXAMPLES=[
+  {id:"ex1",title:"Attack on Titan",kind:"anime",type:"TV",year:2013,status:"completed",score:9,genres:["Action","Drama"],seasons:[{n:1,watched:true},{n:2,watched:true,effect:-1,note:"Dragged a bit"},{n:3,watched:true,effect:1},{n:4,watched:true,effect:1}],scoreHistory:[{score:8,date:1614600000000,note:"Great but slow start"}],scoreReason:"The final season changed everything",watchedYear:2023,favorite:true,updatedAt:3},
+  {id:"ex2",title:"Mo Dao Zu Shi",altTitle:"The Founder of Diabolism",kind:"donghua",type:"ONA",year:2018,status:"watching",score:9,genres:["Fantasy","Xianxia"],seasons:[{n:1,watched:true},{n:2,watched:true,effect:1},{n:3,watched:false}],updatedAt:2},
+  {id:"ex3",title:"Avatar: The Last Airbender",kind:"cartoon",type:"TV",year:2005,status:"completed",score:10,genres:["Adventure","Fantasy","Martial Arts"],seasons:[{n:1,watched:true},{n:2,watched:true},{n:3,watched:true}],watchedYear:2012,updatedAt:1}];
+
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const norm=t=>String(t||"").toLowerCase().normalize("NFKD").replace(/[^\p{L}\p{N}]+/gu,"");
+const newId=()=>"t"+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const isMovie=it=>!!it&&it.type==="Movie";
+function seasonsOf(it){return it&&Array.isArray(it.seasons)?it.seasons:[]}
+function fmtDate(t){if(!t)return "";try{return new Date(t).toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"})}catch(e){return ""}}
+const toInt=v=>{const n=parseInt(v,10);return Number.isFinite(n)?n:null};
+let toastTimer;
+function toast(msg){const t=$("#toast");t.textContent=msg;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.hidden=true,3200)}
+function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+
+/* ---------- storage ---------- */
+const LS_KEY="celarchive.items.v1";
+const store={
+  mode:"loading",col:null,items:new Map(),listeners:[],
+  async init(){
+    let db=null;
+    try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+    if(db){
+      this.mode="cloud";this.col=db.collection("titles");
+      this.col.onSnapshot(snap=>{
+        const m=new Map();snap.docs.forEach(d=>{const v=d.data();if(v)m.set(d.id,{...v,id:d.id})});
+        this.items=m;this.emit();
+      },err=>{
+        toast("Lost connection to your saved library. Reload the page to reconnect.");
+        setSync("local","Connection lost");
+      });
+    }else{
+      this.mode="local";
+      try{const raw=lsGet(LS_KEY);const arr=raw?JSON.parse(raw):[];arr.forEach(x=>this.items.set(x.id,x))}catch(e){}
+      this.emit();
+    }
+  },
+  persistLocal(){lsSet(LS_KEY,JSON.stringify([...this.items.values()]))},
+  async put(item){
+    const clean=JSON.parse(JSON.stringify(item));
+    if(this.mode==="cloud"){await this.col.doc(item.id).set(clean)}
+    else{this.items.set(item.id,clean);this.persistLocal();this.emit()}
+  },
+  async remove(id){
+    if(this.mode==="cloud"){await this.col.doc(id).delete()}
+    else{this.items.delete(id);this.persistLocal();this.emit()}
+  },
+  onChange(fn){this.listeners.push(fn)},
+  emit(){this.loaded=true;this.listeners.forEach(f=>f())}
+};
+async function withRetry(fn){
+  for(let a=0;;a++){
+    try{return await fn()}catch(e){
+      const c=e&&e.code;
+      if((c==="resource_exhausted"||c==="unavailable")&&a<6){await sleep(500*2**a+Math.random()*400);continue}
+      throw e;
+    }
+  }
+}
+async function writeMany(list,onProgress,conc){
+  let i=0,done=0,failed=[];
+  const worker=async()=>{while(i<list.length){const it=list[i++];try{await withRetry(()=>store.put(it))}catch(e){failed.push({it,e})}onProgress&&onProgress(++done,list.length)}};
+  await Promise.all(Array.from({length:Math.min(conc||4,list.length||1)},worker));
+  return failed;
+}
+function errMsg(e){
+  const c=e&&e.code;
+  if(c==="quota_exceeded")return "Your library is full (5,000 titles). Delete some entries to add more.";
+  if(c==="invalid_argument")return "This view can’t save changes. Open the page signed in as its owner.";
+  return "Couldn’t save that change. Check your connection and try again.";
+}
+function setSync(cls,txt){const s=$("#sync");s.className="sync "+cls;s.textContent=txt}
+
+/* ---------- state + filters ---------- */
+const state={status:"all",q:"",kind:"",genre:"",sort:lsGet("celarchive.sort")||"updated"};
+$("#fsort").value=state.sort;
+
+function items(){return [...store.items.values()]}
+function isExampleMode(){return store.loaded&&store.items.size===0}
+function viewItems(){
+  let list=isExampleMode()?EXAMPLES.map(x=>({...x,_example:true})):items();
+  const q=state.q.trim().toLowerCase();
+  list=list.filter(it=>{
+    if(state.status==="review"){if(!it.needsReview)return false}
+    else if(state.status!=="all"&&it.status!==state.status)return false;
+    if(state.kind&&it.kind!==state.kind)return false;
+    if(state.genre&&!(it.genres||[]).includes(state.genre))return false;
+    if(q){const hay=[it.title,it.altTitle,it.notes,(it.genres||[]).join(" "),it.year,KIND_LABEL[it.kind]].join(" ").toLowerCase();if(!hay.includes(q))return false}
+    return true;
+  });
+  const by={
+    updated:(a,b)=>(b.updatedAt||0)-(a.updatedAt||0),
+    title:(a,b)=>String(a.title).localeCompare(String(b.title),undefined,{sensitivity:"base"}),
+    score:(a,b)=>(b.score||0)-(a.score||0)||String(a.title).localeCompare(b.title),
+    year_desc:(a,b)=>(b.year||0)-(a.year||0),
+    year_asc:(a,b)=>(a.year||9999)-(b.year||9999),
+    watched:(a,b)=>(b.watchedYear||0)-(a.watchedYear||0)||(b.updatedAt||0)-(a.updatedAt||0)};
+  return list.sort(by[state.sort]||by.updated);
+}
+
+/* ---------- render ---------- */
+function renderBand(){
+  const src=isExampleMode()?EXAMPLES:items();
+  const done=src.filter(x=>x.status==="completed");
+  const cnt=k=>done.filter(x=>x.kind===k).length;
+  const prog=k=>src.filter(x=>x.status==="watching"&&(!k||x.kind===k)).length;
+  const other=done.filter(x=>!["anime","donghua","cartoon"].includes(x.kind)).length;
+  const scored=src.filter(x=>x.score);
+  const mean=scored.length?(scored.reduce((a,b)=>a+b.score,0)/scored.length):null;
+  const seasonsW=src.reduce((a,b)=>a+seasonsOf(b).filter(s=>s.watched).length,0);
+  const counts=Array.from({length:10},(_,i)=>scored.filter(x=>Math.round(x.score)===i+1).length);
+  const max=Math.max(1,...counts);
+  const tile=(k,v,sub)=>`<div class="stat"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${sub}</span></div>`;
+  $("#band").innerHTML=
+    tile("Watched · all",done.length,`${prog()} in progress · ${seasonsW} season${seasonsW===1?"":"s"}`)+
+    tile("Anime",cnt("anime"),`${prog("anime")} in progress`)+
+    tile("Donghua",cnt("donghua"),`${prog("donghua")} in progress`)+
+    tile("Cartoons",cnt("cartoon"),other?`+${other} other animation`:`${prog("cartoon")} in progress`)+
+    `<div class="hist" aria-label="Score distribution">
+      <span class="k lbl" style="display:flex;justify-content:space-between;gap:8px"><span>Score distribution</span><span>${mean?"mean "+mean.toFixed(2):""}</span></span>
+      <div class="bars">${counts.map(c=>`<div class="bar" title="${c} title(s)"><span>${c||""}</span><b class="${c?"":"zero"}" style="height:${c?Math.max(4,c/max*58):2}px"></b></div>`).join("")}</div>
+      <div class="axis">${counts.map((_,i)=>`<span>${i+1}</span>`).join("")}</div>
+    </div>`;
+}
+function renderTabs(){
+  const src=isExampleMode()?EXAMPLES:items();
+  const review=src.filter(x=>x.needsReview).length;
+  const tabs=[{k:"all",label:"All",n:src.length},...STATUSES.map(s=>({k:s.k,label:s.label,n:src.filter(x=>x.status===s.k).length,dot:true}))];
+  if(review)tabs.push({k:"review",label:"Needs review",n:review,review:true});
+  if(state.status==="review"&&!review)state.status="all";
+  $("#tabs").innerHTML=tabs.map(t=>`<button class="tab${t.review?" review":""}" data-st="${t.k}" aria-pressed="${state.status===t.k}">${t.dot?`<span class="dot" style="background:var(--st-${t.k})"></span>`:""}${esc(t.label)} <span class="n">${t.n}</span></button>`).join("");
+}
+function renderSelects(){
+  const src=items();
+  const k=$("#fkind"),g=$("#fgenre");
+  k.innerHTML=`<option value="">All kinds</option>`+KINDS.map(x=>`<option value="${x.k}">${x.label}</option>`).join("");
+  k.value=state.kind;
+  const used=new Set();src.forEach(x=>(x.genres||[]).forEach(z=>used.add(z)));
+  const list=[...new Set([...GENRES.filter(x=>used.has(x)),...[...used].sort()])];
+  g.innerHTML=`<option value="">All genres</option>`+(list.length?list:GENRES).map(x=>`<option>${esc(x)}</option>`).join("");
+  g.value=state.genre;
+}
+function cardHTML(it){
+  const st=it.status||"plan";
+  const ss=seasonsOf(it),sw=ss.filter(s=>s.watched).length;
+  const pct=st==="completed"?100:(ss.length?sw/ss.length*100:0);
+  const meta=[KIND_LABEL[it.kind],it.type,it.year].filter(Boolean).map(esc).join(" · ");
+  const prev=(it.scoreHistory||[]).slice(-1)[0];
+  const sTxt=isMovie(it)?"Film":(ss.length?(st==="completed"?`${ss.length} season${ss.length>1?"s":""}`:`${sw} of ${ss.length} seasons`):"");
+  const fx=e=>e>0?`+${e}`:e<0?`−${-e}`:"±0";
+  const chips=!isMovie(it)&&ss.some(s=>s.effect!=null)?`<div class="seasons">${ss.filter(s=>s.effect!=null).map(s=>`<span class="${s.effect>0?"up":s.effect<0?"down":""}">S${s.n}<b>${fx(s.effect)}</b></span>`).join("")}</div>`:"";
+  return `<article class="card${it._example?" example":""}" style="--st:var(--st-${st})" data-id="${esc(it.id)}" tabindex="0" role="button" aria-label="${esc(it.title)}, open details">
+    ${it._example?`<span class="example-tag">Example</span>`:""}
+    <div class="row1">
+      <div class="ttl">
+        <div class="meta">${meta||"&nbsp;"}${it.watchedYear?`<span>· watched ${esc(it.watchedYear)}</span>`:""}</div>
+        <h3>${it.favorite?`<span class="fav" title="Favorite">♥</span> `:""}${esc(it.title)}</h3>
+        ${it.altTitle?`<div class="alt">${esc(it.altTitle)}</div>`:""}
+      </div>
+      <div class="score${it.score?"":" none"}" style="${it._example?"margin-top:14px":""}"><div class="num">${it.score||"–"}</div><div class="lab">${it.score?SCORE_LABEL[Math.round(it.score)]:"unscored"}</div>${prev&&prev.score!==it.score?`<div class="was">was ${prev.score}</div>`:""}</div>
+    </div>
+    ${(it.genres||[]).length?`<div class="chips">${it.genres.map(g=>`<span class="chip">${esc(g)}</span>`).join("")}</div>`:""}
+    ${chips}
+    ${it.needsReview?`<div class="chips"><span class="flag">Needs review</span></div>`:""}
+    <div class="foot">
+      <span class="pill">${esc(ST_LABEL[st])}</span>
+      <div class="prog"><div class="track"><b style="width:${pct}%"></b></div><span class="t">${esc(sTxt)}</span></div>
+      ${st==="watching"&&!it._example?`<button class="plus" data-done="${esc(it.id)}" aria-label="Mark ${esc(it.title)} as finished">Finished ✓</button>`:""}
+    </div>
+  </article>`;
+}
+function render(){
+  if(!store.loaded){$("#grid").innerHTML="";$("#emptySlot").innerHTML=`<div class="loading">Opening your library…</div>`;return}
+  renderBand();renderTabs();renderSelects();
+  const list=viewItems();
+  $("#bannerSlot").innerHTML=isExampleMode()?`<div class="banner"><p><b>Your library is empty.</b> The three cards below are examples so you can see how entries look. Add a title, or paste your Google Doc list into Bulk import. Everything saves in this browser, so download a backup from More now and then.</p><button class="btn primary sm" id="bannerBulk">Bulk import</button></div>`:"";
+  $("#grid").innerHTML=list.map(cardHTML).join("");
+  $("#emptySlot").innerHTML=list.length?"":`<div class="empty">Nothing matches these filters.</div>`;
+  const bb=$("#bannerBulk");if(bb)bb.onclick=openBulk;
+}
+
+/* ---------- events: library ---------- */
+$("#tabs").addEventListener("click",e=>{const b=e.target.closest("[data-st]");if(!b)return;state.status=b.dataset.st;render()});
+let qTimer;$("#fq").addEventListener("input",e=>{clearTimeout(qTimer);qTimer=setTimeout(()=>{state.q=e.target.value;render()},120)});
+$("#fkind").addEventListener("change",e=>{state.kind=e.target.value;render()});
+$("#fgenre").addEventListener("change",e=>{state.genre=e.target.value;render()});
+$("#fsort").addEventListener("change",e=>{state.sort=e.target.value;lsSet("celarchive.sort",state.sort);render()});
+$("#grid").addEventListener("click",async e=>{
+  const p=e.target.closest("[data-done]");
+  if(p){e.stopPropagation();const it=store.items.get(p.dataset.done);if(!it)return;
+    const up={...it,status:"completed",seasons:seasonsOf(it).map(s=>({...s,watched:true})),updatedAt:Date.now()};
+    if(!up.watchedYear)up.watchedYear=new Date().getFullYear();
+    try{await store.put(up);toast(it.score?`${it.title} marked completed`:`${it.title} completed. Tap it to give it a score.`)}catch(err){toast(errMsg(err))}
+    return}
+  const c=e.target.closest(".card");if(!c)return;
+  if(c.classList.contains("example")){toast("That’s an example card. Add your own title to get started.");return}
+  openEdit(store.items.get(c.dataset.id));
+});
+$("#grid").addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.classList.contains("card")){e.preventDefault();e.target.click()}});
+$("#btnAdd").onclick=()=>openEdit(null);
+$("#btnBulk").onclick=openBulk;
+$("#btnXlsx").onclick=openShare;
+const menuBtn=$("#btnMenu"),menuPop=$("#menuPop");
+menuBtn.onclick=e=>{e.stopPropagation();menuPop.hidden=!menuPop.hidden;menuBtn.setAttribute("aria-expanded",String(!menuPop.hidden))};
+document.addEventListener("click",e=>{if(!menuPop.hidden&&!e.target.closest(".menu")){menuPop.hidden=true;menuBtn.setAttribute("aria-expanded","false")}});
+$("#mExportJson").onclick=()=>{menuPop.hidden=true;exportFile("json")};
+$("#mExportCsv").onclick=()=>{menuPop.hidden=true;exportFile("csv")};
+$("#mImportJson").onclick=()=>{menuPop.hidden=true;$("#fileJson").click()};
+$("#mDeleteAll").onclick=()=>{menuPop.hidden=true;openDeleteAll()};
+
+/* ---------- sheets ---------- */
+function openSheet(html,wide){
+  const slot=$("#sheetSlot");
+  slot.innerHTML=`<div class="scrim" id="scrim"><div class="sheet${wide?" wide":""}" role="dialog" aria-modal="true">${html}</div></div>`;
+  const scrim=$("#scrim");
+  scrim.addEventListener("mousedown",e=>{if(e.target===scrim)closeSheet()});
+  slot.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeSheet);
+  document.body.style.overflow="hidden";
+  setTimeout(()=>{const f=slot.querySelector("[autofocus]");if(f)f.focus()},30);
+  return slot.querySelector(".sheet");
+}
+function closeSheet(){$("#sheetSlot").innerHTML="";document.body.style.overflow=""}
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("#scrim"))closeSheet()});
+
+/* ---------- add / edit ---------- */
+function openEdit(it){
+  const isNew=!it;
+  const d=it?JSON.parse(JSON.stringify(it)):{id:newId(),title:"",status:"completed",kind:"anime",type:"TV",genres:[],score:null,seasons:[{n:1,watched:true}],createdAt:Date.now()};
+  let genres=[...(d.genres||[])];let score=d.score||null;const origScore=d.score||null;
+  let seasons=seasonsOf(d).map(x=>({...x}));
+  if(!isNew&&!isMovie(d)&&!seasons.length)seasons=[{n:1,watched:d.status==="completed"}];
+  const hist=[...(d.scoreHistory||[])];
+  const origSeasonCount=seasons.length;
+  const opt=(arr,val)=>arr.map(o=>`<option value="${esc(o.k??o)}"${(o.k??o)===val?" selected":""}>${esc(o.label??o)}</option>`).join("");
+  const effOpts=v=>`<option value=""${v==null?" selected":""}>Effect on rating</option>`+[[3,"+3 raised it a lot"],[2,"+2 raised it"],[1,"+1 raised it"],[0,"±0 no change"],[-1,"−1 lowered it"],[-2,"−2 lowered it"],[-3,"−3 lowered it a lot"]].map(([k,l])=>`<option value="${k}"${v===k?" selected":""}>${l}</option>`).join("");
+  const scoreOpts=v=>`<option value="">No score</option>`+Array.from({length:10},(_,i)=>`<option value="${10-i}"${v===10-i?" selected":""}>${10-i} · ${SCORE_LABEL[10-i]}</option>`).join("");
+  const past=!isNew&&(hist.length||d.score)?`<div class="past"><span class="lbl">What you thought</span><ul>
+      ${d.score?`<li class="now"><span class="sc">${d.score}</span><span>${SCORE_LABEL[d.score]} · current${d.scoreDate?` · since ${fmtDate(d.scoreDate)}`:""}</span>${d.scoreReason?`<span class="q">“${esc(d.scoreReason)}”</span>`:""}</li>`:""}
+      ${[...hist].reverse().map(h=>`<li><span class="sc">${h.score}</span><span>${SCORE_LABEL[h.score]||""}${h.date?` · <span class="when">${fmtDate(h.date)}</span>`:""}</span>${h.note?`<span class="q">“${esc(h.note)}”</span>`:""}</li>`).join("")}
+    </ul></div>`:"";
+  const sheet=openSheet(`
+    <header><h2>${isNew?"Add a title":"Edit title"}</h2><button class="x" data-close aria-label="Close">×</button></header>
+    <form class="body" id="editForm" autocomplete="off">
+      ${d.needsReview&&(d.flags||[]).length?`<div class="flagbox"><span class="lbl" style="color:var(--st-on_hold)">From your import, please check</span><ul>${d.flags.map(f=>`<li>${esc(f)}</li>`).join("")}</ul>${d.rawLine?`<div class="help">Original line: <span class="raw">${esc(d.rawLine)}</span></div>`:""}</div>`:""}
+      ${past}
+      <div class="form-grid">
+        <div class="field c6"><label for="eTitle">Title</label><input type="text" id="eTitle" value="${esc(d.title)}" required${isNew?" autofocus":""}></div>
+        <div class="field c6"><label for="eAlt">Other title <span style="text-transform:none;letter-spacing:0;font-weight:400">(Japanese, Chinese, English…)</span></label><input type="text" id="eAlt" value="${esc(d.altTitle||"")}"></div>
+        <div class="field c2"><label for="eKind">Kind</label><select id="eKind">${opt(KINDS,d.kind)}</select></div>
+        <div class="field c2"><label for="eType">Format</label><select id="eType">${opt(TYPES,d.type)}</select></div>
+        <div class="field c2"><label for="eYear">Release year</label><input type="number" id="eYear" min="1900" max="2100" inputmode="numeric" value="${esc(d.year||"")}"></div>
+        <div class="field c3"><label for="eStatus">Status</label><select id="eStatus">${opt(STATUSES,d.status)}</select></div>
+        <div class="field c3"><label for="eWatched">Year you watched it</label><input type="number" id="eWatched" min="1950" max="2100" inputmode="numeric" value="${esc(d.watchedYear||"")}"></div>
+      </div>
+      <div class="field"><span class="lbl">Overall score${isNew?"":" (change it any time)"}</span>
+        <div class="scorepick" id="scorePick">${Array.from({length:10},(_,i)=>`<button type="button" data-s="${i+1}" aria-pressed="${score===i+1}">${i+1}</button>`).join("")}</div>
+        <div class="scorehint" id="scoreHint"></div>
+      </div>
+      <div class="field" id="reasonWrap" hidden><label for="eReason">What changed your mind? (optional)</label><input type="text" id="eReason" placeholder="e.g. Season 3 was a letdown"></div>
+      <div class="field" id="seasonsWrap"${isMovie(d)?" hidden":""}>
+        <div class="shead"><span class="lbl">Seasons</span>
+          <label for="eSCount" style="font-size:13px;color:var(--muted)">How many</label><input type="number" id="eSCount" min="1" max="60" inputmode="numeric" value="${seasons.length||1}">
+          <button type="button" class="btn sm" id="eSAdd">+ New season came out</button></div>
+        <div class="slist" id="sList"></div>
+        <div class="shint" id="sHint"></div>
+      </div>
+      <div class="field"><span class="lbl">Genres</span>
+        <div class="gpick" id="gPick"></div>
+        <div style="display:flex;gap:6px;margin-top:4px"><input type="text" id="gCustom" placeholder="Add another genre"><button type="button" class="btn sm" id="gAdd">Add</button></div>
+      </div>
+      <div class="field"><label for="eNotes">What I think of it</label><textarea id="eNotes" rows="3" placeholder="Your thoughts, where you watched it, who recommended it…">${esc(d.notes||"")}</textarea></div>
+      <div class="form-grid">
+        <div class="field c3"><label for="eRe">Times rewatched</label><input type="number" id="eRe" min="0" inputmode="numeric" value="${esc(d.rewatches||"")}"></div>
+        <div class="field c3" style="justify-content:flex-end"><label class="check"><input type="checkbox" id="eFav"${d.favorite?" checked":""}> Favorite</label></div>
+      </div>
+      <details class="opt"${d.startDate||d.finishDate?" open":""}><summary>Dates (optional)</summary>
+        <div class="form-grid">
+          <div class="field c3"><label for="eStart">Started</label><input type="date" id="eStart" value="${esc(d.startDate||"")}"></div>
+          <div class="field c3"><label for="eFinish">Finished</label><input type="date" id="eFinish" value="${esc(d.finishDate||"")}"></div>
+        </div></details>
+    </form>
+    <div class="foot-bar">
+      ${isNew?"":`<button class="btn danger" id="eDel">Delete</button>`}
+      <span class="sp"></span>
+      ${d.needsReview?`<button class="btn" id="eReviewed">Save & mark checked</button>`:""}
+      <button class="btn" data-close>Cancel</button>
+      <button class="btn primary" id="eSave">${isNew?"Add to library":"Save"}</button>
+    </div>`);
+  const hint=()=>{
+    $("#scoreHint").textContent=score?`${score} · ${SCORE_LABEL[score]}${origScore&&score!==origScore?` (was ${origScore})`:""} — tap again to clear`:"Not scored yet";
+    $("#reasonWrap").hidden=!(origScore&&score&&score!==origScore);
+  };hint();
+  $("#scorePick").onclick=e=>{const b=e.target.closest("[data-s]");if(!b)return;const s=+b.dataset.s;score=score===s?null:s;
+    sheet.querySelectorAll("#scorePick button").forEach(x=>x.setAttribute("aria-pressed",String(+x.dataset.s===score)));hint()};
+  const drawS=()=>{
+    $("#sList").innerHTML=seasons.map((x,i)=>`<div class="srow${x._new?" new":""}" data-si="${i}">
+      <span class="sn">Season ${x.n}</span>
+      <label class="check"><input type="checkbox" data-sw="${i}"${x.watched?" checked":""}> Watched</label>
+      <select data-se="${i}" aria-label="How season ${x.n} changed your overall rating">${effOpts(x.effect)}</select>
+      <input type="text" data-sn="${i}" value="${esc(x.note||"")}" placeholder="Thoughts on season ${x.n}" aria-label="Season ${x.n} thoughts">
+    </div>`).join("");
+    $("#eSCount").value=seasons.length||1;
+  };drawS();
+  $("#sList").addEventListener("change",e=>{const t=e.target;
+    if(t.dataset.sw!=null){seasons[+t.dataset.sw].watched=t.checked;
+      const all=seasons.every(x=>x.watched);
+      if(!all&&$("#eStatus").value==="completed"){$("#eStatus").value="watching";$("#sHint").textContent="Not every season is watched, so status is now Watching."}
+      if(all&&$("#eStatus").value==="watching"){$("#eStatus").value="completed";$("#sHint").textContent="All seasons watched, so status is now Completed."}}
+    if(t.dataset.se!=null){seasons[+t.dataset.se].effect=t.value===""?null:+t.value;seasons[+t.dataset.se]._manual=true}
+  });
+  $("#sList").addEventListener("input",e=>{const t=e.target;if(t.dataset.sn!=null)seasons[+t.dataset.sn].note=t.value.trim()||null});
+  $("#eSCount").onchange=e=>{let n=Math.max(1,Math.min(60,toInt(e.target.value)||1));const done=$("#eStatus").value==="completed";
+    while(seasons.length<n)seasons.push({n:seasons.length+1,watched:done});
+    while(seasons.length>n)seasons.pop();drawS()};
+  $("#eSAdd").onclick=()=>{
+    seasons.push({n:seasons.length+1,watched:false,addedAt:Date.now(),_new:true});
+    const st=$("#eStatus");
+    if(st.value==="completed")st.value="watching";
+    $("#sHint").textContent=`Season ${seasons.length} added and status set to Watching.${origScore?` You gave it ${origScore} last time.`:""} When you finish it, tick Watched and change your overall score. The season will record how much it raised or lowered it.`;
+    drawS();
+  };
+  $("#eType").onchange=e=>{$("#seasonsWrap").hidden=e.target.value==="Movie";if(e.target.value!=="Movie"&&!seasons.length){seasons=[{n:1,watched:$("#eStatus").value==="completed"}];drawS()}};
+  const drawG=()=>{const all=[...new Set([...GENRES,...genres])];$("#gPick").innerHTML=all.map(g=>`<button type="button" data-g="${esc(g)}" aria-pressed="${genres.includes(g)}">${esc(g)}</button>`).join("")};drawG();
+  $("#gPick").onclick=e=>{const b=e.target.closest("[data-g]");if(!b)return;const g=b.dataset.g;genres=genres.includes(g)?genres.filter(x=>x!==g):[...genres,g];b.setAttribute("aria-pressed",String(genres.includes(g)))};
+  const addCustom=()=>{const v=$("#gCustom").value.trim();if(!v)return;const g=GENRE_ALIAS[v.toLowerCase()];const vals=Array.isArray(g)?g:[g||v];vals.forEach(x=>{if(!genres.includes(x))genres.push(x)});$("#gCustom").value="";drawG()};
+  $("#gAdd").onclick=addCustom;$("#gCustom").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();addCustom()}};
+  $("#eStatus").onchange=e=>{if(e.target.value==="completed"){seasons.forEach(x=>x.watched=true);drawS();$("#sHint").textContent="";if(!$("#eWatched").value)$("#eWatched").value=new Date().getFullYear()}};
+  $("#editForm").onsubmit=e=>{e.preventDefault();save(false)};
+  let dupOk=false;
+  async function save(markChecked){
+    const title=$("#eTitle").value.trim();if(!title){$("#eTitle").focus();toast("Give the title a name first.");return}
+    const status=$("#eStatus").value,type=$("#eType").value;
+    const now=Date.now();
+    const out={...d,title,altTitle:$("#eAlt").value.trim()||null,kind:$("#eKind").value,type,year:toInt($("#eYear").value),
+      status,watchedYear:toInt($("#eWatched").value),startDate:$("#eStart").value||null,finishDate:$("#eFinish").value||null,score,genres,
+      rewatches:toInt($("#eRe").value),favorite:$("#eFav").checked,notes:$("#eNotes").value.trim()||null,updatedAt:now};
+    delete out.epWatched;delete out.epTotal;
+    const wasWatched=new Set(seasonsOf(d).filter(x=>x.watched).map(x=>x.n));
+    const fin=seasons.map((x,i)=>({x,i,w:status==="completed"?true:!!x.watched})).filter(o=>o.w&&!wasWatched.has(o.i+1)&&!o.x._manual&&o.x.effect==null);
+    if(!isNew&&origScore&&score&&fin.length){fin[fin.length-1].x.effect=score-origScore}
+    out.seasons=type==="Movie"?[]:seasons.map((x,i)=>{const y={n:i+1,watched:status==="completed"?true:!!x.watched};if(x.effect!=null)y.effect=x.effect;if(x.note)y.note=x.note;if(x.addedAt)y.addedAt=x.addedAt;return y});
+    const h=[...hist];
+    if(origScore&&score!==origScore){h.push({score:origScore,date:d.scoreDate||d.updatedAt||d.createdAt||now,note:d.scoreReason||d.notes||null});out.scoreDate=now;out.scoreReason=$("#eReason").value.trim()||null}
+    else if(score&&!origScore){out.scoreDate=now}
+    out.scoreHistory=h;
+    if(markChecked){out.needsReview=false;out.flags=[]}
+    if(isNew&&!dupOk){const dup=items().find(x=>norm(x.title)===norm(title));if(dup){dupOk=true;toast(`“${dup.title}” is already in your library. Press Add again to keep both.`);return}}
+    $("#eSave").disabled=true;
+    try{await store.put(out);closeSheet();toast(isNew?`Added ${title}`:(origScore&&score!==origScore?`Score changed ${origScore} → ${score||"none"}. Your old take is saved.`:"Saved"))}catch(err){$("#eSave").disabled=false;toast(errMsg(err))}
+  }
+  $("#eSave").onclick=()=>save(false);
+  const rv=$("#eReviewed");if(rv)rv.onclick=()=>save(true);
+  const del=$("#eDel");
+  if(del){let armed=false;del.onclick=async()=>{
+    if(!armed){armed=true;del.classList.add("armed");del.textContent="Tap again to delete";setTimeout(()=>{if(del.isConnected){armed=false;del.classList.remove("armed");del.textContent="Delete"}},4000);return}
+    try{await store.remove(d.id);closeSheet();toast(`Deleted ${d.title}`)}catch(err){toast(errMsg(err))}
+  }}
+}
+
+/* ---------- bulk parser ---------- */
+const STATUS_WORDS=[
+  [/\b(plan(?:ned)?\s*to\s*watch|ptw|to[\s-]?watch|want\s*to\s*watch|watchlist|backlog|not\s*started)\b/i,"plan"],
+  [/\b(on[\s-]?hold|paused|hiatus)\b/i,"on_hold"],
+  [/\b(dropped|abandoned|quit|gave\s*up)\b/i,"dropped"],
+  [/\b(watching|currently|in[\s-]?progress|ongoing|airing|catching\s*up)\b/i,"watching"],
+  [/\b(completed?|finished|done|watched|seen)\b/i,"completed"]];
+const KIND_WORDS=[[/\b(donghua|chinese\s*anim\w*|c-?anime)\b/i,"donghua"],[/\b(cartoons?|western\s*anim\w*)\b/i,"cartoon"],[/\b(aeni|korean\s*anim\w*)\b/i,"aeni"],[/\banime\b/i,"anime"]];
+const TYPE_WORDS=[[/\b(movies?|films?)\b/i,"Movie"],[/\bova\b/i,"OVA"],[/\bona\b/i,"ONA"],[/\bspecials?\b/i,"Special"],[/\b(tv|series|show)\b/i,"TV"],[/\bshorts?\b/i,"Short"]];
+const YEAR_RE=/^(19[2-9]\d|20[0-4]\d)(?:\s*[-–]\s*(?:19|20)?\d{2,4}|\s*[-–]\s*present)?$/i;
+
+function statusOf(s){for(const [re,k] of STATUS_WORDS)if(re.test(s))return k;return null}
+function kindOf(s){for(const [re,k] of KIND_WORDS)if(re.test(s))return k;return null}
+function typeOf(s){for(const [re,k] of TYPE_WORDS)if(re.test(s))return k;return null}
+function genreOf(tok){const t=tok.toLowerCase().replace(/[.\s]+$/,"").trim();const g=GENRE_ALIAS[t];return g?(Array.isArray(g)?g:[g]):null}
+function scoreOf(tok){
+  let m=tok.match(/^(?:score|rating|rated|my\s*score)?\s*[:=]?\s*(\d{1,3}(?:\.\d+)?)\s*\/\s*(10|5|100)$/i);
+  if(m){const v=parseFloat(m[1])/(+m[2])*10;if(v>0&&v<=10)return Math.max(1,Math.round(v))}
+  m=tok.match(/^(?:score|rating|rated)\s*[:=]?\s*(\d{1,2}(?:\.\d+)?)$/i);
+  if(m){const v=parseFloat(m[1]);if(v>0&&v<=10)return Math.max(1,Math.round(v))}
+  const stars=(tok.match(/[★⭐]/g)||[]).length;
+  if(stars&&/^[\s★⭐☆]+$/.test(tok)){return Math.min(10,stars*2)}
+  if(/^\d{1,2}(\.\d)?$/.test(tok)){const v=parseFloat(tok);if(v>=1&&v<=10)return Math.round(v)}
+  return null;
+}
+function epsOf(tok){
+  let m=tok.match(/^(\d{1,4})\s*(?:\/|of)\s*(\d{1,4})\s*(?:eps?|episodes?)?$/i);
+  if(m&&/ep/i.test(tok))return {w:+m[1],t:+m[2]};
+  m=tok.match(/^(?:eps?\.?|episodes?)\s*(\d{1,4})(?:\s*(?:\/|of)\s*(\d{1,4}))?$/i);
+  if(m)return {w:+m[1],t:m[2]?+m[2]:null};
+  m=tok.match(/^(\d{1,4})\s*(?:eps?|episodes?)$/i);
+  if(m)return {t:+m[1]};
+  return null;
+}
+function classifyToken(tok,rec){
+  const t=tok.trim().replace(/^[\s:=]+|[\s.]+$/g,"");if(!t)return true;
+  if(/^[✅✔✓☑]$/.test(t)){rec.status=rec.status||"completed";return true}
+  if(/^[❌✗✘]$/.test(t)){rec.status=rec.status||"dropped";return true}
+  const y=t.match(YEAR_RE);if(y){rec.year=+y[1];return true}
+  const wm=t.match(/^(?:watched|finished|seen)\s*(?:in)?\s*(19[5-9]\d|20[0-4]\d)$/i);if(wm){rec.watchedYear=+wm[1];rec.status=rec.status||"completed";return true}
+  const sc=scoreOf(t);if(sc){rec.score=sc;return true}
+  const sn=t.match(/^(\d{1,2})\s*seasons?$/i)||t.match(/^seasons?\s*[:=]?\s*(\d{1,2})$/i)||t.match(/^s(?:easons?)?\s*1\s*[-–]\s*s?(\d{1,2})$/i);if(sn){rec.seasonCount=+sn[1];return true}
+  const ep=epsOf(t);if(ep){if(ep.w!=null)rec.epWatched=ep.w;if(ep.t!=null)rec.epTotal=ep.t;return true}
+  const g=genreOf(t);if(g){g.forEach(x=>{if(!rec.genres.includes(x))rec.genres.push(x)});return true}
+  if(t.includes("/")){const ps=t.split("/").map(genreOf);if(ps.every(Boolean)){ps.flat().forEach(x=>{if(!rec.genres.includes(x))rec.genres.push(x)});return true}}
+  if(/^(season|s)\s*\d+$/i.test(t)||/^(part|cour)\s*\d+$/i.test(t)){rec._titleAppend=(rec._titleAppend||[]).concat(t);return true}
+  const words=t.split(/\s+/).length;
+  if(words<=4){
+    let hit=false;const st=statusOf(t);if(st){rec.status=st;hit=true}
+    const k=kindOf(t);if(k){rec.kind=k;hit=true}
+    const ty=typeOf(t);if(ty){rec.type=ty;hit=true}
+    if(hit)return true;
+  }
+  return false;
+}
+function parseSegment(seg,rec){
+  const toks=seg.split(/\s*[,;]\s*|\s+&\s+|\s+and\s+/i);
+  const left=[];
+  toks.forEach(tk=>{if(!classifyToken(tk,rec))left.push(tk.trim())});
+  if(left.length===0)return {consumed:true,left:[]};
+  if(left.length===toks.length)return {consumed:false,left:[seg.trim()]};
+  return {consumed:true,left};
+}
+function parseLine(raw,ctx){
+  let line=raw.replace(/ /g," ").trim();
+  line=line.replace(/^(?:[-*•·●▪◦>–—]+|\d{1,4}[.)]|\[[ xX✓]?\]|☐)\s*/,"");
+  let checkMark=null;
+  if(/[✅✔✓☑]/.test(line)){checkMark="completed";line=line.replace(/[✅✔✓☑]/g," ")}
+  if(/❌/.test(line)){checkMark="dropped";line=line.replace(/❌/g," ")}
+  line=line.replace(/\s+/g," ").trim();
+  if(!line)return null;
+  const rec={title:"",genres:[],flags:[],rawLine:raw.trim()};
+  const meta=[];
+  // bracketed groups are always metadata candidates
+  let title=line.replace(/[(\[{]([^()\[\]{}]*)[)\]}]/g,(m,inner)=>{meta.push({text:inner,br:true});return " "}).trim();
+  // split on separators
+  const parts=title.split(/\s+[-–—|•·]\s+|\s*\t\s*|\s+[:>]\s+(?=\S)/).map(s=>s.trim()).filter(Boolean);
+  title=parts.shift()||"";
+  parts.forEach(p=>meta.push({text:p,br:false}));
+  // inline score in title part: "Naruto 8/10"
+  title=title.replace(/\s*[-:]?\s*(\d{1,3}(?:\.\d+)?)\s*\/\s*(10|5|100)\s*$/,(m)=>{const s=scoreOf(m.replace(/^[\s:-]+/,""));if(s){rec.score=s;return ""}return m}).trim();
+  title=title.replace(/\s+[★⭐]+\s*$/,m=>{rec.score=Math.min(10,(m.match(/[★⭐]/g)||[]).length*2);return ""}).trim();
+  const leftovers=[];let titleExtra=[];
+  meta.forEach((mseg,i)=>{
+    const r=parseSegment(mseg.text,rec);
+    if(!r.consumed){
+      // unbracketed segment right after the title with nothing recognizable = subtitle
+      if(!mseg.br&&leftovers.length===0&&meta.slice(0,i).every(x=>!x.br||true)&&i===meta.findIndex(x=>!x.br)){titleExtra.push(mseg.text);return}
+      if(mseg.br&&/^(season|part|s)\s*\d+|^\d+(st|nd|rd|th)\s*season/i.test(mseg.text)){titleExtra.push("("+mseg.text+")");return}
+      leftovers.push(mseg.text);
+    }else r.left.forEach(x=>leftovers.push(x));
+  });
+  if(titleExtra.length)title=[title,...titleExtra.filter(x=>!x.startsWith("("))].join(" - ")+titleExtra.filter(x=>x.startsWith("(")).map(x=>" "+x).join("");
+  if(rec._titleAppend){title+=" "+rec._titleAppend.join(" ");delete rec._titleAppend}
+  // year stuck to the end of an unbracketed title: "Your Name 2016"
+  if(!rec.year){const m=title.match(/\s(19[5-9]\d|20[0-4]\d)$/);if(m&&title.length>6){rec.year=+m[1];title=title.slice(0,-5).trim();rec.flags.push(`Read ${m[1]} as the release year from the end of the title`)}}
+  title=title.replace(/[\s\-–—:|,;]+$/,"").trim();
+  rec.title=title;
+  if(checkMark&&!rec.status)rec.status=checkMark;
+  if(!rec.status&&ctx.status){rec.status=ctx.status}
+  if(!rec.kind&&ctx.kind)rec.kind=ctx.kind;
+  if(!rec.type&&ctx.type)rec.type=ctx.type;
+  if(!rec.watchedYear&&ctx.watchedYear)rec.watchedYear=ctx.watchedYear;
+  if(leftovers.length){rec.notes=leftovers.join("; ");rec.flags.push(`Didn’t recognize “${leftovers.join("”, “")}”. Kept it in notes`)}
+  if(!rec.title){return null}
+  return rec;
+}
+function headerOf(line){
+  let l=line.replace(/ /g," ").trim();
+  const md=/^#{1,6}\s+/.test(l);l=l.replace(/^#{1,6}\s+/,"").replace(/^[*_]+|[*_]+$/g,"").trim();
+  const colon=/:\s*$/.test(l);l=l.replace(/:\s*$/,"").trim();
+  if(!(md||colon))return null;
+  if(l.length>48||/\d{1,2}\s*\/\s*10/.test(l))return null;
+  const h={};
+  const st=statusOf(l);if(st)h.status=st;
+  const k=kindOf(l);if(k)h.kind=k;
+  const ty=typeOf(l);if(ty&&!/\bshow/i.test(l)||/movies?|films?/i.test(l))h.type=typeOf(l);
+  const y=l.match(/\b(19[5-9]\d|20[0-4]\d)\b/);if(y)h.watchedYear=+y[1];
+  h.label=l;return h;
+}
+function parseCSV(text){
+  const delim=text.split("\n")[0].includes("\t")?"\t":",";
+  const rows=[];let row=[],cur="",q=false;
+  for(let i=0;i<text.length;i++){const c=text[i];
+    if(q){if(c==='"'){if(text[i+1]==='"'){cur+='"';i++}else q=false}else cur+=c}
+    else if(c==='"')q=true;else if(c===delim){row.push(cur);cur=""}
+    else if(c==="\n"||c==="\r"){if(c==="\r"&&text[i+1]==="\n")i++;row.push(cur);rows.push(row);row=[];cur=""}
+    else cur+=c}
+  if(cur||row.length){row.push(cur);rows.push(row)}
+  return rows.filter(r=>r.some(x=>x.trim()));
+}
+function looksLikeCSV(text){const first=text.split(/\r?\n/)[0]||"";return /(^|[,\t])\s*"?(title|name|anime|show)"?\s*([,\t]|$)/i.test(first)&&/[,\t]/.test(first)}
+function fromCSV(text){
+  const rows=parseCSV(text);const head=rows.shift().map(h=>h.trim().toLowerCase());
+  const col=re=>head.findIndex(h=>re.test(h));
+  const ix={title:col(/^(title|name|anime|show)/),alt:col(/(alt|english|japanese|native|other).*title|romaji/),year:col(/^(year|release|aired|premiere)/),score:col(/score|rating|rated/),status:col(/status|state/),genres:col(/genre|tags?/),type:col(/^(type|format)/),kind:col(/kind|origin|country|category/),eps:col(/^(episodes?|eps|total)/),prog:col(/progress|watched\s*ep/),wy:col(/watched|year\s*seen|finished/),notes:col(/notes?|comment|review/)};
+  return rows.map(r=>{
+    const g=i=>i>=0?(r[i]||"").trim():"";
+    const rec={title:g(ix.title),genres:[],flags:[],rawLine:r.join(" | ")};
+    if(!rec.title)return null;
+    if(g(ix.alt))rec.altTitle=g(ix.alt);
+    const y=g(ix.year).match(/(19|20)\d\d/);if(y)rec.year=+y[0];
+    if(g(ix.score)){const s=scoreOf(g(ix.score));if(s)rec.score=s;else rec.flags.push(`Couldn’t read score “${g(ix.score)}”`)}
+    if(g(ix.status)){const s=statusOf(g(ix.status));if(s)rec.status=s;else rec.flags.push(`Unknown status “${g(ix.status)}”`)}
+    g(ix.genres).split(/[,;/|]/).forEach(t=>{t=t.trim();if(!t)return;const gg=genreOf(t);(gg||[t]).forEach(x=>{if(!rec.genres.includes(x))rec.genres.push(x)})});
+    if(g(ix.type))rec.type=typeOf(g(ix.type))||TYPES.find(t=>t.toLowerCase()===g(ix.type).toLowerCase())||undefined;
+    if(g(ix.kind))rec.kind=kindOf(g(ix.kind))||(/japan/i.test(g(ix.kind))?"anime":/china/i.test(g(ix.kind))?"donghua":/korea/i.test(g(ix.kind))?"aeni":/us|america|west/i.test(g(ix.kind))?"cartoon":undefined);
+    {const si=head.findIndex(h=>/^seasons?$/.test(h));if(si>=0&&toInt(r[si])!=null)rec.seasonCount=toInt(r[si])}
+    if(toInt(g(ix.eps))!=null)rec.epTotal=toInt(g(ix.eps));
+    if(g(ix.prog)){const e=g(ix.prog).match(/(\d+)(?:\s*\/\s*(\d+))?/);if(e){rec.epWatched=+e[1];if(e[2])rec.epTotal=+e[2]}}
+    const wy=g(ix.wy).match(/(19|20)\d\d/);if(wy)rec.watchedYear=+wy[0];
+    if(g(ix.notes))rec.notes=g(ix.notes);
+    return rec;
+  }).filter(Boolean);
+}
+function parseBulk(text){
+  text=text.replace(/\r\n?/g,"\n");
+  if(looksLikeCSV(text))return fromCSV(text);
+  const out=[];const ctx={};
+  text.split("\n").forEach(raw=>{
+    if(!raw.trim()){return}
+    const h=headerOf(raw);
+    if(h){Object.keys(ctx).forEach(k=>delete ctx[k]);Object.assign(ctx,h);return}
+    const rec=parseLine(raw,ctx);if(rec)out.push(rec);
+  });
+  return out;
+}
+function finalizeRows(rows,defaultStatus){
+  const lib=new Map(items().map(x=>[norm(x.title),x]));
+  const seen=new Map();
+  return rows.map((r,i)=>{
+    const row={...r,_i:i,_include:true};
+    row.kind=row.kind||null;row.type=row.type||null;
+    if(!row.status){row.status=defaultStatus;row._statusGuessed=true}
+    const n=norm(row.title);
+    if(lib.has(n)){row._include=false;row._dup="library"}
+    else if(seen.has(n)){row._include=false;row._dup="batch"}
+    seen.set(n,true);
+    if(row.status==="completed"&&row.epTotal&&row.epWatched==null)row.epWatched=row.epTotal;
+    return row;
+  });
+}
+function rowFlags(r){
+  const f=[...(r.flags||[])];
+  if(r._dup==="library")f.unshift("Already in your library, skipped unless you tick it");
+  if(r._dup==="batch")f.unshift("Listed twice in this import");
+  if(!r.year)f.push("No release year");
+  if(!r.kind)f.push("Kind not set");
+  if(r._statusGuessed)f.push(`No status found, using “${ST_LABEL[r.status]}”`);
+  if(r.title.length>80)f.push("Very long title, may contain notes");
+  return f;
+}
+
+/* ---------- bulk import sheet ---------- */
+let bulk={rows:[],defaultStatus:"completed",stage:"paste",text:""};
+function openBulk(){bulk={rows:[],defaultStatus:"completed",stage:"paste",text:bulk.text||""};drawBulk()}
+function drawBulk(){
+  if(bulk.stage==="paste"){
+    openSheet(`
+      <header><h2>Bulk import</h2><button class="x" data-close aria-label="Close">×</button></header>
+      <div class="body">
+        <p class="help">In Google Docs, select all (Ctrl/⌘ + A), copy, and paste below. One title per line. Anything else on the line is read if it looks like a year, score, status, genre, format or number of seasons (e.g. <code>3 seasons</code>). Headings ending in a colon, such as <code>Completed:</code>, <code>Movies:</code>, <code>Donghua:</code> or <code>2023:</code>, apply to the lines under them. A spreadsheet export (.csv) with a Title column also works.</p>
+        <p class="help">Examples that read cleanly: <code>Attack on Titan (2013) - Action, Drama - 9/10 - completed</code> · <code>Mo Dao Zu Shi | donghua | 10</code> · <code>Your Name movie 2016 ✅</code></p>
+        <div class="field"><label for="bText">Your list</label><textarea id="bText" rows="12" placeholder="Paste your list here" autofocus>${esc(bulk.text)}</textarea></div>
+        <div class="form-grid">
+          <div class="field c3"><label for="bDef">Lines with no status become</label><select id="bDef">${STATUSES.map(s=>`<option value="${s.k}"${s.k===bulk.defaultStatus?" selected":""}>${s.label}</option>`).join("")}</select></div>
+          <div class="field c3" style="justify-content:flex-end"><button type="button" class="btn" id="bFile">Upload a .txt or .csv instead</button></div>
+        </div>
+      </div>
+      <div class="foot-bar"><span class="sp help" id="bCount"></span><button class="btn" data-close>Cancel</button><button class="btn primary" id="bRead">Read my list</button></div>`,true);
+    const upd=()=>{const n=$("#bText").value.split(/\n/).filter(x=>x.trim()).length;$("#bCount").textContent=n?`${n} non-empty lines`:""};upd();
+    $("#bText").oninput=()=>{bulk.text=$("#bText").value;upd()};
+    $("#bDef").onchange=e=>bulk.defaultStatus=e.target.value;
+    $("#bFile").onclick=()=>$("#fileText").click();
+    $("#bRead").onclick=()=>{
+      const text=$("#bText").value;if(!text.trim()){toast("Paste your list first.");return}
+      bulk.text=text;bulk.rows=finalizeRows(parseBulk(text),bulk.defaultStatus);
+      if(!bulk.rows.length){toast("No titles found in that text.");return}
+      bulk.stage="review";drawBulk();
+    };
+    return;
+  }
+  const inc=bulk.rows.filter(r=>r._include);
+  const flagged=bulk.rows.filter(r=>r._include&&rowFlags(r).length).length;
+  const sheet=openSheet(`
+    <header><h2>Check ${bulk.rows.length} titles</h2><button class="x" data-close aria-label="Close">×</button></header>
+    <div class="body">
+      <div class="isum"><span><b>${inc.length}</b> will be imported</span><span><b>${flagged}</b> have something to check</span><span><b>${bulk.rows.length-inc.length}</b> skipped</span></div>
+      <p class="help">Fix anything here, or import as is: titles with open questions get a <b>Needs review</b> tab in your library so you can sort them out later.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <select id="bShow" style="width:auto"><option value="all">Show all rows</option><option value="flag">Only rows to check</option></select>
+      </div>
+      <div class="progressline" id="bProg" hidden><b></b></div>
+      <div class="help" id="bAIMsg"></div>
+      <div class="irows" id="bRows"></div>
+    </div>
+    <div class="foot-bar"><button class="btn ghost" id="bBack">← Edit text</button><span class="sp"></span><button class="btn" data-close>Cancel</button><button class="btn primary" id="bGo"${inc.length?"":" disabled"}>Import ${inc.length} titles</button></div>`,true);
+  const showOnly=bulk._show||"all";$("#bShow").value=showOnly;
+  const rowsEl=$("#bRows");
+  const kindOpts=v=>`<option value="">—</option>`+KINDS.map(k=>`<option value="${k.k}"${k.k===v?" selected":""}>${k.label}</option>`).join("");
+  const typeOpts=v=>`<option value="">—</option>`+TYPES.map(t=>`<option${t===v?" selected":""}>${t}</option>`).join("");
+  const stOpts=v=>STATUSES.map(s=>`<option value="${s.k}"${s.k===v?" selected":""}>${s.label}</option>`).join("");
+  const scOpts=v=>`<option value="">—</option>`+Array.from({length:10},(_,i)=>`<option value="${10-i}"${v===10-i?" selected":""}>${10-i}</option>`).join("");
+  rowsEl.innerHTML=bulk.rows.map(r=>{
+    const f=rowFlags(r);if(showOnly==="flag"&&(!f.length||!r._include))return "";
+    const i=r._i;
+    return `<div class="irow${r._include?"":" off"}${f.length?" flagged":""}" data-i="${i}">
+      <label class="inc check" title="Include"><input type="checkbox" data-f="_include" id="inc${i}"${r._include?" checked":""} aria-label="Include ${esc(r.title)}"></label>
+      <div class="field tt"><label for="t${i}">Title</label><input type="text" id="t${i}" data-f="title" value="${esc(r.title)}"></div>
+      <div class="field"><label for="s${i}">Status</label><select id="s${i}" data-f="status">${stOpts(r.status)}</select></div>
+      <div class="field"><label for="sc${i}">Score</label><select id="sc${i}" data-f="score">${scOpts(r.score)}</select></div>
+      <div class="field"><label for="y${i}">Year</label><input type="number" id="y${i}" data-f="year" inputmode="numeric" value="${esc(r.year||"")}"></div>
+      <div class="field"><label for="k${i}">Kind</label><select id="k${i}" data-f="kind">${kindOpts(r.kind)}</select></div>
+      <div class="field"><label for="ty${i}">Format</label><select id="ty${i}" data-f="type">${typeOpts(r.type)}</select></div>
+      <div class="field"><label for="sn${i}">Seasons</label><input type="number" id="sn${i}" data-f="seasonCount" min="0" inputmode="numeric" value="${esc(r.type==="Movie"?"":(r.seasonCount||1))}"></div>
+      <div class="field genres"><label for="g${i}">Genres</label><input type="text" id="g${i}" data-f="genres" value="${esc((r.genres||[]).join(", "))}" placeholder="Action, Fantasy"></div>
+      <div class="under">${f.map(x=>`<span class="flag">${esc(x)}</span>`).join("")}<span class="raw" title="Original line">${esc(r.rawLine.length>120?r.rawLine.slice(0,117)+"…":r.rawLine)}</span></div>
+    </div>`}).join("")||`<div class="empty">No rows need checking.</div>`;
+  rowsEl.addEventListener("change",e=>{
+    const el=e.target;const f=el.dataset.f;if(!f)return;const i=+el.closest(".irow").dataset.i;const r=bulk.rows.find(x=>x._i===i);
+    if(f==="_include"){r._include=el.checked;drawBulk();return}
+    if(f==="score")r.score=toInt(el.value);
+    else if(f==="seasonCount")r.seasonCount=toInt(el.value);
+    else if(f==="year")r.year=toInt(el.value);
+    else if(f==="genres"){r.genres=[];el.value.split(/[,;/]/).forEach(t=>{t=t.trim();if(!t)return;(genreOf(t)||[t]).forEach(x=>{if(!r.genres.includes(x))r.genres.push(x)})})}
+    else if(f==="status"){r.status=el.value;r._statusGuessed=false}
+    else r[f]=el.value||null;
+  });
+  $("#bShow").onchange=e=>{bulk._show=e.target.value;drawBulk()};
+  $("#bBack").onclick=()=>{bulk.stage="paste";drawBulk()};
+  $("#bGo").onclick=()=>runImport();
+}
+$("#fileText").addEventListener("change",async e=>{
+  const f=e.target.files[0];e.target.value="";if(!f)return;
+  const text=await f.text();bulk.text=text;
+  if($("#bText")){$("#bText").value=text;$("#bText").dispatchEvent(new Event("input"))}
+});
+
+async function runImport(){
+  const inc=bulk.rows.filter(r=>r._include&&r.title&&r.title.trim());
+  if(!inc.length)return;
+  const now=Date.now();
+  const docs=inc.map((r,k)=>{
+    const flags=rowFlags(r).filter(f=>!/^Already in your library/.test(f));
+    return {id:newId()+k.toString(36),title:r.title.trim(),altTitle:r.altTitle||null,kind:r.kind||null,type:r.type||null,year:r.year||null,status:r.status,
+      score:r.score||null,scoreDate:r.score?now:null,scoreHistory:[],genres:r.genres||[],watchedYear:r.watchedYear||null,notes:r.notes||null,
+      seasons:r.type==="Movie"?[]:Array.from({length:Math.max(1,r.seasonCount||1)},(_,j)=>({n:j+1,watched:r.status==="completed"})),
+      favorite:false,rewatches:null,startDate:null,finishDate:null,needsReview:flags.length>0,flags,rawLine:r.rawLine||null,
+      createdAt:now,updatedAt:now-k,source:"bulk"}});
+  const go=$("#bGo");go.disabled=true;$("#bBack").disabled=true;
+  const prog=$("#bProg");prog.hidden=false;const bar=prog.querySelector("b");bar.style.width="0";
+  $("#bAIMsg").textContent=`Saving 0 of ${docs.length}…`;
+  const failed=await writeMany(docs,(d,t)=>{bar.style.width=Math.round(d/t*100)+"%";$("#bAIMsg").textContent=`Saving ${d} of ${t}…`},4);
+  if(failed.length){$("#bAIMsg").textContent=`${docs.length-failed.length} saved. ${failed.length} failed: ${errMsg(failed[0].e)}`;go.disabled=false;
+    const failedIds=new Set(failed.map(f=>f.it.title));bulk.rows.forEach(r=>{if(!failedIds.has(r.title.trim()))r._include=false});return}
+  const nr=docs.filter(d=>d.needsReview).length;
+  bulk.text="";closeSheet();
+  state.status=nr?"review":"all";render();
+  toast(`Imported ${docs.length} titles${nr?`. ${nr} are in Needs review`:""}`);
+}
+
+/* ---------- export / restore / delete all ---------- */
+async function exportFile(kind){
+  const list=items();if(!list.length){toast("Your library is empty, nothing to download yet.");return}
+  let data,filename;const stamp=new Date().toISOString().slice(0,10);
+  if(kind==="json"){data=JSON.stringify({app:"cel-archive",version:1,exportedAt:new Date().toISOString(),items:list},null,2);filename=`cel-archive-backup-${stamp}.json`}
+  else{
+    const cols=["title","altTitle","kind","type","year","status","score","previousScores","seasons","seasonEffects","genres","watchedYear","startDate","finishDate","rewatches","favorite","notes"];
+    const q=v=>{v=Array.isArray(v)?v.join(", "):(v==null?"":String(v));if(cols&&kind)v=v;return /[",\n]/.test(v)?`"${v.replace(/"/g,'""')}"`:v};
+    data=[cols.join(","),...list.map(it=>cols.map(c=>c==="status"?q(ST_LABEL[it.status]):c==="kind"?q(KIND_LABEL[it.kind]||""):c==="previousScores"?q((it.scoreHistory||[]).map(h=>h.score).join(" > ")):c==="seasons"?q(seasonsOf(it).length||""):c==="seasonEffects"?q(seasonsOf(it).filter(x=>x.effect!=null).map(x=>`S${x.n} ${x.effect>0?"+":""}${x.effect}`).join(" | ")):q(it[c])).join(","))].join("\n");
+    filename=`cel-archive-${stamp}.csv`;
+  }
+  if(saveBlob(new Blob([data],{type:kind==="json"?"application/json":"text/csv"}),filename)){if(kind==="json"){lsSet("celarchive.lastBackup",String(Date.now()));store.emit()}toast(`Downloaded ${filename}`);return}
+  openSheet(`<header><h2>Copy your ${kind.toUpperCase()}</h2><button class="x" data-close aria-label="Close">×</button></header>
+    <div class="body"><p class="help">Downloads aren’t available in this view. Copy the text below and save it as <code>${esc(filename)}</code>.</p>
+    <textarea id="cpText" rows="14" readonly class="mono">${esc(data)}</textarea></div>
+    <div class="foot-bar"><span class="sp"></span><button class="btn" data-close>Close</button><button class="btn primary" id="cpBtn">Copy</button></div>`,true);
+  $("#cpBtn").onclick=async()=>{const t=$("#cpText");try{await navigator.clipboard.writeText(t.value);toast("Copied")}catch(e){t.focus();t.select();toast("Selected. Press Ctrl/⌘ + C to copy")}};
+}
+$("#fileJson").addEventListener("change",async e=>{
+  const f=e.target.files[0];e.target.value="";if(!f)return;
+  let parsed;try{parsed=JSON.parse(await f.text())}catch(err){toast("That file isn’t a valid backup (.json).");return}
+  const arr=Array.isArray(parsed)?parsed:parsed&&parsed.items;
+  if(!Array.isArray(arr)||!arr.length){toast("No titles found in that backup.");return}
+  const docs=arr.filter(x=>x&&x.title).map(x=>({...x,id:typeof x.id==="string"&&/^[\w\-.~:@+]+$/.test(x.id)?x.id:newId()}));
+  toast(`Restoring ${docs.length} titles…`);
+  const failed=await writeMany(docs,null,4);
+  toast(failed.length?`${docs.length-failed.length} restored, ${failed.length} failed.`:`Restored ${docs.length} titles`);
+});
+function openDeleteAll(){
+  const n=store.items.size;if(!n){toast("Your library is already empty.");return}
+  openSheet(`<header><h2>Delete entire library</h2><button class="x" data-close aria-label="Close">×</button></header>
+    <div class="body"><p class="help">This permanently removes all <b>${n}</b> titles on every device. Download a backup first if you might want them back.</p>
+    <div class="field"><label for="daIn">Type DELETE to confirm</label><input type="text" id="daIn" autocomplete="off" autofocus></div>
+    <div class="progressline" id="daProg" hidden><b></b></div></div>
+    <div class="foot-bar"><button class="btn" id="daBackup">Download backup first</button><span class="sp"></span><button class="btn" data-close>Cancel</button><button class="btn danger" id="daGo" disabled>Delete ${n} titles</button></div>`);
+  $("#daIn").oninput=e=>$("#daGo").disabled=e.target.value.trim()!=="DELETE";
+  $("#daBackup").onclick=()=>exportFile("json");
+  $("#daGo").onclick=async()=>{
+    $("#daGo").disabled=true;const ids=[...store.items.keys()];const prog=$("#daProg");prog.hidden=false;
+    let i=0,done=0;const worker=async()=>{while(i<ids.length){const id=ids[i++];try{await withRetry(()=>store.remove(id))}catch(e){}prog.querySelector("b").style.width=Math.round(++done/ids.length*100)+"%"}};
+    await Promise.all([worker(),worker(),worker(),worker()]);
+    closeSheet();toast("Library deleted");
+  };
+}
+
+/* XLSX-BUILDER-START */
+function buildWorkbook(ExcelJS,list,opts){
+  opts=opts||{};
+  const STL={watching:"Watching",completed:"Completed",on_hold:"On hold",dropped:"Dropped",plan:"Plan to watch"};
+  const STC={watching:["FF23805A","FFE3F2EA"],completed:["FF2C5FB3","FFE2EAF8"],on_hold:["FF9A6C0C","FFF8EED6"],dropped:["FFA83246","FFF6E0E4"],plan:["FF5F6371","FFECEDF0"]};
+  const KL={anime:"Anime",donghua:"Donghua",cartoon:"Cartoon",aeni:"Aeni (Korean)",other:"Other"};
+  const SL={10:"Masterpiece",9:"Great",8:"Very good",7:"Good",6:"Fine",5:"Average",4:"Bad",3:"Very bad",2:"Horrible",1:"Appalling"};
+  const SCOREFILL={10:"FF1E7A4F",9:"FF2E8B57",8:"FF5BA85B",7:"FF94BF4E",6:"FFC9C443",5:"FFE0B040",4:"FFE08A3C",3:"FFD9663A",2:"FFC94A3A",1:"FFA8323A"};
+  const INK="FF171A28",ACC="FFD3305A",PAPER="FFFAFBF6",ZEBRA="FFF1F3EC",LINE="FFD5D9CF",MUTED="FF5B6070";
+  const FONT="Arial";
+  const order={watching:0,completed:1,on_hold:2,dropped:3,plan:4};
+  const rows=[...list].sort((a,b)=>(order[a.status]??9)-(order[b.status]??9)||(b.score||0)-(a.score||0)||String(a.title).localeCompare(String(b.title)));
+  const scored=list.filter(x=>x.score);
+  const mean=scored.length?scored.reduce((s,x)=>s+x.score,0)/scored.length:null;
+  const seas=list.reduce((s,x)=>s+(Array.isArray(x.seasons)?x.seasons.filter(y=>y.watched).length:0),0);
+  const kc=k=>list.filter(x=>x.status==="completed"&&x.kind===k).length;
+  const done=list.filter(x=>x.status==="completed").length;
+  const today=new Date().toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"});
+  const owner=(opts.owner||"").trim();
+  const heading=owner?`${owner}’s Animation Library`:"My Animation Library";
+
+  const wb=new ExcelJS.Workbook();wb.creator="Cel Archive";wb.created=new Date();
+  const thin={style:"thin",color:{argb:LINE}};
+  const fill=c=>({type:"pattern",pattern:"solid",fgColor:{argb:c}});
+
+  /* ---- Library sheet ---- */
+  const ws=wb.addWorksheet("Library",{properties:{tabColor:{argb:ACC}},views:[{state:"frozen",ySplit:5,xSplit:2,showGridLines:false}]});
+  const cols=[
+    {h:"#",w:5},{h:"Title",w:38},{h:"Other title",w:26},{h:"Kind",w:12},{h:"Format",w:10},{h:"Year",w:7},
+    {h:"Status",w:15},{h:"Score",w:7},{h:"Rating",w:13},{h:"Seasons",w:18},{h:"Genres",w:30},{h:"Watched",w:9},{h:"♥",w:4},{h:"Notes",w:40}];
+  ws.columns=cols.map(c=>({width:c.w}));
+  const last=cols.length;
+  ws.mergeCells(1,1,1,last);ws.mergeCells(2,1,2,last);ws.mergeCells(3,1,3,last);
+  const t=ws.getCell(1,1);t.value=heading;t.font={name:"Arial Black",size:22,color:{argb:"FFFFFFFF"}};t.alignment={vertical:"middle",indent:1};
+  const s=ws.getCell(2,1);
+  s.value=`${done} watched   ·   ${kc("anime")} anime   ·   ${kc("donghua")} donghua   ·   ${kc("cartoon")} cartoons   ·   ${seas} seasons   ·   mean score ${mean?mean.toFixed(2):"—"}`;
+  s.font={name:FONT,size:11,color:{argb:"FFE8EAF0"}};s.alignment={vertical:"middle",indent:1};
+  const d=ws.getCell(3,1);d.value=`Shared ${today} from Cel Archive`;d.font={name:FONT,size:9,italic:true,color:{argb:"FF9BA1B4"}};d.alignment={vertical:"top",indent:1};
+  for(let r=1;r<=3;r++)for(let c=1;c<=last;c++)ws.getCell(r,c).fill=fill(INK);
+  ws.getRow(1).height=40;ws.getRow(2).height=20;ws.getRow(3).height=18;
+  for(let c=1;c<=last;c++)ws.getCell(4,c).fill=fill(ACC);ws.getRow(4).height=5;
+  const hr=ws.getRow(5);hr.height=24;
+  cols.forEach((c,i)=>{const cell=hr.getCell(i+1);cell.value=c.h;cell.font={name:FONT,bold:true,size:10,color:{argb:INK}};cell.fill=fill("FFE3E6DD");
+    cell.alignment={vertical:"middle",horizontal:[0,5,7,11,12].includes(i)?"center":"left",indent:[0,5,7,11,12].includes(i)?0:1};cell.border={bottom:{style:"medium",color:{argb:INK}}}});
+  rows.forEach((it,k)=>{
+    const r=ws.getRow(6+k);r.height=20;
+    const ssA=Array.isArray(it.seasons)?it.seasons:[];const ssW=ssA.filter(y=>y.watched).length;
+    const fxs=ssA.filter(y=>y.effect!=null&&y.effect!==0).map(y=>`S${y.n} ${y.effect>0?"+":"−"}${Math.abs(y.effect)}`).join(", ");
+    const epTxt=(it.type==="Movie"?"Film":(ssA.length?(it.status==="completed"?String(ssA.length):`${ssW} / ${ssA.length}`):""))+(fxs?`  (${fxs})`:"");
+    const prevS=(it.scoreHistory||[]).slice(-1)[0];
+    const vals=[k+1,it.title||"",it.altTitle||"",KL[it.kind]||"",it.type||"",it.year||"",STL[it.status]||"",it.score||"",(it.score?SL[Math.round(it.score)]:"")+(prevS&&prevS.score!==it.score?` (was ${prevS.score})`:""),epTxt,(it.genres||[]).join(", "),it.watchedYear||"",it.favorite?"♥":"",it.notes||""];
+    const base=k%2?ZEBRA:PAPER;
+    vals.forEach((v,i)=>{
+      const cell=r.getCell(i+1);cell.value=v;cell.fill=fill(base);cell.border={bottom:thin};
+      cell.font={name:FONT,size:10,color:{argb:i===0||i===2||i===13?MUTED:INK}};
+      cell.alignment={vertical:"middle",horizontal:[0,5,7,9,11,12].includes(i)?"center":"left",indent:[0,5,7,9,11,12].includes(i)?0:1,wrapText:i===13};
+    });
+    r.getCell(2).font={name:FONT,size:10.5,bold:true,color:{argb:INK}};
+    const sc=STC[it.status];if(sc){const c=r.getCell(7);c.fill=fill(sc[1]);c.font={name:FONT,size:10,bold:true,color:{argb:sc[0]}}}
+    if(it.score){const c=r.getCell(8);c.fill=fill(SCOREFILL[Math.round(it.score)]);c.font={name:"Arial Black",size:11,color:{argb:"FFFFFFFF"}};
+      r.getCell(9).font={name:FONT,size:9.5,italic:true,color:{argb:MUTED}}}
+    r.getCell(13).font={name:FONT,size:12,color:{argb:ACC}};
+    if(it.notes&&String(it.notes).length>60)r.height=Math.min(80,20+Math.ceil(String(it.notes).length/60)*12);
+  });
+  const lastRow=5+rows.length;
+  ws.autoFilter={from:{row:5,column:1},to:{row:Math.max(5,lastRow),column:last}};
+  ws.pageSetup={orientation:"landscape",fitToPage:true,fitToWidth:1,fitToHeight:0,printTitlesRow:"5:5",margins:{left:.4,right:.4,top:.5,bottom:.5,header:.2,footer:.2}};
+  ws.headerFooter={oddFooter:`&L&8${heading}&R&8Page &P of &N`};
+
+  /* ---- Summary sheet ---- */
+  const sm=wb.addWorksheet("Summary",{properties:{tabColor:{argb:INK}},views:[{showGridLines:false}]});
+  sm.columns=[{width:3},{width:20},{width:9},{width:34},{width:4},{width:20},{width:9},{width:34}];
+  sm.mergeCells("A1:H1");const st=sm.getCell("A1");st.value="At a glance";st.font={name:"Arial Black",size:18,color:{argb:"FFFFFFFF"}};st.alignment={vertical:"middle",indent:1};
+  for(let c=1;c<=8;c++)sm.getCell(1,c).fill=fill(INK);sm.getRow(1).height=36;
+  for(let c=1;c<=8;c++)sm.getCell(2,c).fill=fill(ACC);sm.getRow(2).height=4;
+  // KPI row
+  const kpis=[["Watched · all",done],["Anime",kc("anime")],["Donghua",kc("donghua")],["Cartoons",kc("cartoon")]];
+  const kcols=[2,4,6,8];
+  kpis.forEach(([lab,val],i)=>{const c=kcols[i];
+    const a=sm.getCell(4,c);a.value=lab.toUpperCase();a.font={name:FONT,size:8.5,bold:true,color:{argb:MUTED}};
+    const b=sm.getCell(5,c);b.value=val;b.font={name:"Arial Black",size:20,color:{argb:i===0?ACC:INK}};b.alignment={horizontal:"left"}});
+  sm.getRow(5).height=30;
+  const bar=(n,max)=>max?"■".repeat(Math.max(n?1:0,Math.round(n/max*24))):"";
+  function table(r0,c0,title,data,colorFor){
+    const h=sm.getCell(r0,c0);h.value=title;h.font={name:FONT,bold:true,size:11,color:{argb:INK}};
+    [c0,c0+1,c0+2].forEach(c=>{sm.getCell(r0,c).border={bottom:{style:"medium",color:{argb:INK}}}});
+    const max=Math.max(0,...data.map(x=>x[1]));
+    data.forEach(([lab,n],i)=>{const r=r0+1+i;
+      const a=sm.getCell(r,c0);a.value=lab;a.font={name:FONT,size:10,color:{argb:INK}};
+      const b=sm.getCell(r,c0+1);b.value=n;b.font={name:FONT,size:10,bold:true,color:{argb:INK}};b.alignment={horizontal:"center"};
+      const g=sm.getCell(r,c0+2);g.value=bar(n,max);g.font={name:FONT,size:9,color:{argb:(colorFor&&colorFor(lab,i))||ACC}};
+      [c0,c0+1,c0+2].forEach(c=>sm.getCell(r,c).border={bottom:thin});
+    });
+    return r0+1+data.length;
+  }
+  const byStatus=Object.keys(STL).map(k=>[STL[k],list.filter(x=>x.status===k).length]);
+  const byKind=Object.keys(KL).map(k=>[KL[k],list.filter(x=>x.kind===k).length]).filter(x=>x[1]);
+  const gc={};list.forEach(x=>(x.genres||[]).forEach(g=>gc[g]=(gc[g]||0)+1));
+  const topG=Object.entries(gc).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const dist=Array.from({length:10},(_,i)=>[`${10-i} · ${SL[10-i]}`,scored.filter(x=>Math.round(x.score)===10-i).length]);
+  const stColor=lab=>{const k=Object.keys(STL).find(k=>STL[k]===lab);return k?STC[k][0]:ACC};
+  let a=table(7,2,"By status",byStatus,stColor);
+  let b=table(7,6,"Score distribution",dist,(lab,i)=>SCOREFILL[10-i]);
+  let r2=Math.max(a,b)+2;
+  a=table(r2,2,"By kind",byKind.length?byKind:[["—",0]]);
+  b=table(r2,6,"Top genres",topG.length?topG:[["—",0]]);
+
+  /* ---- Top rated sheet ---- */
+  const top=list.filter(x=>x.score>=9||x.favorite).sort((a,b)=>(b.score||0)-(a.score||0)||(b.favorite?1:0)-(a.favorite?1:0));
+  if(top.length){
+    const tp=wb.addWorksheet("Top picks",{properties:{tabColor:{argb:"FF1E7A4F"}},views:[{showGridLines:false,state:"frozen",ySplit:3}]});
+    tp.columns=[{width:3},{width:7},{width:40},{width:12},{width:7},{width:32}];
+    tp.mergeCells("A1:F1");const tt=tp.getCell("A1");tt.value="Top picks — scored 9+ or favorited";tt.font={name:"Arial Black",size:16,color:{argb:"FFFFFFFF"}};tt.alignment={vertical:"middle",indent:1};
+    for(let c=1;c<=6;c++){tp.getCell(1,c).fill=fill(INK);tp.getCell(2,c).fill=fill(ACC)}tp.getRow(1).height=34;tp.getRow(2).height=4;
+    ["","Score","Title","Kind","Year","Genres"].forEach((h,i)=>{const c=tp.getCell(3,i+1);c.value=h;c.font={name:FONT,bold:true,size:10};c.border={bottom:{style:"medium",color:{argb:INK}}}});
+    top.forEach((it,k)=>{const r=4+k;tp.getRow(r).height=20;
+      const sc=tp.getCell(r,2);sc.value=it.score||"♥";sc.alignment={horizontal:"center",vertical:"middle"};
+      if(it.score){sc.fill=fill(SCOREFILL[Math.round(it.score)]);sc.font={name:"Arial Black",size:11,color:{argb:"FFFFFFFF"}}}else sc.font={name:FONT,size:12,color:{argb:ACC}};
+      const ti=tp.getCell(r,3);ti.value=(it.favorite&&it.score?"♥ ":"")+it.title;ti.font={name:FONT,bold:true,size:10.5};ti.alignment={vertical:"middle",indent:1};
+      [[4,KL[it.kind]||""],[5,it.year||""],[6,(it.genres||[]).join(", ")]].forEach(([c,v])=>{const x=tp.getCell(r,c);x.value=v;x.font={name:FONT,size:10,color:{argb:MUTED}};x.alignment={vertical:"middle",horizontal:c===5?"center":"left",indent:c===5?0:1}});
+      for(let c=1;c<=6;c++)tp.getCell(r,c).border={bottom:thin};
+    });
+  }
+  return wb;
+}
+
+function saveBlob(blob,filename){
+  try{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);return true}catch(e){return false}
+}
+function loadExcel(){
+  if(window.ExcelJS)return Promise.resolve();
+  const srcs=["https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js","https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"];
+  const tryOne=i=>new Promise((res,rej)=>{if(i>=srcs.length)return rej(new Error("offline"));const sc=document.createElement("script");sc.src=srcs[i];sc.onload=()=>window.ExcelJS?res():tryOne(i+1).then(res,rej);sc.onerror=()=>{sc.remove();tryOne(i+1).then(res,rej)};document.head.appendChild(sc)});
+  return tryOne(0);
+}
+function openShare(){
+  const list=items();if(!list.length){toast("Add some titles first, then share them.");return}
+  const counts=STATUSES.map(x=>[x.k,list.filter(i=>i.status===x.k).length]);
+  openSheet(`<header><h2>Share as Excel</h2><button class="x" data-close aria-label="Close">×</button></header>
+    <div class="body">
+      <p class="help">Makes a styled spreadsheet with three tabs: your full library, an at-a-glance summary, and your top picks. Anyone can open it in Excel, Google Sheets or Numbers.</p>
+      <div class="field"><label for="shName">Your name on the sheet</label><input type="text" id="shName" value="${esc(lsGet("celarchive.owner")||"")}" placeholder="e.g. Raymond → “Raymond’s Animation Library”"></div>
+      <div class="field"><span class="lbl">Include</span>
+        <div style="display:flex;flex-wrap:wrap;gap:8px 18px">${counts.map(([k,n])=>`<label class="check"><input type="checkbox" data-shst="${k}" checked> ${ST_LABEL[k]} <span class="mono" style="color:var(--muted)">${n}</span></label>`).join("")}</div>
+      </div>
+      <label class="check"><input type="checkbox" id="shNotes" checked> Include my notes</label>
+    </div>
+    <div class="foot-bar"><span class="sp"></span><button class="btn" data-close>Cancel</button><button class="btn primary" id="shGo">Download .xlsx</button></div>`);
+  $("#shGo").onclick=async()=>{
+    const owner=$("#shName").value.trim();lsSet("celarchive.owner",owner);
+    const keep=new Set([...document.querySelectorAll("[data-shst]")].filter(x=>x.checked).map(x=>x.dataset.shst));
+    let sel=list.filter(x=>keep.has(x.status));
+    if(!sel.length){toast("Tick at least one status to share.");return}
+    if(!$("#shNotes").checked)sel=sel.map(x=>({...x,notes:null}));
+    $("#shGo").disabled=true;$("#shGo").textContent="Building…";
+    try{await loadExcel()}catch(e){$("#shGo").disabled=false;$("#shGo").textContent="Download .xlsx";toast("Connect to the internet to build the spreadsheet. Your library itself works offline.");return}
+    try{
+      const wb=buildWorkbook(window.ExcelJS,sel,{owner});
+      const buf=await wb.xlsx.writeBuffer();
+      const slug=(owner?owner.replace(/[^\w]+/g,"-")+"-":"")+"animation-library";
+      saveBlob(new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}),`${slug}-${new Date().toISOString().slice(0,10)}.xlsx`);
+      closeSheet();toast(`Spreadsheet with ${sel.length} titles downloaded`);
+    }catch(e){$("#shGo").disabled=false;$("#shGo").textContent="Download .xlsx";toast("Couldn’t build the spreadsheet. Try again.")}
+  };
+}
+/* ---------- boot ---------- */
+store.onChange(()=>{
+  const lb=+lsGet("celarchive.lastBackup")||0;
+  const days=lb?Math.floor((Date.now()-lb)/864e5):null;
+  const stale=store.items.size&&(days===null||days>=14);
+  setSync(stale?"local":"ok","Saved on this device · "+(lb?(days===0?"backed up today":`last backup ${days} day${days===1?"":"s"} ago`):"no backup yet"));
+  render();
+});
+render();
+store.init();
+})();
+</script>
+
+</body></html>
