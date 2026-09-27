@@ -244,6 +244,7 @@ button.tcard{font:inherit;color:inherit;text-align:left;cursor:pointer;position:
 .drow .dt small{font-size:12px;color:var(--muted)}
 .drow .ds{font-family:var(--display);font-size:20px;min-width:28px;text-align:right}
 .drow .ds.none{color:var(--line)}
+.more{display:flex;flex-direction:column;align-items:center;gap:6px;padding-block:20px 8px}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:80;max-width:calc(100% - 32px);box-shadow:var(--shadow)}
 .menu{position:relative}
 .menu .pop{position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px;display:flex;flex-direction:column;min-width:220px;z-index:30}
@@ -302,6 +303,7 @@ button.tcard{font:inherit;color:inherit;text-align:left;cursor:pointer;position:
   <div id="bannerSlot"></div>
   <div id="grid" class="grid"></div>
   <div id="emptySlot"></div>
+  <div id="moreSlot"></div>
 </div>
 
 <div id="sheetSlot"></div>
@@ -608,12 +610,17 @@ function cardHTML(it){
     </div>
   </article>`;
 }
+const PAGE_SIZE=500;let shownCount=PAGE_SIZE,lastViewKey="";
 function render(){
   if(!store.loaded){$("#grid").innerHTML="";$("#emptySlot").innerHTML=`<div class="loading">Opening your library…</div>`;return}
   renderBand();renderTaste();renderTabs();renderSelects();
   const list=viewItems();
   $("#bannerSlot").innerHTML=isExampleMode()?`<div class="banner"><p><b>Your library is empty.</b> The three cards below are examples so you can see how entries look. Add a title, or paste your Google Doc list into Bulk import. Everything saves in this browser, so download a backup from More now and then.</p><button class="btn primary sm" id="bannerBulk">Bulk import</button></div>`:"";
-  $("#grid").innerHTML=list.map(cardHTML).join("");
+  const vk=[state.status,state.q,state.kind,state.genre,state.demo,state.sort].join("|");
+  if(vk!==lastViewKey){shownCount=PAGE_SIZE;lastViewKey=vk}
+  $("#grid").innerHTML=list.slice(0,shownCount).map(cardHTML).join("");
+  const left=list.length-shownCount;
+  $("#moreSlot").innerHTML=left>0?`<div class="more"><button type="button" class="btn" id="btnMore">Load ${Math.min(PAGE_SIZE,left)} more</button><span class="help">Showing ${shownCount} of ${list.length}</span></div>`:"";
   $("#emptySlot").innerHTML=list.length?"":`<div class="empty">${state.status==="fav"&&!state.q&&!state.kind&&!state.genre&&!state.demo?"No favorites yet. Tap the ♡ on any card to add one.":"Nothing matches these filters."}</div>`;
   const bb=$("#bannerBulk");if(bb)bb.onclick=openBulk;
 }
@@ -1499,6 +1506,7 @@ function openTerms(focus,fromEdit){
 }
 
 /* ---------- boot ---------- */
+$("#moreSlot").addEventListener("click",e=>{if(e.target.closest("#btnMore")){shownCount+=PAGE_SIZE;render()}});
 window.addEventListener("pagehide",()=>store.flush());
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")store.flush()});
 store.onChange(()=>{
