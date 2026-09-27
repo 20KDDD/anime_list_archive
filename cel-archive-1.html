@@ -61,7 +61,7 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;padding-
 .btn.sm{padding:5px 10px;font-size:13px;border-radius:8px}
 
 /* stats band */
-.band{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) minmax(0,1.6fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:18px}
+.band{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:18px}
 .stat{background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:2px;min-width:0}
 .stat .k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
 .stat .v{font-family:var(--display);font-size:28px;line-height:1.15;font-variant-numeric:tabular-nums}
@@ -73,7 +73,10 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;padding-
 .hist .bar b{display:block;width:100%;border-radius:3px 3px 1px 1px;background:var(--accent);min-height:2px;opacity:.85}
 .hist .bar b.zero{background:var(--line);opacity:1}
 .hist .axis{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;font-family:var(--mono);font-size:10.5px;color:var(--muted);text-align:center;border-top:1px solid var(--line);padding-top:3px}
-@media (max-width:860px){.band{grid-template-columns:repeat(2,minmax(0,1fr))}.hist{grid-column:1/-1}}
+.band .hist{grid-column:1/-1}
+.stat.lead .v{color:var(--accent)}
+@media (max-width:1000px){.band{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:560px){.band{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 /* toolbar */
 .tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;scrollbar-width:none}
@@ -245,6 +248,8 @@ button.tcard{font:inherit;color:inherit;text-align:left;cursor:pointer;position:
 .drow .ds{font-family:var(--display);font-size:20px;min-width:28px;text-align:right}
 .drow .ds.none{color:var(--line)}
 .more{display:flex;flex-direction:column;align-items:center;gap:6px;padding-block:20px 8px}
+.flag.upd{border-style:solid;border-color:var(--st-completed);color:var(--st-completed)}
+.duphint{font-size:12.5px;color:var(--st-completed);min-height:0}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:80;max-width:calc(100% - 32px);box-shadow:var(--shadow)}
 .menu{position:relative}
 .menu .pop{position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px;display:flex;flex-direction:column;min-width:220px;z-index:30}
@@ -453,21 +458,27 @@ function viewItems(){
 /* ---------- render ---------- */
 function renderBand(){
   const src=isExampleMode()?EXAMPLES:items();
+  const SEEN=["completed","unfinished","dropped","watching","on_hold"];
   const done=src.filter(x=>x.status==="completed");
-  const cnt=k=>done.filter(x=>x.kind===k).length;
-  const prog=k=>src.filter(x=>x.status==="watching"&&(!k||x.kind===k)).length;
-  const other=done.filter(x=>!["anime","donghua","cartoon"].includes(x.kind)).length;
+  const seen=src.filter(x=>SEEN.includes(x.status));
+  const by=(l,st)=>l.filter(x=>x.status===st).length;
+  const kd=(l,k)=>l.filter(x=>x.kind===k);
+  const prog=src.filter(x=>x.status==="watching"||x.status==="on_hold").length;
+  const other=src.filter(x=>SEEN.includes(x.status)&&!["anime","donghua","cartoon"].includes(x.kind));
   const scored=src.filter(x=>x.score);
   const mean=scored.length?(scored.reduce((a,b)=>a+b.score,0)/scored.length):null;
   const seasonsW=src.reduce((a,b)=>a+seasonsOf(b).filter(s=>s.watched).length,0);
   const counts=Array.from({length:10},(_,i)=>scored.filter(x=>Math.round(x.score)===i+1).length);
   const max=Math.max(1,...counts);
-  const tile=(k,v,sub)=>`<div class="stat"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${sub}</span></div>`;
+  const tile=(k,v,sub,cls)=>`<div class="stat${cls?" "+cls:""}"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${sub}</span></div>`;
+  const kindTile=(label,k,extra)=>{const s=kd(seen,k),c=by(s,"completed");return tile(label,c,`completed · ${s.length} seen${extra||""}`)};
   $("#band").innerHTML=
-    tile("Watched · all",done.length,`${prog()} in progress · ${seasonsW} season${seasonsW===1?"":"s"}`)+
-    tile("Anime",cnt("anime"),`${prog("anime")} in progress`)+
-    tile("Donghua",cnt("donghua"),`${prog("donghua")} in progress`)+
-    tile("Cartoons",cnt("cartoon"),other?`+${other} other animation`:`${prog("cartoon")} in progress`)+
+    tile("Completed",done.length,`finished every season · ${seasonsW} seasons watched`,"lead")+
+    tile("Seen · all",seen.length,[`${by(seen,"unfinished")} unfinished`,`${by(seen,"dropped")} dropped`,prog?`${prog} in progress`:""].filter(Boolean).join(" · "),"lead")+
+    kindTile("Anime","anime")+
+    kindTile("Donghua","donghua")+
+    kindTile("Cartoons","cartoon")+
+    tile("Other animation",other.filter(x=>x.status==="completed").length,`completed · ${other.length} seen`)+
     `<div class="hist" aria-label="Score distribution">
       <span class="k lbl" style="display:flex;justify-content:space-between;gap:8px"><span>Score distribution</span><span>${mean?"mean "+mean.toFixed(2):""}</span></span>
       <div class="bars">${counts.map(c=>`<div class="bar" title="${c} title(s)"><span>${c||""}</span><b class="${c?"":"zero"}" style="height:${c?Math.max(4,c/max*58):2}px"></b></div>`).join("")}</div>
@@ -706,7 +717,7 @@ function openEdit(it){
       <div class="presults" id="ePResults"></div>
       ${past}
       <div class="form-grid">
-        <div class="field c6"><label for="eTitle">Title</label><input type="text" id="eTitle" value="${esc(d.title)}" required${isNew?" autofocus":""}></div>
+        <div class="field c6"><label for="eTitle">Title</label><input type="text" id="eTitle" value="${esc(d.title)}" required${isNew?" autofocus":""}><span class="duphint" id="eDupHint"></span></div>
         <div class="field c6"><label for="eAlt">Other title <span style="text-transform:none;letter-spacing:0;font-weight:400">(Japanese, Chinese, English…)</span></label><input type="text" id="eAlt" value="${esc(d.altTitle||"")}"></div>
         <div class="field c2"><label for="eKind">Kind</label><select id="eKind">${opt(KINDS,d.kind)}</select></div>
         <div class="field c2"><label for="eType">Format</label><select id="eType">${opt(TYPES,d.type)}</select></div>
@@ -803,7 +814,8 @@ function openEdit(it){
   $("#gAdd").onclick=addCustom;$("#gCustom").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();addCustom()}};
   $("#eStatus").onchange=e=>{if(e.target.value==="completed"){seasons.forEach(x=>x.watched=true);drawS();$("#sHint").textContent="";if(!$("#eWatched").value)$("#eWatched").value=new Date().getFullYear()}};
   $("#editForm").onsubmit=e=>{e.preventDefault();save(false)};
-  let dupOk=false;
+  const findDup=t=>{const n=norm(t);return n?items().find(x=>x.id!==d.id&&norm(x.title)===n):null};
+  if(isNew){const upd=()=>{const x=findDup($("#eTitle").value);$("#eDupHint").textContent=x?`Already in your library as “${x.title}”. Saving updates that one instead of adding a copy.`:""};$("#eTitle").addEventListener("input",upd);upd()}
   async function save(markChecked){
     const title=$("#eTitle").value.trim();if(!title){$("#eTitle").focus();toast("Give the title a name first.");return}
     const status=$("#eStatus").value,type=$("#eType").value;
@@ -827,9 +839,21 @@ function openEdit(it){
       reviewMsg=left.length?` Still to check: ${left.join(", ").toLowerCase()}.`:" Removed from Needs review.";
     }
     if(markChecked){out.needsReview=false;out.flags=[];reviewMsg=d.needsReview?" Removed from Needs review.":""}
-    if(isNew&&!dupOk){const dup=items().find(x=>norm(x.title)===norm(title));if(dup){dupOk=true;toast(`“${dup.title}” is already in your library. Press Add again to keep both.`);return}}
+    let updatedDup=null;
+    if(isNew){const dup=findDup(title);if(dup){
+      updatedDup=dup;
+      Object.assign(out,{id:dup.id,title:dup.title,createdAt:dup.createdAt||now,favorite:out.favorite||!!dup.favorite,poster:out.poster||dup.poster||null,alUrl:out.poster?out.alUrl:(dup.alUrl||null),
+        notes:out.notes||dup.notes||null,rewatches:out.rewatches??dup.rewatches??null,startDate:out.startDate||dup.startDate||null,finishDate:out.finishDate||dup.finishDate||null,
+        watchedYear:out.watchedYear||dup.watchedYear||null,year:out.year||dup.year||null,altTitle:out.altTitle||dup.altTitle||null,demo:out.demo||dup.demo||null,
+        genres:out.genres.length?out.genres:(dup.genres||[])});
+      const dh=[...(dup.scoreHistory||[])];
+      if(dup.score&&out.score&&out.score!==dup.score){dh.push({score:dup.score,date:dup.scoreDate||dup.updatedAt||now,note:dup.scoreReason||null});out.scoreDate=now}
+      else if(!out.score){out.score=dup.score||null;out.scoreDate=dup.scoreDate||null;out.scoreReason=dup.scoreReason||null}
+      out.scoreHistory=dh;
+      const left=[];if(!out.year)left.push("No release year");if(!out.kind)left.push("Kind not set");out.flags=left;out.needsReview=left.length>0;
+    }}
     $("#eSave").disabled=true;
-    try{await store.put(out);if(isNew&&!out.poster)findPosters([out],false);closeSheet();toast((isNew?`Added ${title}`:(origScore&&score!==origScore?`Score changed ${origScore} → ${score||"none"}. Your old take is saved.`:"Saved"))+reviewMsg)}catch(err){$("#eSave").disabled=false;toast(errMsg(err))}
+    try{await store.put(out);if(isNew&&!out.poster)findPosters([out],false);closeSheet();toast((updatedDup?`Updated “${updatedDup.title}”. It was already in your library, so no copy was made.`:isNew?`Added ${title}`:(origScore&&score!==origScore?`Score changed ${origScore} → ${score||"none"}. Your old take is saved.`:"Saved"))+reviewMsg)}catch(err){$("#eSave").disabled=false;toast(errMsg(err))}
   }
   $("#eSave").onclick=()=>save(false);
   const rv=$("#eReviewed");if(rv)rv.onclick=()=>save(true);
@@ -1020,17 +1044,16 @@ function finalizeRows(rows,defaultStatus){
     row.kind=row.kind||null;row.type=row.type||null;
     if(!row.status){row.status=defaultStatus;row._statusGuessed=true}
     const n=norm(row.title);
-    if(lib.has(n)){row._include=false;row._dup="library"}
-    else if(seen.has(n)){row._include=false;row._dup="batch"}
-    seen.set(n,true);
+    if(seen.has(n)){const prev=seen.get(n);prev._include=false;prev._dup="batch"}
+    if(lib.has(n)){row._dup="library";row._existingId=lib.get(n).id}
+    seen.set(n,row);
     if(row.status==="completed"&&row.epTotal&&row.epWatched==null)row.epWatched=row.epTotal;
     return row;
   });
 }
 function rowFlags(r){
   const f=[...(r.flags||[])];
-  if(r._dup==="library")f.unshift("Already in your library, skipped unless you tick it");
-  if(r._dup==="batch")f.unshift("Listed twice in this import");
+  if(r._dup==="batch")f.unshift("Listed again further down, so that line is used instead");
   if(!r.year)f.push("No release year");
   if(!r.kind)f.push("Kind not set");
   if(r._statusGuessed)f.push(`No status found, using “${ST_LABEL[r.status]}”`);
@@ -1069,10 +1092,11 @@ function drawBulk(){
   }
   const inc=bulk.rows.filter(r=>r._include);
   const flagged=bulk.rows.filter(r=>r._include&&rowFlags(r).length).length;
+  const upd=inc.filter(r=>r._dup==="library").length;
   const sheet=openSheet(`
     <header><h2>Check ${bulk.rows.length} titles</h2><button class="x" data-close aria-label="Close">×</button></header>
     <div class="body">
-      <div class="isum"><span><b>${inc.length}</b> will be imported</span><span><b>${flagged}</b> have something to check</span><span><b>${bulk.rows.length-inc.length}</b> skipped</span></div>
+      <div class="isum"><span><b>${inc.length-upd}</b> new</span><span><b>${upd}</b> will update shows you already have</span><span><b>${flagged}</b> have something to check</span><span><b>${bulk.rows.length-inc.length}</b> skipped</span></div>
       <p class="help">Fix anything here, or import as is: titles with open questions get a <b>Needs review</b> tab in your library so you can sort them out later.</p>
       <div style="display:flex;flex-wrap:wrap;gap:8px">
         <select id="bShow" style="width:auto"><option value="all">Show all rows</option><option value="flag">Only rows to check</option></select>
@@ -1081,7 +1105,7 @@ function drawBulk(){
       <div class="help" id="bAIMsg"></div>
       <div class="irows" id="bRows"></div>
     </div>
-    <div class="foot-bar"><button class="btn ghost" id="bBack">← Edit text</button><span class="sp"></span><button class="btn" data-close>Cancel</button><button class="btn primary" id="bGo"${inc.length?"":" disabled"}>Import ${inc.length} titles</button></div>`,true);
+    <div class="foot-bar"><button class="btn ghost" id="bBack">← Edit text</button><span class="sp"></span><button class="btn" data-close>Cancel</button><button class="btn primary" id="bGo"${inc.length?"":" disabled"}>${upd?`Import (${inc.length-upd} new, ${upd} updates)`:`Import ${inc.length} titles`}</button></div>`,true);
   const showOnly=bulk._show||"all";$("#bShow").value=showOnly;
   const rowsEl=$("#bRows");
   const kindOpts=v=>`<option value="">—</option>`+KINDS.map(k=>`<option value="${k.k}"${k.k===v?" selected":""}>${k.label}</option>`).join("");
@@ -1102,7 +1126,7 @@ function drawBulk(){
       <div class="field"><label for="ty${i}">Format</label><select id="ty${i}" data-f="type">${typeOpts(r.type)}</select></div>
       <div class="field"><label for="sn${i}">Seasons</label><input type="number" id="sn${i}" data-f="seasonCount" min="0" inputmode="numeric" value="${esc(r.type==="Movie"?"":(r.seasonCount||1))}"></div>
       <div class="field genres"><label for="g${i}">Genres</label><input type="text" id="g${i}" data-f="genres" value="${esc((r.genres||[]).join(", "))}" placeholder="Action, Fantasy"></div>
-      <div class="under">${f.map(x=>`<span class="flag">${esc(x)}</span>`).join("")}<span class="raw" title="Original line">${esc(r.rawLine.length>120?r.rawLine.slice(0,117)+"…":r.rawLine)}</span></div>
+      <div class="under">${r._dup==="library"&&r._include?`<span class="flag upd">Updates the one in your library</span>`:""}${f.map(x=>`<span class="flag">${esc(x)}</span>`).join("")}<span class="raw" title="Original line">${esc(r.rawLine.length>120?r.rawLine.slice(0,117)+"…":r.rawLine)}</span></div>
     </div>`}).join("")||`<div class="empty">No rows need checking.</div>`;
   rowsEl.addEventListener("change",e=>{
     const el=e.target;const f=el.dataset.f;if(!f)return;const i=+el.closest(".irow").dataset.i;const r=bulk.rows.find(x=>x._i===i);
@@ -1124,12 +1148,40 @@ $("#fileText").addEventListener("change",async e=>{
   if($("#bText")){$("#bText").value=text;$("#bText").dispatchEvent(new Event("input"))}
 });
 
+function mergeImported(ex,r,now){
+  const out={...ex,updatedAt:now,rawLine:r.rawLine||ex.rawLine||null};
+  if(r.altTitle)out.altTitle=r.altTitle;
+  ["kind","demo","type","year","watchedYear"].forEach(k=>{if(r[k])out[k]=r[k]});
+  const statusChanged=!r._statusGuessed&&r.status&&r.status!==ex.status;
+  if(!r._statusGuessed&&r.status)out.status=r.status;
+  if(r.genres&&r.genres.length)out.genres=[...r.genres];
+  if(r.notes&&!(ex.notes||"").includes(r.notes))out.notes=ex.notes?`${ex.notes}\n${r.notes}`:r.notes;
+  if(r.score&&r.score!==ex.score){
+    if(ex.score)out.scoreHistory=[...(ex.scoreHistory||[]),{score:ex.score,date:ex.scoreDate||ex.updatedAt||ex.createdAt||now,note:ex.scoreReason||null}];
+    out.score=r.score;out.scoreDate=now;out.scoreReason="Updated from import";
+  }
+  if(out.type==="Movie")out.seasons=[];
+  else{
+    const old=seasonsOf(ex),cnt=Math.max(1,r.seasonCount||old.length||1);
+    out.seasons=Array.from({length:cnt},(_,j)=>{const o={...(old[j]||{}),n:j+1};
+      if(out.status==="completed")o.watched=true;
+      else if(statusChanged&&(out.status==="dropped"||out.status==="plan"))o.watched=false;
+      else if(statusChanged&&out.status==="unfinished")o.watched=j===0||!!o.watched;
+      else o.watched=!!o.watched;
+      return o});
+  }
+  const left=[];if(!out.year)left.push("No release year");if(!out.kind)left.push("Kind not set");
+  out.flags=left;out.needsReview=left.length>0;
+  return out;
+}
 async function runImport(){
   const inc=bulk.rows.filter(r=>r._include&&r.title&&r.title.trim());
   if(!inc.length)return;
   const now=Date.now();
   const docs=inc.map((r,k)=>{
-    const flags=rowFlags(r).filter(f=>!/^Already in your library/.test(f));
+    const ex=r._existingId&&store.items.get(r._existingId);
+    if(ex)return mergeImported(ex,r,now-k);
+    const flags=rowFlags(r);
     return {id:newId()+k.toString(36),title:r.title.trim(),altTitle:r.altTitle||null,kind:r.kind||null,demo:r.demo||null,type:r.type||null,year:r.year||null,status:r.status,
       score:r.score||null,scoreDate:r.score?now:null,scoreHistory:[],genres:r.genres||[],watchedYear:r.watchedYear||null,notes:r.notes||null,
       seasons:r.type==="Movie"?[]:Array.from({length:Math.max(1,r.seasonCount||1)},(_,j)=>({n:j+1,watched:r.status==="completed"||(r.status==="unfinished"&&j===0)})),
@@ -1142,10 +1194,11 @@ async function runImport(){
   if(failed.length){$("#bAIMsg").textContent=`${docs.length-failed.length} saved. ${failed.length} failed: ${errMsg(failed[0].e)}`;go.disabled=false;
     const failedIds=new Set(failed.map(f=>f.it.title));bulk.rows.forEach(r=>{if(!failedIds.has(r.title.trim()))r._include=false});return}
   const nr=docs.filter(d=>d.needsReview).length;
+  const nUpd=inc.filter(r=>r._existingId&&store.items.get(r._existingId)).length;
   setTimeout(()=>findPosters(docs,false),1500);
   bulk.text="";closeSheet();
   state.status=nr?"review":"all";render();
-  toast(`Imported ${docs.length} titles${nr?`. ${nr} are in Needs review`:""}`);
+  toast(`${nUpd?`Added ${docs.length-nUpd} new, updated ${nUpd}`:`Imported ${docs.length} titles`}${nr?`. ${nr} are in Needs review`:""}`);
 }
 
 /* ---------- export / restore / delete all ---------- */
