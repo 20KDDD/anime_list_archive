@@ -217,6 +217,11 @@ details.opt[open] summary{margin-bottom:10px}
 .gl-item dd i{color:var(--ink);font-style:normal}
 .gl-item.hit{border-color:var(--accent)}
 .linkbtn{border:none;background:none;color:var(--accent);font-size:13px;padding:4px;text-decoration:underline;text-underline-offset:2px}
+.favbtn{border:none;background:none;font-size:19px;line-height:1;padding:2px 4px;color:var(--muted);flex:0 0 auto}
+.favbtn[aria-pressed="true"]{color:var(--accent)}
+.favbtn:hover{color:var(--accent)}
+.tab.favtab .heart{color:var(--accent)}
+.tab.favtab[aria-pressed="true"] .heart{color:var(--accent)}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:80;max-width:calc(100% - 32px);box-shadow:var(--shadow)}
 .menu{position:relative}
 .menu .pop{position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px;display:flex;flex-direction:column;min-width:220px;z-index:30}
@@ -401,6 +406,7 @@ function viewItems(){
   const q=state.q.trim().toLowerCase();
   list=list.filter(it=>{
     if(state.status==="review"){if(!it.needsReview)return false}
+    else if(state.status==="fav"){if(!it.favorite)return false}
     else if(state.status!=="all"&&it.status!==state.status)return false;
     if(state.kind&&it.kind!==state.kind)return false;
     if(state.genre&&!(it.genres||[]).includes(state.genre))return false;
@@ -497,9 +503,10 @@ function renderTabs(){
   const src=isExampleMode()?EXAMPLES:items();
   const review=src.filter(x=>x.needsReview).length;
   const tabs=[{k:"all",label:"All",n:src.length},...STATUSES.map(s=>({k:s.k,label:s.label,n:src.filter(x=>x.status===s.k).length,dot:true}))];
+  tabs.splice(1,0,{k:"fav",label:"Favorites",n:src.filter(x=>x.favorite).length,fav:true});
   if(review)tabs.push({k:"review",label:"Needs review",n:review,review:true});
   if(state.status==="review"&&!review)state.status="all";
-  $("#tabs").innerHTML=tabs.map(t=>`<button class="tab${t.review?" review":""}" data-st="${t.k}" aria-pressed="${state.status===t.k}">${t.dot?`<span class="dot" style="background:var(--st-${t.k})"></span>`:""}${esc(t.label)} <span class="n">${t.n}</span></button>`).join("");
+  $("#tabs").innerHTML=tabs.map(t=>`<button class="tab${t.review?" review":""}${t.fav?" favtab":""}" data-st="${t.k}" aria-pressed="${state.status===t.k}">${t.fav?`<span class="heart" aria-hidden="true">♥</span>`:""}${t.dot?`<span class="dot" style="background:var(--st-${t.k})"></span>`:""}${esc(t.label)} <span class="n">${t.n}</span></button>`).join("");
 }
 function renderSelects(){
   const src=items();
@@ -537,6 +544,7 @@ function cardHTML(it){
     <div class="foot">
       <span class="pill">${esc(ST_LABEL[st])}</span>
       <div class="prog"><div class="track"><b style="width:${pct}%"></b></div><span class="t">${esc(sTxt)}</span></div>
+      ${it._example?"":`<button class="favbtn" data-fav="${esc(it.id)}" aria-pressed="${!!it.favorite}" aria-label="${it.favorite?"Remove from":"Add to"} favorites">${it.favorite?"♥":"♡"}</button>`}
       ${st==="watching"&&!it._example?`<button class="plus" data-done="${esc(it.id)}" aria-label="Mark ${esc(it.title)} as finished">Finished ✓</button>`:""}
     </div>
   </article>`;
@@ -547,7 +555,7 @@ function render(){
   const list=viewItems();
   $("#bannerSlot").innerHTML=isExampleMode()?`<div class="banner"><p><b>Your library is empty.</b> The three cards below are examples so you can see how entries look. Add a title, or paste your Google Doc list into Bulk import. Everything saves in this browser, so download a backup from More now and then.</p><button class="btn primary sm" id="bannerBulk">Bulk import</button></div>`:"";
   $("#grid").innerHTML=list.map(cardHTML).join("");
-  $("#emptySlot").innerHTML=list.length?"":`<div class="empty">Nothing matches these filters.</div>`;
+  $("#emptySlot").innerHTML=list.length?"":`<div class="empty">${state.status==="fav"&&!state.q&&!state.kind&&!state.genre&&!state.demo?"No favorites yet. Tap the ♡ on any card to add one.":"Nothing matches these filters."}</div>`;
   const bb=$("#bannerBulk");if(bb)bb.onclick=openBulk;
 }
 
@@ -559,6 +567,11 @@ $("#fgenre").addEventListener("change",e=>{state.genre=e.target.value;render()})
 $("#fdemo").addEventListener("change",e=>{state.demo=e.target.value;render()});
 $("#fsort").addEventListener("change",e=>{state.sort=e.target.value;lsSet("celarchive.sort",state.sort);render()});
 $("#grid").addEventListener("click",async e=>{
+  const fv=e.target.closest("[data-fav]");
+  if(fv){e.stopPropagation();const it=store.items.get(fv.dataset.fav);if(!it)return;
+    const on=!it.favorite;
+    try{await store.put({...it,favorite:on,updatedAt:Date.now()});toast(on?`♥ Added ${it.title} to favorites`:`Removed ${it.title} from favorites`)}catch(err){toast(errMsg(err))}
+    return}
   const p=e.target.closest("[data-done]");
   if(p){e.stopPropagation();const it=store.items.get(p.dataset.done);if(!it)return;
     const up={...it,status:"completed",seasons:seasonsOf(it).map(s=>({...s,watched:true})),updatedAt:Date.now()};
