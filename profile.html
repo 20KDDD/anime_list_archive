@@ -336,7 +336,7 @@ const SECS={
 
 function fresh(){return{v:1,hero:{name:'',title:'',avatar:'',banner:''},f:{},l:{},diary:[],ob:{},obHist:[],
  theme:{preset:'emerald',custom:{...PRESETS.emerald},house:false,font:'game',card:'solid',amb:'fireflies'},
- layout:{order:{},hidden:{},titles:{},accent:{heroes:'#2F7FE0'},custom:[]},cel:{on:true},posters:{}}}
+ layout:{order:{},hidden:{},titles:{},accent:{heroes:'#2F7FE0'},custom:[]},cel:{on:true},posters:{},celSnap:[]}}
 function merge(a,b){for(const k in b){const x=b[k];if(x&&typeof x==='object'&&!Array.isArray(x)&&a[k]&&typeof a[k]==='object'&&!Array.isArray(a[k]))a[k]=merge(a[k],x);else a[k]=x}return a}
 
 let S=fresh(),canSave=true,page='about',obOpen=false;const filt={};
@@ -400,10 +400,16 @@ function level(){let xp=0;for(const s in S.f)for(const k in S.f[s])if(S.f[s][k]&
 
 /* Cel Archive link: same site on GitHub Pages, so its saved list is readable here */
 const CEL_KEY='celarchive.items.v1',ANI='https://graphql.anilist.co';
-function celFavs(){try{const arr=JSON.parse(localStorage.getItem(CEL_KEY)||'[]');return Array.isArray(arr)?arr.filter(x=>x&&x.favorite&&x.title).sort((a,b)=>(b.score??-1)-(a.score??-1)||String(a.title).localeCompare(b.title)):[]}catch(e){return[]}}
+const favSort=(a,b)=>(b.score??-1)-(a.score??-1)||String(a.title).localeCompare(b.title);
+function celLive(){try{const arr=JSON.parse(localStorage.getItem(CEL_KEY)||'[]');return Array.isArray(arr)?arr.filter(x=>x&&x.favorite&&x.title):[]}catch(e){return[]}}
+let celSrc='none';
+function celFavs(){const live=celLive();if(live.length){celSrc='live';return live.sort(favSort)}if(S.celSnap&&S.celSnap.length){celSrc='backup';return [...S.celSnap].sort(favSort)}celSrc='none';return[]}
+const posterOf=x=>x.poster?String(x.poster).replace('/cover/medium/','/cover/large/'):(S.posters[x.title]||'');
+function importCel(text){const o=JSON.parse(text);const items=Array.isArray(o)?o:o&&o.items;if(!Array.isArray(items))throw new Error('bad');
+ S.celSnap=items.filter(x=>x&&x.favorite&&x.title).map(x=>({id:String(x.id),title:x.title,kind:x.kind||'',year:x.year||'',score:x.score??null,poster:x.poster||''}));return S.celSnap.length}
 const celSub=x=>[x.kind?cap(x.kind):'',x.year||'',x.score!=null?`${x.score}/10`:''].filter(Boolean).join(' · ');
 let posterBusy=false;
-async function fillPosters(){if(posterBusy||!S.cel.on)return;const need=celFavs().filter(x=>!(x.title in S.posters));if(!need.length)return;posterBusy=true;
+async function fillPosters(){if(posterBusy||!S.cel.on)return;const need=celFavs().filter(x=>!x.poster&&!(x.title in S.posters));if(!need.length)return;posterBusy=true;
  try{for(const x of need)if(x.kind==='cartoon')S.posters[x.title]='';const q=need.filter(x=>x.kind!=='cartoon');
   for(let i=0;i<q.length;i+=10){const grp=q.slice(i,i+10);const query='query{'+grp.map((x,j)=>`a${j}:Media(search:${JSON.stringify(String(x.title))},type:ANIME){coverImage{large}}`).join(' ')+'}';
    const r=await fetch(ANI,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({query})});const j=await r.json();if(!j||!j.data)break;
@@ -442,8 +448,10 @@ function fieldHTML(s,f,autoVal){const v=fv(s,f.k),id=`f-${s}-${f.k}`,dk=`${s}.${
 function listHTML(id,d,L,i){const items=getList(id,L.k);let head='';
  if(L.l)head=`<div class="lh${i===0?' first':''}"><span class="bdg ${L.b||'plain'}">${esc(L.l)}</span>${L.rank?'<span>Ranked, #1 first</span>':''}${L.to?'<span>Tap one to move it to all-time</span>':''}</div>`;
  let list=items;if(L.filter){const cur=filt[id]||'All';head+=`<div class="fchips">${['All',...L.filter].map(x=>`<button class="chip${x===cur?' on':''}" data-filt="${id}.${x}">${x}</button>`).join('')}</div>`;if(cur!=='All')list=items.filter(it=>(it.tag||'Esports')===cur)}
- if(L.cel){const favs=celFavs();if(favs.length){head+=`<div class="fchips"><button class="chip${S.cel.on?' on':''}" data-celtog>♥ ${S.cel.on?'Showing':'Show'} ${favs.length} Cel Archive favorite${favs.length===1?'':'s'}</button></div>`;
-  if(S.cel.on){const have=new Set(list.map(x=>String(x.title).toLowerCase()));list=[...list,...favs.filter(x=>!have.has(String(x.title).toLowerCase())).map(x=>({id:x.id,title:x.title,sub:celSub(x),img:S.posters[x.title]||'',cel:1}))]}}}
+ if(L.cel){const favs=celFavs();const impBtn=lbl=>`<label class="chip" style="cursor:pointer" title="Pick a Cel Archive backup file">${lbl}<input type="file" accept=".json,application/json" hidden data-celimp></label>`;
+  if(!favs.length)head+=`<div class="fchips">${impBtn('♥ Import Cel Archive favorites')}</div>`;
+  if(favs.length){head+=`<div class="fchips" style="flex-wrap:wrap"><button class="chip${S.cel.on?' on':''}" data-celtog>♥ ${S.cel.on?'Showing':'Show'} ${favs.length} Cel Archive favorite${favs.length===1?'':'s'}</button>${celSrc==='backup'?impBtn('Update from backup'):''}</div>`;
+  if(S.cel.on){const have=new Set(list.map(x=>String(x.title).toLowerCase()));list=[...list,...favs.filter(x=>!have.has(String(x.title).toLowerCase())).map(x=>({id:x.id,title:x.title,sub:celSub(x),img:posterOf(x),cel:1}))]}}}
  const ref=it=>`${id}.${L.k}.${it.id}`;
  if(L.shape==='row')return head+`<div class="rows">${list.map(it=>`<div class="rowi"><button class="rowmain" data-edit="${ref(it)}"><span class="th">${it.img?`<img src="${esc(it.img)}" alt="">`:`<span class="ms">${d.i}</span>`}</span><span class="rt"><b>${esc(it.title)}</b>${it.sub?`<small>${esc(it.sub)}</small>`:''}</span>${it.tag?`<span class="tag">${esc(it.tag)}</span>`:''}</button>${it.link?`<a class="lnk" href="${esc(it.link)}" target="_blank" rel="noopener" aria-label="Open link"><span class="ms">open_in_new</span></a>`:''}</div>`).join('')}</div><button class="addrow" data-add="${id}.${L.k}"><span class="ms">add</span>Add ${esc(L.noun||d.noun||'')}</button>`;
  const ghosts=Math.max(0,(L.shape==='poster'?4:3)-list.length-1);
@@ -588,6 +596,7 @@ document.addEventListener('change',async e=>{const el=e.target;
   if(key==='banner')S.hero.banner=await readImg(f,1800);else if(key==='avatar')S.hero.avatar=await readImg(f,500);else if(key==='ob')S.ob.img=await readImg(f,700);
   else if(key.startsWith('f:')){const [s,k]=split(key.slice(2));S.f[s]??={};S.f[s][k]=await readImg(f,800)}
   save();if(key.startsWith('f:'))rerenderSec(split(key.slice(2))[0]);else render();updateHero()}catch(err){toast("That file couldn't be read as an image.")}return}
+ if(el.dataset.celimp!==undefined&&el.files&&el.files[0]){const f=el.files[0];el.value='';try{const n=importCel(await f.text());S.cel.on=true;save();rerenderSec('anime');fillPosters();toast(n?`Imported ${n} favorites`:'No favorites found in that backup')}catch(err){toast("That doesn't look like a Cel Archive backup.")}return}
  if(el.id==='housetog'){S.theme.house=el.checked;applyTheme();save();return}
  if(el.id==='impfile'&&el.files[0]){const text=await el.files[0].text();el.value='';doImport(text,$('#imp-err'))}});
 document.addEventListener('dragover',e=>{if(e.target.closest('.pc.add,.addrow[data-add],.imgslot,.spotimg,.avatar,.banner'))e.preventDefault()});
@@ -601,7 +610,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
  if(ds.add){const [s,k]=split(ds.add);openItem(s,k);return}
  if(ds.edit){const [s,r]=split(ds.edit);const [k,id]=split(r);openItem(s,k,id);return}
  if(ds.entry){openEntry(ds.entry);return}
- if(ds.cel){const [s,r]=split(ds.cel);const [k,id]=split(r);const x=celFavs().find(v=>v.id===id);if(x)openItem(s,k,null,{title:x.title,sub:celSub(x),img:S.posters[x.title]||''});return}
+ if(ds.cel){const [s,r]=split(ds.cel);const [k,id]=split(r);const x=celFavs().find(v=>v.id===id);if(x)openItem(s,k,null,{title:x.title,sub:celSub(x),img:posterOf(x)});return}
  if('celtog' in ds){S.cel.on=!S.cel.on;save();rerenderSec('anime');fillPosters();return}
  if(ds.tladd){getList(ds.tladd,'items').push({id:uid(),text:'',done:false});rerenderSec(ds.tladd);save();const ts=document.querySelectorAll(`#s-${ds.tladd} textarea`);ts[ts.length-1]?.focus();return}
  if(ds.tldel){const [s,id]=split(ds.tldel);S.l[s].items=getList(s,'items').filter(x=>x.id!==id);rerenderSec(s);updateHero();save();return}
