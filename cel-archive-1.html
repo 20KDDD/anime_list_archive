@@ -657,7 +657,7 @@ function openEdit(it){
     <div class="foot-bar">
       ${isNew?"":`<button class="btn danger" id="eDel">Delete</button>`}
       <span class="sp"></span>
-      ${d.needsReview?`<button class="btn" id="eReviewed">Save & mark checked</button>`:""}
+      ${d.needsReview?`<button class="btn" id="eReviewed" title="Clear it from Needs review even if something is still missing">Save & mark checked</button>`:""}
       <button class="btn" data-close>Cancel</button>
       <button class="btn primary" id="eSave">${isNew?"Add to library":"Save"}</button>
     </div>`);
@@ -719,10 +719,16 @@ function openEdit(it){
     if(origScore&&score!==origScore){h.push({score:origScore,date:d.scoreDate||d.updatedAt||d.createdAt||now,note:d.scoreReason||d.notes||null});out.scoreDate=now;out.scoreReason=$("#eReason").value.trim()||null}
     else if(score&&!origScore){out.scoreDate=now}
     out.scoreHistory=h;
-    if(markChecked){out.needsReview=false;out.flags=[]}
+    let reviewMsg="";
+    if(d.needsReview){
+      const left=[];if(!out.year)left.push("No release year");if(!out.kind)left.push("Kind not set");
+      out.flags=left;out.needsReview=left.length>0;
+      reviewMsg=left.length?` Still to check: ${left.join(", ").toLowerCase()}.`:" Removed from Needs review.";
+    }
+    if(markChecked){out.needsReview=false;out.flags=[];reviewMsg=d.needsReview?" Removed from Needs review.":""}
     if(isNew&&!dupOk){const dup=items().find(x=>norm(x.title)===norm(title));if(dup){dupOk=true;toast(`“${dup.title}” is already in your library. Press Add again to keep both.`);return}}
     $("#eSave").disabled=true;
-    try{await store.put(out);closeSheet();toast(isNew?`Added ${title}`:(origScore&&score!==origScore?`Score changed ${origScore} → ${score||"none"}. Your old take is saved.`:"Saved"))}catch(err){$("#eSave").disabled=false;toast(errMsg(err))}
+    try{await store.put(out);closeSheet();toast((isNew?`Added ${title}`:(origScore&&score!==origScore?`Score changed ${origScore} → ${score||"none"}. Your old take is saved.`:"Saved"))+reviewMsg)}catch(err){$("#eSave").disabled=false;toast(errMsg(err))}
   }
   $("#eSave").onclick=()=>save(false);
   const rv=$("#eReviewed");if(rv)rv.onclick=()=>save(true);
