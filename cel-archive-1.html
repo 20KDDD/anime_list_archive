@@ -184,11 +184,11 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
 .shead .lbl{margin-right:auto}
 .shead input{width:72px}
 .slist{display:flex;flex-direction:column;gap:6px}
-.srow{display:grid;grid-template-columns:80px auto 170px minmax(0,1fr);gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.srow{display:grid;grid-template-columns:80px auto 170px minmax(0,1fr) auto;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
 .srow .sn{font-weight:700;font-size:13.5px}
-.srow select,.srow input[type=text]{padding:6px 8px;font-size:13.5px}
+.srow select,.srow input[type=text]{padding:6px 8px;font-size:13.5px}.srow .sdel{padding:5px 8px;font-size:12px}
 .srow.new{border-color:var(--accent)}
-@media (max-width:520px){.srow{grid-template-columns:auto auto 1fr}.srow input[type=text]{grid-column:1/-1}}
+@media (max-width:520px){.srow{grid-template-columns:auto auto 1fr auto}.srow input[type=text]{grid-column:1/-1}.srow select{grid-column:1/3}}
 .shint{font-size:13px;color:var(--accent);min-height:0}
 details.opt summary{cursor:pointer;font-size:13px;color:var(--muted);font-weight:500}
 details.opt[open] summary{margin-bottom:10px}
@@ -490,7 +490,7 @@ function renderTaste(){
   const el=$("#taste");
   const src=isExampleMode()?EXAMPLES:items();
   const done=src.filter(x=>x.status==="completed");
-  if(!done.length){el.innerHTML="";TASTE_SETS={};return}
+  if(!src.length){el.innerHTML="";TASTE_SETS={};return}
   const hidden=lsGet("celarchive.tasteHidden")==="1";
   const avgOf=a=>a.length?a.reduce((t,x)=>t+x.score,0)/a.length:null;
   const f1=v=>v==null?"—":v.toFixed(1);
@@ -548,12 +548,26 @@ function renderTaste(){
   const top=gl.slice(0,8),maxC=Math.max(1,...top.map(x=>x.all.length));
   top.forEach(x=>{sets["bg:"+x.k]={title:x.k,items:[...x.all].sort(bySc)}});
   dl.forEach(x=>{sets["bd:"+x.k]={title:DEMO_LABEL[x.k],items:[...x.all].sort(bySc)}});
+  // Recent genre chart uses the 20 most recently added titles (createdAt), with
+  // updatedAt as a compatibility fallback for older library entries.
+  const recentlyAdded=[...src].sort((a,b)=>(Number(b.createdAt)||Number(b.updatedAt)||0)-(Number(a.createdAt)||Number(a.updatedAt)||0)).slice(0,20);
+  const recentGenreMap={};
+  recentlyAdded.forEach(it=>(it.genres||[]).forEach(g=>{
+    if(!g)return;
+    if(!recentGenreMap[g])recentGenreMap[g]={k:g,n:0,items:[]};
+    recentGenreMap[g].n++;recentGenreMap[g].items.push(it);
+  }));
+  const recentGenres=Object.values(recentGenreMap).sort((a,b)=>b.n-a.n||a.k.localeCompare(b.k)).slice(0,8);
+  const recentGenreMax=Math.max(1,...recentGenres.map(x=>x.n));
+  recentGenres.forEach(x=>{sets["rg:"+x.k]={title:x.k+" · recently added",items:x.items}});
+  const recentGenreBars=recentGenres.map(x=>`<button type="button" class="grow" data-set="${esc("rg:"+x.k)}" aria-label="Show recent titles tagged ${esc(x.k)}"><span class="gname">${esc(x.k)}</span><span class="gtrack"><b style="width:${x.n/recentGenreMax*100}%"></b></span><span class="gn">${x.n}</span><span class="ga">${Math.round(x.n/Math.max(1,recentlyAdded.length)*100)}%</span></button>`).join("");
   const bar=(key,name,n,mx,avg)=>`<button type="button" class="grow" data-set="${esc(key)}" aria-label="Show ${esc(name)} titles"><span class="gname">${esc(name)}</span><span class="gtrack"><b style="width:${n/mx*100}%"></b></span><span class="gn">${n}</span><span class="ga">${f1(avg)}</span></button>`;
   TASTE_SETS=sets;
   el.innerHTML=`<div class="thead"><h2>Your taste</h2><button type="button" class="linkbtn" data-terms="demographics">What do these terms mean?</button><button type="button" id="tasteTog" aria-expanded="${!hidden}">${hidden?"Show":"Hide"}</button></div>
     ${hidden?"":`<p class="help" style="margin:0">Tap any block or bar to see the shows behind it.</p><div class="tcards">${cards}</div>
     ${top.length?`<div class="gbars"><span class="k"><span>Genres you watch most</span><span>titles · avg</span></span>${top.map(x=>bar("bg:"+x.k,x.k,x.all.length,maxC,avgOf(x.sc))).join("")}</div>`:""}
-    ${dl.length?`<div class="gbars"><span class="k"><span>Demographics you watch</span><span>titles · avg</span></span>${dl.map(x=>bar("bd:"+x.k,DEMO_LABEL[x.k],x.all.length,dl[0].all.length,avgOf(x.sc))).join("")}</div>`:""}`}`;
+    ${dl.length?`<div class="gbars"><span class="k"><span>Demographics you watch</span><span>titles · avg</span></span>${dl.map(x=>bar("bd:"+x.k,DEMO_LABEL[x.k],x.all.length,dl[0].all.length,avgOf(x.sc))).join("")}</div>`:""}
+    <div class="gbars"><span class="k"><span>Genres in your ${recentlyAdded.length} most recently added titles</span><span>titles · share of recent additions</span></span>${recentGenreBars||`<p class="help" style="margin:4px 0">Add genres to recent titles to build this chart.</p>`}</div>`}`;
   $("#tasteTog").onclick=()=>{lsSet("celarchive.tasteHidden",hidden?"0":"1");renderTaste()};
 }
 function openSet(key){
@@ -733,7 +747,7 @@ function openEdit(it){
       <div class="field" id="reasonWrap" hidden><label for="eReason">What changed your mind? (optional)</label><input type="text" id="eReason" placeholder="e.g. Season 3 was a letdown"></div>
       <div class="field" id="seasonsWrap"${isMovie(d)?" hidden":""}>
         <div class="shead"><span class="lbl">Seasons</span>
-          <label for="eSCount" style="font-size:13px;color:var(--muted)">How many</label><input type="number" id="eSCount" min="1" max="60" inputmode="numeric" value="${seasons.length||1}">
+          <label for="eSCount" style="font-size:13px;color:var(--muted)">How many</label><input type="number" id="eSCount" min="0" max="60" inputmode="numeric" value="${seasons.length}">
           <button type="button" class="btn sm" id="eSAdd">+ New season came out</button></div>
         <div class="slist" id="sList"></div>
         <div class="shint" id="sHint"></div>
@@ -780,14 +794,27 @@ function openEdit(it){
     }catch(err){$("#ePMsg").textContent="Couldn't reach AniList. Check your connection and try again."}
   };
   const drawS=()=>{
+    seasons.forEach((x,i)=>{x.n=i+1});
     $("#sList").innerHTML=seasons.map((x,i)=>`<div class="srow${x._new?" new":""}" data-si="${i}">
       <span class="sn">Season ${x.n}</span>
       <label class="check"><input type="checkbox" data-sw="${i}"${x.watched?" checked":""}> Watched</label>
       <select data-se="${i}" aria-label="How season ${x.n} changed your overall rating">${effOpts(x.effect)}</select>
       <input type="text" data-sn="${i}" value="${esc(x.note||"")}" placeholder="Thoughts on season ${x.n}" aria-label="Season ${x.n} thoughts">
+      <button type="button" class="btn danger sm sdel" data-sdel="${i}" aria-label="Delete season ${x.n}" title="Delete this season">Delete</button>
     </div>`).join("");
-    $("#eSCount").value=seasons.length||1;
+    $("#eSCount").value=seasons.length;
   };drawS();
+  $("#sList").addEventListener("click",e=>{
+    const b=e.target.closest("[data-sdel]");
+    if(!b)return;
+    const index=+b.dataset.sdel;
+    if(!Number.isInteger(index)||index<0||index>=seasons.length)return;
+    const removed=seasons[index];
+    if(!confirm(`Delete Season ${index+1}? This will remove its watched status and notes when you save.`))return;
+    seasons.splice(index,1);
+    drawS();
+    $("#sHint").textContent=`Season ${index+1} deleted. ${seasons.length} season${seasons.length===1?"":"s"} remain. Save to keep this change.`;
+  });
   $("#sList").addEventListener("change",e=>{const t=e.target;
     if(t.dataset.sw!=null){seasons[+t.dataset.sw].watched=t.checked;
       const all=seasons.every(x=>x.watched);
@@ -796,7 +823,7 @@ function openEdit(it){
     if(t.dataset.se!=null){seasons[+t.dataset.se].effect=t.value===""?null:+t.value;seasons[+t.dataset.se]._manual=true}
   });
   $("#sList").addEventListener("input",e=>{const t=e.target;if(t.dataset.sn!=null)seasons[+t.dataset.sn].note=t.value.trim()||null});
-  $("#eSCount").onchange=e=>{let n=Math.max(1,Math.min(60,toInt(e.target.value)||1));const done=$("#eStatus").value==="completed";
+  $("#eSCount").onchange=e=>{let n=Math.max(0,Math.min(60,toInt(e.target.value)??0));const done=$("#eStatus").value==="completed";
     while(seasons.length<n)seasons.push({n:seasons.length+1,watched:done});
     while(seasons.length>n)seasons.pop();drawS()};
   $("#eSAdd").onclick=()=>{
