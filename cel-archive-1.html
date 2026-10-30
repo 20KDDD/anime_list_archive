@@ -783,14 +783,32 @@ function openEdit(it){
   let poster=d.poster||null,alUrl=d.alUrl||null;
   const drawP=()=>{$("#pImgBox").innerHTML=poster?`<img class="pimg" src="${esc(poster)}" alt="" referrerpolicy="no-referrer">`:`<div class="pimg">No poster</div>`;$("#ePRemove").hidden=!poster};drawP();
   $("#ePRemove").onclick=()=>{poster=null;alUrl=null;drawP();$("#ePMsg").textContent="Poster removed. Save to keep the change."};
+  const applyAniList=m=>{
+    const title=m.title&&(m.title.english||m.title.romaji);
+    if(title)$("#eTitle").value=title;
+    const alt=(m.title&&(m.title.native||(m.title.romaji&&m.title.romaji!==title?m.title.romaji:"")))||"";
+    if(alt&&!$("#eAlt").value.trim())$("#eAlt").value=alt;
+    const ty=alFormatToType(m.format);
+    if(ty){$("#eType").value=ty;$("#eType").dispatchEvent(new Event("change"))}
+    const yr=(m.startDate&&m.startDate.year)||m.seasonYear;
+    if(yr)$("#eYear").value=yr;
+    const kd=alCountryToKind(m.countryOfOrigin);
+    if(kd)$("#eKind").value=kd;
+    const dm=alDemoFromTags(m.tags);
+    if(dm)$("#eDemo").value=dm;
+    let added=0;alGenresToApp(m.genres).forEach(g=>{if(!genres.includes(g)){genres.push(g);added++}});
+    if(added)drawG();
+    const got=["title","format",yr?"year":null,"genres",dm?"demographic":null,kd?"kind":null].filter(Boolean).join(", ");
+    $("#ePMsg").textContent=`Filled in ${got}. Now just set the score, seasons watched and year watched.`;
+  };
   $("#ePFind").onclick=async()=>{
     const q=cleanForSearch($("#eTitle").value||d.title);if(!q){$("#ePMsg").textContent="Type a title first.";return}
     $("#ePMsg").textContent="Searching AniList…";$("#ePResults").innerHTML="";
     try{const list=await alSearchList(q);
       if(!list.length){$("#ePMsg").textContent="No matches on AniList. It may not list this show (most Western cartoons aren't there).";return}
-      $("#ePMsg").textContent="Tap the right one:";
+      $("#ePMsg").textContent="Tap the right one — it fills in the details too:";
       $("#ePResults").innerHTML=list.map((m,i)=>`<button type="button" data-pi="${i}"><img src="${esc(m.coverImage.large)}" alt="" referrerpolicy="no-referrer"><span>${esc(m.title.english||m.title.romaji)}</span><small>${[m.format,m.seasonYear].filter(Boolean).join(" · ")}</small></button>`).join("");
-      $("#ePResults").onclick=e=>{const b=e.target.closest("[data-pi]");if(!b)return;const m=list[+b.dataset.pi];poster=m.coverImage.large;alUrl=m.siteUrl;drawP();$("#ePResults").innerHTML="";$("#ePMsg").textContent="Poster picked. Save to keep it."};
+      $("#ePResults").onclick=e=>{const b=e.target.closest("[data-pi]");if(!b)return;const m=list[+b.dataset.pi];poster=m.coverImage.large;alUrl=m.siteUrl;drawP();applyAniList(m);$("#ePResults").innerHTML="";};
     }catch(err){$("#ePMsg").textContent="Couldn't reach AniList. Check your connection and try again."}
   };
   const drawS=()=>{
@@ -1485,7 +1503,16 @@ async function alQuery(query,variables){
   }
   throw new Error("anilist");
 }
-async function alSearchList(q){const j=await alQuery(`query($q:String){Page(perPage:8){media(search:$q,type:ANIME,sort:SEARCH_MATCH){id siteUrl seasonYear format title{romaji english} coverImage{large}}}}`,{q});return (j.data&&j.data.Page&&j.data.Page.media)||[]}
+async function alSearchList(q){const j=await alQuery(`query($q:String){Page(perPage:8){media(search:$q,type:ANIME,sort:SEARCH_MATCH){id siteUrl seasonYear format genres countryOfOrigin startDate{year} title{romaji english native} tags{name category} coverImage{large}}}}`,{q});return (j.data&&j.data.Page&&j.data.Page.media)||[]}
+/* map AniList fields to this app's own vocabulary */
+function alFormatToType(f){return ({TV:"TV",TV_SHORT:"Short",MOVIE:"Movie",SPECIAL:"Special",OVA:"OVA",ONA:"ONA",MUSIC:"Short"})[f]||null}
+function alCountryToKind(c){return ({JP:"anime",CN:"donghua",KR:"aeni"})[c]||null}
+function alDemoFromTags(tags){if(!Array.isArray(tags))return null;
+  const demo=tags.filter(t=>t&&/demograph/i.test(t.category||""));
+  for(const t of demo){const d=demoOf(t.name);if(d)return d}
+  for(const t of tags){const d=demoOf(t&&t.name);if(d)return d}
+  return null}
+function alGenresToApp(gs){const out=[];(gs||[]).forEach(g=>{const a=GENRE_ALIAS[String(g).toLowerCase()];const vals=Array.isArray(a)?a:[a||g];vals.forEach(x=>{if(x&&!out.includes(x))out.push(x)})});return out}
 async function alSearchMany(list){
   const defs=[],parts=[],vars={};
   list.forEach((it,i)=>{defs.push(`$s${i}:String`);vars["s"+i]=cleanForSearch(it.title);
