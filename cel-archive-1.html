@@ -456,8 +456,75 @@ function viewItems(){
 }
 
 /* ---------- render ---------- */
+/* ---------- counting mode: franchise (original) vs MAL style ---------- */
+function countMode(){return lsGet("celarchive.countMode")==="mal"?"mal":"franchise"}
+function malStatusOf(fr){return ({completed:"completed",watching:"watching",plan:"plan",on_hold:"on_hold",unfinished:"on_hold",dropped:"dropped"})[fr]||"plan"}
+/* turn franchise titles into MAL-style entries: each season/OVA/movie is its own entry */
+function malEntries(src){
+  const out=[];
+  src.forEach(it=>{
+    const ss=seasonsOf(it),sc=it.score||null;
+    if(isMovie(it)||!ss.length){out.push({status:malStatusOf(it.status),score:sc});return}
+    let hit=false;
+    ss.forEach(s=>{
+      if(s.watched){out.push({status:"completed",score:sc});return}
+      let st;
+      if(it.status==="watching"){st=hit?"plan":"watching";hit=true}
+      else if(it.status==="dropped"){st=hit?"plan":"dropped";hit=true}
+      else if(it.status==="unfinished"||it.status==="on_hold"){st="on_hold"}
+      else if(it.status==="completed"){st="completed"}
+      else{st="plan"}
+      out.push({status:st,score:sc});
+    });
+  });
+  return out;
+}
+function renderBandMal(src){
+  const E=malEntries(src);
+  const ST=[["watching","Watching"],["completed","Completed"],["on_hold","On-Hold"],["dropped","Dropped"],["plan","Plan to Watch"]];
+  const cnt=Object.fromEntries(ST.map(([k])=>[k,E.filter(e=>e.status===k).length]));
+  const scoredE=E.filter(e=>e.score&&e.status!=="plan");
+  const mean=scoredE.length?scoredE.reduce((a,b)=>a+b.score,0)/scoredE.length:null;
+  const counts=Array.from({length:10},(_,i)=>scoredE.filter(e=>Math.round(e.score)===i+1).length);
+  const max=Math.max(1,...counts);
+  const total=E.length;
+  const tile=(k,v,sub,cls)=>`<div class="stat${cls?" "+cls:""}"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${sub}</span></div>`;
+  const seg=ST.map(([k,l])=>cnt[k]?`<span class="malseg" style="flex:${cnt[k]};background:var(--st-${k})" title="${l}: ${cnt[k]}"></span>`:"").join("");
+  const legend=ST.map(([k,l])=>`<span class="mallg"><i style="background:var(--st-${k})"></i>${l} <b>${cnt[k]}</b></span>`).join("");
+  $("#band").innerHTML=
+    tile("Total entries",total,`across ${src.length} franchise${src.length===1?"":"s"} · each season counts`,"lead")+
+    tile("Mean score",mean?mean.toFixed(2):"—",`${scoredE.length} scored entr${scoredE.length===1?"y":"ies"}`,"lead")+
+    tile("Completed",cnt.completed,"entries finished")+
+    tile("Watching",cnt.watching,"in progress")+
+    tile("On-Hold",cnt.on_hold,"paused or unfinished")+
+    tile("Dropped · Plan",cnt.dropped+" · "+cnt.plan,"dropped · planned")+
+    `<div class="hist" style="grid-column:1/-1">
+      <span class="k lbl" style="display:flex;justify-content:space-between;gap:8px"><span>Status breakdown</span><span>${total} entr${total===1?"y":"ies"}</span></span>
+      <div class="malbar">${seg||'<span class="malseg" style="flex:1;background:var(--surface-2)"></span>'}</div>
+      <div class="mallegend">${legend}</div>
+    </div>`+
+    `<div class="hist" style="grid-column:1/-1" aria-label="Score distribution">
+      <span class="k lbl" style="display:flex;justify-content:space-between;gap:8px"><span>Score distribution (per entry)</span><span>${mean?"mean "+mean.toFixed(2):""}</span></span>
+      <div class="bars">${counts.map(c=>`<div class="bar" title="${c} entr${c===1?"y":"ies"}"><span>${c||""}</span><b class="${c?"":"zero"}" style="height:${c?Math.max(4,c/max*58):2}px"></b></div>`).join("")}</div>
+      <div class="axis">${counts.map((_,i)=>`<span>${i+1}</span>`).join("")}</div>
+    </div>`;
+}
 function renderBand(){
+  if(!document.getElementById("malModeCss")){
+    const st=document.createElement("style");st.id="malModeCss";
+    st.textContent=".modebar{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap;margin:0 0 12px}.modebar .modelbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}.modeseg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:var(--surface)}.modeseg button{border:none;background:transparent;padding:6px 14px;font-size:13.5px;font-weight:600;color:var(--muted)}.modeseg button[aria-pressed=\"true\"]{background:var(--accent);color:var(--accent-ink)}.modebar .modehint{font-size:12.5px;color:var(--muted);flex:1;min-width:160px}.malbar{display:flex;height:16px;border-radius:8px;overflow:hidden;background:var(--surface-2);gap:1px}.malbar .malseg{min-width:3px}.mallegend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px;font-size:12.5px;color:var(--muted)}.mallegend .mallg{display:inline-flex;align-items:center;gap:6px}.mallegend .mallg i{width:10px;height:10px;border-radius:3px;display:inline-block}.mallegend .mallg b{color:var(--ink);font-family:var(--mono)}";
+    document.head.appendChild(st);
+  }
+  let bar=document.getElementById("modeBar");
+  if(!bar){
+    bar=document.createElement("div");bar.className="modebar";bar.id="modeBar";
+    const band=$("#band");band.parentNode.insertBefore(bar,band);
+    bar.addEventListener("click",e=>{const b=e.target.closest("[data-mode]");if(!b)return;lsSet("celarchive.countMode",b.dataset.mode);renderBand()});
+  }
+  const mode=countMode();
+  bar.innerHTML=`<span class="modelbl">Counting</span><div class="modeseg"><button data-mode="franchise" aria-pressed="${mode!=="mal"}">Franchise</button><button data-mode="mal" aria-pressed="${mode==="mal"}">MAL style</button></div><span class="modehint">${mode==="mal"?"Each season, OVA and movie counted as its own entry, MAL-style.":"Your original tracking — one card per show, seasons nested inside."}</span>`;
   const src=isExampleMode()?EXAMPLES:items();
+  if(mode==="mal"){renderBandMal(src);return}
   const SEEN=["completed","unfinished","dropped","watching","on_hold"];
   const done=src.filter(x=>x.status==="completed");
   const seen=src.filter(x=>SEEN.includes(x.status));
