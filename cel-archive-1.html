@@ -362,6 +362,8 @@ const isMovie=it=>!!it&&it.type==="Movie";
 function seasonsOf(it){return it&&Array.isArray(it.seasons)?it.seasons:[]}
 function fmtDate(t){if(!t)return "";try{return new Date(t).toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"})}catch(e){return ""}}
 const toInt=v=>{const n=parseInt(v,10);return Number.isFinite(n)?n:null};
+/* scores live on a 1–10 scale; coerce anything else into range (18 -> 10) or null */
+const safeScore=s=>{if(s==null||s==="")return null;const n=Math.round(Number(s));return Number.isFinite(n)&&n>=1?Math.min(10,n):null};
 let toastTimer;
 function toast(msg){const t=$("#toast");t.textContent=msg;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.hidden=true,3200)}
 function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
@@ -385,7 +387,14 @@ const store={
       });
     }else{
       this.mode="local";
-      try{const raw=lsGet(LS_KEY);const arr=raw?JSON.parse(raw):[];arr.forEach(x=>this.items.set(x.id,x))}catch(e){}
+      try{const raw=lsGet(LS_KEY);const arr=raw?JSON.parse(raw):[];let fixed=0;
+        arr.forEach(x=>{
+          if(x&&"score"in x){const sc=safeScore(x.score);if(sc!==x.score){x.score=sc;fixed++}}
+          if(x&&Array.isArray(x.scoreHistory))x.scoreHistory.forEach(h=>{if(h&&"score"in h){const sc=safeScore(h.score);if(sc!==h.score){h.score=sc;fixed++}}});
+          this.items.set(x.id,x);
+        });
+        if(fixed)lsSet(LS_KEY,JSON.stringify([...this.items.values()]));
+      }catch(e){}
       this.emit();
     }
   },
@@ -492,7 +501,7 @@ function renderBandMal(src){
   const seg=ST.map(([k,l])=>cnt[k]?`<span class="malseg" style="flex:${cnt[k]};background:var(--st-${k})" title="${l}: ${cnt[k]}"></span>`:"").join("");
   const legend=ST.map(([k,l])=>`<span class="mallg"><i style="background:var(--st-${k})"></i>${l} <b>${cnt[k]}</b></span>`).join("");
   $("#band").innerHTML=
-    tile("Total entries",total,`across ${src.length} franchise${src.length===1?"":"s"} · each season counts`,"lead")+
+    tile("Total entries",total,`across ${src.length} series · each season counts`,"lead")+
     tile("Mean score",mean?mean.toFixed(2):"—",`${scoredE.length} scored entr${scoredE.length===1?"y":"ies"}`,"lead")+
     tile("Completed",cnt.completed,"entries finished")+
     tile("Watching",cnt.watching,"in progress")+
@@ -522,7 +531,7 @@ function renderBand(){
     bar.addEventListener("click",e=>{const b=e.target.closest("[data-mode]");if(!b)return;lsSet("celarchive.countMode",b.dataset.mode);renderBand()});
   }
   const mode=countMode();
-  bar.innerHTML=`<span class="modelbl">Counting</span><div class="modeseg"><button data-mode="franchise" aria-pressed="${mode!=="mal"}">Franchise</button><button data-mode="mal" aria-pressed="${mode==="mal"}">MAL style</button></div><span class="modehint">${mode==="mal"?"Each season, OVA and movie counted as its own entry, MAL-style.":"Your original tracking — one card per show, seasons nested inside."}</span>`;
+  bar.innerHTML=`<span class="modelbl">Counting</span><div class="modeseg"><button data-mode="franchise" aria-pressed="${mode!=="mal"}">Series</button><button data-mode="mal" aria-pressed="${mode==="mal"}">MAL style</button></div><span class="modehint">${mode==="mal"?"Each season, OVA and movie counted as its own entry, MAL-style.":"Your original tracking — one card per series, seasons nested inside."}</span>`;
   const src=isExampleMode()?EXAMPLES:items();
   if(mode==="mal"){renderBandMal(src);return}
   const SEEN=["completed","unfinished","dropped","watching","on_hold"];
@@ -1243,7 +1252,7 @@ function drawBulk(){
   rowsEl.addEventListener("change",e=>{
     const el=e.target;const f=el.dataset.f;if(!f)return;const i=+el.closest(".irow").dataset.i;const r=bulk.rows.find(x=>x._i===i);
     if(f==="_include"){r._include=el.checked;drawBulk();return}
-    if(f==="score")r.score=toInt(el.value);
+    if(f==="score")r.score=safeScore(el.value);
     else if(f==="seasonCount")r.seasonCount=toInt(el.value);
     else if(f==="year")r.year=toInt(el.value);
     else if(f==="genres"){r.genres=[];el.value.split(/[,;/]/).forEach(t=>{t=t.trim();if(!t)return;(genreOf(t)||[t]).forEach(x=>{if(!r.genres.includes(x))r.genres.push(x)})})}
@@ -1395,6 +1404,7 @@ function openDeleteAll(){
 /* XLSX-BUILDER-START */
 function buildWorkbook(ExcelJS,list,opts){
   opts=opts||{};
+  list=list.map(it=>({...it,score:safeScore(it.score)}));/* backstop: never feed an out-of-range score to the sheet */
   const STL={watching:"Watching",completed:"Completed",unfinished:"Unfinished",on_hold:"On hold",dropped:"Dropped",plan:"Plan to watch"};
   const STC={watching:["FF23805A","FFE3F2EA"],completed:["FF2C5FB3","FFE2EAF8"],unfinished:["FF7A4FB5","FFEFE7F9"],on_hold:["FF9A6C0C","FFF8EED6"],dropped:["FFA83246","FFF6E0E4"],plan:["FF5F6371","FFECEDF0"]};
   const KL={anime:"Anime",donghua:"Donghua",cartoon:"Cartoon",aeni:"Aeni (Korean)",other:"Other"};
