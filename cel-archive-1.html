@@ -1825,7 +1825,7 @@ store.init();
     {id:"ember",name:"Ember",tag:"fire & ash",c:{bg:"#1C0F0A",surface:"#2A1812","surface-2":"#3A2219",ink:"#FFF0E8",muted:"#C89479",line:"#4A2C1F",accent:"#FF7A3C","accent-ink":"#1C0A04",accent2:"#FFD24A"}},
     {id:"matcha",name:"Matcha",tag:"forest green",c:{bg:"#0F1A12",surface:"#17271B","surface-2":"#203525",ink:"#EEFBF0",muted:"#8BB598",line:"#2A4530",accent:"#8EF06A","accent-ink":"#0A1A0C",accent2:"#E0C24A"}},
     {id:"mono",name:"Mono",tag:"clean grayscale",c:{bg:"#101014",surface:"#1A1A20","surface-2":"#26262E",ink:"#F2F2F5",muted:"#9A9AA6",line:"#33333D",accent:"#E8E8EE","accent-ink":"#101014",accent2:"#9A9AA6"}},
-    {id:"cyberpunk",name:"Cyberpunk",tag:"neon city · code rain",c:{bg:"#070A14",surface:"#0F1626","surface-2":"#172238",ink:"#E6F2FF",muted:"#6F9BC0",line:"#1E2E4A",accent:"#00F0FF","accent-ink":"#02121A",accent2:"#FF2E88"}},
+    {id:"cyberpunk",name:"Cyberpunk",tag:"neon city · colorful rain",c:{bg:"#070A14",surface:"#0F1626","surface-2":"#172238",ink:"#E6F2FF",muted:"#6F9BC0",line:"#1E2E4A",accent:"#00F0FF","accent-ink":"#02121A",accent2:"#FF2E88"}},
     {id:"celestial",name:"Celestial",tag:"starlit night · twinkle",c:{bg:"#0A0A1F",surface:"#14142E","surface-2":"#1E1E42",ink:"#F0EEFF",muted:"#8F8FC8",line:"#2A2A58",accent:"#B9A7FF","accent-ink":"#0C0A22",accent2:"#7FE0FF"}},
     {id:"rainy",name:"Rainy Day",tag:"melancholy · rain",c:{bg:"#0E1418",surface:"#172026","surface-2":"#1F2C33",ink:"#E6EEF2",muted:"#7F98A4",line:"#28383F",accent:"#7FC0D0","accent-ink":"#06161C",accent2:"#9FB4C0"}},
     {id:"fireflies",name:"Fireflies",tag:"summer night · glow",c:{bg:"#0F1310",surface:"#181E16","surface-2":"#212A1E",ink:"#EEF5E8",muted:"#9AB088",line:"#2C3826",accent:"#EBD66A","accent-ink":"#141608",accent2:"#A6E07A"}}
@@ -1847,14 +1847,8 @@ store.init();
     {id:"toradora",name:"Toradora",tag:"romance · hearts",c:{bg:"#1E1418",surface:"#2A1C22","surface-2":"#3A262E",ink:"#FFEDF2",muted:"#CC94A6",line:"#4A2E38",accent:"#FF6F8E","accent-ink":"#1C060C",accent2:"#FFC56B"}},
     {id:"violet",name:"Violet Evergarden",tag:"letters & snow",c:{bg:"#0E1420",surface:"#172030","surface-2":"#212E42",ink:"#EEF3FA",muted:"#8EA0B4",line:"#2C3A4E",accent:"#7FB0E0","accent-ink":"#04121F",accent2:"#E8D9A8"}}
   ];
-  var HOF_THEMES = [
-    {id:"t-frieren",name:"Frieren",tag:"Best Anime",c:{bg:"#101A1C",surface:"#17272A","surface-2":"#20383C",ink:"#EEF7F6",muted:"#8FB5B2",line:"#284A4D",accent:"#8FE0D2","accent-ink":"#06201C",accent2:"#E9C87A"}},
-    {id:"t-avatar",name:"Avatar: TLA",tag:"Best Cartoon",c:{bg:"#1B1208",surface:"#2A1D0F","surface-2":"#3A2A17",ink:"#FFF3E0",muted:"#C6A06A",line:"#4A361D",accent:"#FF9D2E","accent-ink":"#1B1004",accent2:"#4BB6D8"}},
-    {id:"t-spirited",name:"Spirited Away",tag:"Best Movie",c:{bg:"#0C1620",surface:"#13212F","surface-2":"#1C2F41",ink:"#EAF2F8",muted:"#86A2B8",line:"#263E52",accent:"#E2574A","accent-ink":"#1A0605",accent2:"#E7B14A"}},
-    {id:"t-makima",name:"Makima",tag:"Best Girl",c:{bg:"#1C0D0C",surface:"#2A1513","surface-2":"#3A1E1A",ink:"#FFEAE6",muted:"#CC8A80",line:"#4A2621",accent:"#FF5640","accent-ink":"#1C0603",accent2:"#E9B24A"}}
-  ];
-  var ALL = THEMES.concat(ANIME_THEMES, HOF_THEMES);
-  var FXKEY = {arcade:"spark",sakura:"petal",abyss:"bubble",ember:"ember",matcha:"leaf",mono:"dust",cyberpunk:"matrix",celestial:"star",rainy:"rain",fireflies:"firefly",naruto:"autumn",bleach:"ash",chainsaw:"blood",jjk:"firefly",demonslayer:"petal",aot:"fog",onepiece:"bubble",dragonball:"ember",deathnote:"feather",yourname:"meteor",evangelion:"glitch",bebop:"notes",yourlie:"bokeh",toradora:"hearts",violet:"snowstorm","t-frieren":"snow","t-avatar":"ember","t-spirited":"ash","t-makima":"ember"};
+  var ALL = THEMES.concat(ANIME_THEMES);
+  var FXKEY = {arcade:"spark",sakura:"petal",abyss:"bubble",ember:"ember",matcha:"leaf",mono:"dust",cyberpunk:"neonrain",celestial:"star",rainy:"rain",fireflies:"firefly",naruto:"autumn",bleach:"butterfly",chainsaw:"blood",jjk:"cursed",demonslayer:"petal",aot:"fog",onepiece:"bubble",dragonball:"ember",deathnote:"feather",yourname:"meteor",evangelion:"glitch",bebop:"notes",yourlie:"bokeh",toradora:"hearts",violet:"snow"};
 
   /* ---- particle effects ---- */
   var MATRIX_CH = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホ0123456789".split("");
@@ -1881,7 +1875,10 @@ store.init();
     glitch:{m:"linear",dir:1,shape:"glitch",n:40,size:[2,6],spd:[1.0,2.6],sway:.2},
     fog:{m:"float",shape:"fog",n:14,size:[40,90],spd:[.03,.12],sway:.2},
     snowstorm:{m:"linear",dir:1,shape:"snow",n:90,size:[1.5,3.5],spd:[1.0,2.2],sway:1.4,vx:[1.2,2.8],col:["#FFFFFF","#EAF7F4"]},
-    blood:{m:"linear",dir:1,shape:"blood",n:40,size:[2,5],spd:[2.0,4.2],sway:.1}
+    blood:{m:"linear",dir:1,shape:"blood",n:40,size:[2,5],spd:[2.0,4.2],sway:.1},
+    neonrain:{m:"linear",dir:1,shape:"nrain",n:90,size:[10,24],spd:[3.2,6.2],sway:.05,vx:[.2,.7],col:["#00F0FF","#FF2EA6","#B14DFF","#39FF14","#FFE53C","#FF7A18","#2E8BFF"]},
+    butterfly:{m:"float",shape:"butterfly",n:18,size:[6,11],spd:[.1,.4],sway:.6,col:["#8C6ED0","#B48AE6","#6E5AA8"]},
+    cursed:{m:"float",shape:"cursed",n:24,size:[3,7],spd:[.1,.45],sway:.5}
   };
   var cv, cx, fxType = "spark", fxOn = true, parts = [], W = 0, Ht = 0, COLS = ["#B8FF3C","#FF4D9D"];
   var reduceM = false;
@@ -1923,6 +1920,9 @@ store.init();
       else if(sh==="glitch"){cx.globalAlpha=.4+.5*Math.random();var j=Math.random()<.3?rnd(-3,3):0;cx.fillRect(-p.s/2+j,-p.s/2,p.s,p.s)}
       else if(sh==="fog"){cx.globalAlpha=.06+.04*Math.abs(Math.sin(p.tw));cx.shadowBlur=p.s*.7;cx.shadowColor=p.c;cx.beginPath();cx.arc(0,0,p.s,0,6.28);cx.fill()}
       else if(sh==="blood"){cx.globalAlpha=.75;cx.beginPath();cx.arc(0,0,p.s*.6,0,6.28);cx.fill();cx.globalAlpha=.4;cx.lineWidth=1.2;cx.beginPath();cx.moveTo(0,0);cx.lineTo(0,-p.s*1.4);cx.stroke()}
+      else if(sh==="nrain"){cx.globalAlpha=.62;cx.lineWidth=1.8;cx.shadowBlur=7;cx.shadowColor=p.c;cx.beginPath();cx.moveTo(0,0);cx.lineTo(0,p.s);cx.stroke()}
+      else if(sh==="butterfly"){var bw=p.s,fl=.3+.65*Math.abs(Math.sin(p.tw*2));cx.rotate(Math.sin(p.tw)*.3);cx.globalAlpha=.78;cx.beginPath();cx.ellipse(-bw*fl,0,bw*fl,bw*.75,0,0,6.28);cx.fill();cx.beginPath();cx.ellipse(bw*fl,0,bw*fl,bw*.75,0,0,6.28);cx.fill();cx.globalAlpha=.95;cx.fillRect(-.7,-bw*.6,1.4,bw*1.2)}
+      else if(sh==="cursed"){cx.globalAlpha=.28+.45*Math.abs(Math.sin(p.tw));cx.shadowBlur=12;cx.shadowColor=p.c;cx.beginPath();cx.arc(0,0,p.s,0,6.28);cx.fill()}
       else{cx.beginPath();cx.arc(0,0,p.s,0,6.28);cx.fill()}
       cx.restore()}
   }
@@ -1970,7 +1970,6 @@ store.init();
       '<div class="cafx-head"><h2>Theme &amp; effects</h2><button type="button" class="cafx-x" aria-label="Close">×</button></div>'+
       grp("Vibe presets",THEMES,"tag")+
       grp("Anime presets — palette + matching effect",ANIME_THEMES,"tag")+
-      grp("From your Hall of Fame",HOF_THEMES,"tag")+
       '<label class="cafx-row"><input type="checkbox" id="cafx-toggle"'+(fxOn?" checked":"")+'> Ambient effects (petals, embers, drifting bits — matches the theme)</label>'+
       '</div>';
     document.body.appendChild(scrim);
@@ -2168,10 +2167,10 @@ store.init();
   var DERE_LABEL = {}; DERE_LIST.forEach(function(e){if(e[0])DERE_LABEL[e[0]]=e[1].split(" — ")[0]});
 
   /* ---- tiers (S–F) ---- */
-  var TIERS = [["S","#FF7B7B"],["A","#FFB366"],["B","#FFE066"],["C","#8CE99A"],["D","#74C0FC"],["F","#B197FC"]];
-  var TIER_ORDER = ["S","A","B","C","D","F"];
+  var TIERS = [["S","#FF7B7B"],["A+","#FF9470"],["A","#FFB366"],["B","#FFE066"],["C","#8CE99A"],["D","#74C0FC"],["F","#B197FC"]];
+  var TIER_ORDER = TIERS.map(function(t){return t[0]});
   var TIER_COLOR = {}; TIERS.forEach(function(t){TIER_COLOR[t[0]]=t[1]});
-  var TIER_SET = {S:1,A:1,B:1,C:1,D:1,F:1};
+  var TIER_SET = {}; TIERS.forEach(function(t){TIER_SET[t[0]]=1});
   var viewMode = (function(){try{return localStorage.getItem("celarchive.charview")==="tier"?"tier":"ranked"}catch(e){return "ranked"}})();
   function setView(v){viewMode=(v==="tier"?"tier":"ranked");try{localStorage.setItem("celarchive.charview",viewMode)}catch(e){}}
   function setTier(id,t){for(var i=0;i<chars.length;i++)if(chars[i].id===id){chars[i].tier=TIER_SET[t]?t:"";break}save();render()}
