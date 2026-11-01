@@ -139,7 +139,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
 .card .example-tag{top:8px;left:8px;right:auto}
 .cardfoot{padding:10px 12px 12px;display:flex;flex-direction:column;gap:7px;min-width:0}
 .ptitle{font-weight:700;font-size:14.5px;line-height:1.22;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-.cfrow{display:flex;align-items:center;gap:8px;min-width:0}
+.cfrow{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}
+.cfrow .plus{margin-left:auto}
 .stchip{flex:0 0 auto;font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:color-mix(in srgb,var(--st) 24%,transparent);color:var(--st)}
 .cmeta{flex:1;min-width:0;font-family:var(--mono);font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cfrow .plus{flex:0 0 auto;border:1px solid var(--line);background:var(--surface-2);border-radius:8px;color:var(--ink);font-weight:800;font-size:12px;padding:3px 9px;cursor:pointer;line-height:1}
@@ -2142,6 +2143,8 @@ store.init();
   var LS = "celarchive.characters.v1";
   var cats = [["girl","Best Girls"],["boy","Best Boys"],["other","Other"]];
   var filter = "all";
+  var charQ = "";
+  function matchQ(c){if(!charQ)return true;var q=charQ.toLowerCase();return (c.name||"").toLowerCase().indexOf(q)>=0 || (c.from||"").toLowerCase().indexOf(q)>=0;}
   var page = null, pending = null;
 
   function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
@@ -2280,6 +2283,8 @@ store.init();
       ".cach-msg{font-size:12.5px;color:var(--muted);min-height:16px;margin-top:4px}"+
       ".cach-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:6px}"+
       /* view toggle */
+      ".cach-search{width:100%;box-sizing:border-box;background:var(--bg);border:2px solid var(--line);color:var(--ink);border-radius:11px;padding:10px 14px;font-family:inherit;font-size:14px;margin:4px 0 2px}"+
+      ".cach-search:focus{outline:none;border-color:var(--accent)}"+
       ".cach-vtog{display:inline-flex;gap:4px;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:3px;margin:2px 0 14px}"+
       ".cach-vtog button{background:transparent;border:none;color:var(--muted);font-family:inherit;font-weight:700;font-size:12.5px;padding:6px 15px;border-radius:999px;cursor:pointer}"+
       ".cach-vtog button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink)}"+
@@ -2325,12 +2330,12 @@ store.init();
       var tcats = filter==="all" ? ["girl","boy","other"] : [filter];
       var anyT=false;
       tcats.forEach(function(cat){
-        var sub=chars.filter(function(c){return c.cat===cat});
+        var sub=chars.filter(function(c){return c.cat===cat && matchQ(c)});
         if(!sub.length)return; anyT=true;
         html+='<div class="cach-el" style="margin:18px 0 10px">'+({girl:"Best Girls",boy:"Best Boys",other:"Other"})[cat]+'</div>';
         html+=tierBoardHTML(sub);
       });
-      if(!anyT)html+='<div class="cach-empty">No characters in this group yet.</div>';
+      if(!anyT)html+='<div class="cach-empty">'+(charQ?'No characters match “'+esc(charQ)+'”.':'No characters in this group yet.')+'</div>';
       body.innerHTML=html;
       return;
     }
@@ -2338,11 +2343,13 @@ store.init();
     var list = filter==="all" ? ["girl","boy","other"] : [filter];
     var any=false;
     list.forEach(function(cat){
-      var sub=chars.filter(function(c){return c.cat===cat});
+      var full=chars.filter(function(c){return c.cat===cat});
+      var sub=full.map(function(c,idx){return {c:c,idx:idx}}).filter(function(o){return matchQ(o.c)});
       if(!sub.length)return; any=true;
       var label=({girl:"Best Girls",boy:"Best Boys",other:"Other"})[cat];
       if(filter==="all")html+='<div class="cach-el" style="margin:18px 0 10px">'+label+'</div>';
-      html+='<div class="cach-grid">'+sub.map(function(c,i){
+      html+='<div class="cach-grid">'+sub.map(function(o){
+        var c=o.c,i=o.idx;
         return '<article class="cach-card" data-cid="'+esc(c.id)+'" title="Click to edit">'+
           '<div class="cach-port">'+(c.img?'<img src="'+esc(c.img)+'" alt="" referrerpolicy="no-referrer" onerror="this.remove()">':'')+'<span class="ini">'+esc((c.name||"?").split(" ").map(function(w){return w[0]}).join("").slice(0,2))+'</span>'+
           '<span class="cach-rank'+(i===0?" gold":"")+'">'+(i+1)+'</span>'+
@@ -2353,7 +2360,7 @@ store.init();
           '</div></article>';
       }).join("")+'</div>';
     });
-    if(!any)html+='<div class="cach-empty">No characters yet. Tap <b>+ Add character</b> to search AniList and start your ranking.</div>';
+    if(!any)html+='<div class="cach-empty">'+(charQ?'No characters match “'+esc(charQ)+'”.':'No characters yet. Tap <b>+ Add character</b> to search AniList and start your ranking.')+'</div>';
     body.innerHTML=html;
   }
 
@@ -2508,6 +2515,7 @@ store.init();
         '<button type="button" class="cach-stab" data-f="girl" aria-pressed="'+(filter==="girl")+'">Best Girls</button>'+
         '<button type="button" class="cach-stab" data-f="boy" aria-pressed="'+(filter==="boy")+'">Best Boys</button>'+
         '<button type="button" class="cach-stab" data-f="other" aria-pressed="'+(filter==="other")+'">Other</button></div>'+
+      '<input type="search" id="cach-search" class="cach-search" placeholder="Find a character by name or series…" value="'+esc(charQ)+'">'+
       '<input type="file" id="cach-file" accept=".json,application/json" hidden>'+
       '<div id="cach-body"></div>';
     page.addEventListener("click",function(e){
@@ -2530,6 +2538,7 @@ store.init();
       else if(act==="del")del(id);
     });
     page.querySelector("#cach-file").addEventListener("change",function(e){if(e.target.files&&e.target.files[0])importChars(e.target.files[0]);e.target.value=""});
+    page.querySelector("#cach-search").addEventListener("input",function(e){charQ=e.target.value;render();});
     page.addEventListener("change",function(e){
       var ts=e.target.closest(".cach-tsel");
       if(ts){setTier(ts.getAttribute("data-tier-for"), ts.value);}
