@@ -2322,7 +2322,15 @@ store.init();
     }
 
     if(viewMode==="tier" && chars.length){
-      html+=tierBoardHTML();
+      var tcats = filter==="all" ? ["girl","boy","other"] : [filter];
+      var anyT=false;
+      tcats.forEach(function(cat){
+        var sub=chars.filter(function(c){return c.cat===cat});
+        if(!sub.length)return; anyT=true;
+        html+='<div class="cach-el" style="margin:18px 0 10px">'+({girl:"Best Girls",boy:"Best Boys",other:"Other"})[cat]+'</div>';
+        html+=tierBoardHTML(sub);
+      });
+      if(!anyT)html+='<div class="cach-empty">No characters in this group yet.</div>';
       body.innerHTML=html;
       return;
     }
@@ -2350,7 +2358,8 @@ store.init();
   }
 
   /* classic S–F tier board; an "Unranked" tray collects characters with no tier */
-  function tierBoardHTML(){
+  function tierBoardHTML(roster){
+    roster = roster || chars;
     function chip(c){
       return '<div class="cach-chip" data-cid="'+esc(c.id)+'" title="Click to edit">'+
         (c.img?'<img class="cp" src="'+esc(c.img)+'" alt="" referrerpolicy="no-referrer" onerror="this.outerHTML=\'<span class=&quot;cpph&quot;>'+esc((c.name||"?").slice(0,2))+'</span>\'">':'<span class="cpph">'+esc((c.name||"?").split(" ").map(function(w){return w[0]}).join("").slice(0,2))+'</span>')+
@@ -2358,11 +2367,11 @@ store.init();
     }
     var h="";
     TIER_ORDER.forEach(function(k){
-      var sub=chars.filter(function(c){return c.tier===k});
+      var sub=roster.filter(function(c){return c.tier===k});
       h+='<div class="cach-tier"><div class="cach-tlabel" style="background:'+TIER_COLOR[k]+'">'+k+'</div>'+
          '<div class="cach-trow">'+(sub.length?sub.map(chip).join(""):'<span class="cach-tempty">Set a character to '+k+' with its tier menu</span>')+'</div></div>';
     });
-    var un=chars.filter(function(c){return !c.tier});
+    var un=roster.filter(function(c){return !c.tier});
     if(un.length) h+='<div class="cach-tier"><div class="cach-tlabel" style="background:var(--surface-2);color:var(--muted)">?</div><div class="cach-trow">'+un.map(chip).join("")+'</div></div>';
     return h;
   }
