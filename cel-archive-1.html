@@ -2261,6 +2261,9 @@ store.init();
       ".cach-catpick{display:flex;gap:7px;flex-wrap:wrap}"+
       ".cach-catpick button{background:var(--surface-2);border:2px solid var(--line);color:var(--muted);border-radius:999px;padding:6px 14px;font-weight:700;font-size:12.5px;font-family:inherit;cursor:pointer}"+
       ".cach-catpick button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}"+
+      ".cach-legend{list-style:none;margin:10px 0 0;padding:10px 12px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;display:grid;gap:4px}"+
+      ".cach-legend li{font-size:11.5px;color:var(--muted);line-height:1.3}"+
+      ".cach-legend b{color:var(--ink);font-weight:800}"+
       ".cach-msg{font-size:12.5px;color:var(--muted);min-height:16px;margin-top:4px}"+
       ".cach-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:6px}"+
       /* view toggle */
@@ -2322,7 +2325,7 @@ store.init();
         return '<article class="cach-card">'+
           '<div class="cach-port">'+(c.img?'<img src="'+esc(c.img)+'" alt="" referrerpolicy="no-referrer" onerror="this.remove()">':'')+'<span class="ini">'+esc((c.name||"?").split(" ").map(function(w){return w[0]}).join("").slice(0,2))+'</span>'+
           '<span class="cach-rank'+(i===0?" gold":"")+'">'+(i+1)+'</span>'+
-          (c.tier?'<span class="cach-ar" style="left:8px;right:auto;background:'+TIER_COLOR[c.tier]+';color:#1a1020">'+c.tier+'</span>':'')+
+          (c.tier?'<span class="cach-ar" style="top:auto;bottom:8px;left:8px;right:auto;background:'+TIER_COLOR[c.tier]+';color:#1a1020">'+c.tier+'</span>':'')+
           (c.arche?'<span class="cach-ar">'+esc(DERE_LABEL[c.arche]||"")+'</span>':'')+'</div>'+
           '<div class="cach-info"><div class="cach-nm">'+esc(c.name)+'</div><div class="cach-fr">from <b>'+esc(c.from||"—")+'</b></div>'+
           '<div class="cach-ctrl"><button data-act="up" data-id="'+c.id+'" aria-label="Move up">↑</button><button data-act="down" data-id="'+c.id+'" aria-label="Move down">↓</button>'+tierSel(c)+'<button class="del" data-act="del" data-id="'+c.id+'" aria-label="Remove">Remove</button></div>'+
@@ -2374,7 +2377,8 @@ store.init();
       '<div class="cach-field" style="margin-top:14px"><label>Category</label><div class="cach-catpick" id="cach-cat">'+
         cats.map(function(c){return '<button type="button" data-cat="'+c[0]+'">'+c[1].replace("Best ","")+'</button>'}).join("")+'</div></div>'+
       '<div class="cach-field"><label>Archetype (powers your taste type)</label><div class="cach-catpick" id="cach-arche">'+
-        DERE_LIST.map(function(e){return '<button type="button" data-ar="'+e[0]+'">'+esc(e[0]?DERE_LABEL[e[0]]:"None")+'</button>'}).join("")+'</div></div>'+
+        DERE_LIST.map(function(e){var desc=e[1].split(" — ")[1]||"";return '<button type="button" data-ar="'+e[0]+'"'+(desc?' title="'+esc(desc)+'"':'')+'>'+esc(e[0]?DERE_LABEL[e[0]]:"None")+'</button>'}).join("")+'</div>'+
+        '<ul class="cach-legend">'+DERE_LIST.filter(function(e){return e[0]}).map(function(e){var p=e[1].split(" — ");return '<li><b>'+esc(p[0])+'</b> — '+esc(p[1]||"")+'</li>'}).join("")+'</ul></div>'+
       '<div class="cach-field"><label>Tier (optional)</label><div class="cach-catpick" id="cach-tierpick">'+
         '<button type="button" data-tier="">None</button>'+TIER_ORDER.map(function(k){return '<button type="button" data-tier="'+k+'">'+k+'</button>'}).join("")+'</div></div>'+
       '<div class="cach-foot"><button type="button" class="cach-ghost" id="cach-cancel">Cancel</button><button type="button" class="cach-btn" id="cach-save">Add character</button></div>'+
