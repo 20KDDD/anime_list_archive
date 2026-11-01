@@ -1,33 +1,33 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<style>:root{color-scheme:light}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<style>:root{color-scheme:dark}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
 <title>Cel Archive</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=IBM+Plex+Mono:wght@400;500&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
 <style>
 :root{
-  --bg:#EDEFE8; --surface:#FAFBF6; --surface-2:#E3E6DD; --ink:#171A28; --muted:#5B6070; --line:#CFD3C8;
-  --accent:#D3305A; --accent-ink:#FFFFFF; --accent-soft:#F7D9E1;
-  --st-watching:#23805A; --st-completed:#2C5FB3; --st-on_hold:#B07D12; --st-dropped:#A83246; --st-plan:#6A6E7C; --st-unfinished:#7A4FB5;
-  --shadow:0 1px 0 rgba(23,26,40,.06),0 6px 18px -10px rgba(23,26,40,.25);
+  --bg:#150C28; --surface:#1E1240; --surface-2:#2A1A4E; --ink:#F3EEFF; --muted:#9A7FD0; --line:#3A2566;
+  --accent:#B8FF3C; --accent-ink:#150C28; --accent-soft:#273A17;
+  --st-watching:#3DE0A0; --st-completed:#5C9BFF; --st-on_hold:#E0AE45; --st-dropped:#FF5C82; --st-plan:#9A7FD0; --st-unfinished:#C08CFF;
+  --shadow:0 1px 0 rgba(0,0,0,.3),0 10px 26px -12px rgba(0,0,0,.7);
   --display:"Dela Gothic One","Arial Black",Impact,sans-serif;
   --body:"Zen Kaku Gothic New",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   color-scheme:dark;
-  --bg:#11131B; --surface:#1A1D28; --surface-2:#232736; --ink:#ECEEF4; --muted:#9BA1B4; --line:#2E3345;
-  --accent:#FF5C82; --accent-ink:#1A0B10; --accent-soft:#3A1B26;
-  --st-watching:#4CC38E; --st-completed:#6F9BF0; --st-on_hold:#E0AE45; --st-dropped:#F07086; --st-plan:#A0A5B5; --st-unfinished:#B08CF0;
-  --shadow:0 1px 0 rgba(0,0,0,.3),0 8px 22px -12px rgba(0,0,0,.7);
+  --bg:#150C28; --surface:#1E1240; --surface-2:#2A1A4E; --ink:#F3EEFF; --muted:#9A7FD0; --line:#3A2566;
+  --accent:#B8FF3C; --accent-ink:#150C28; --accent-soft:#273A17;
+  --st-watching:#3DE0A0; --st-completed:#5C9BFF; --st-on_hold:#E0AE45; --st-dropped:#FF5C82; --st-plan:#9A7FD0; --st-unfinished:#C08CFF;
+  --shadow:0 1px 0 rgba(0,0,0,.3),0 10px 26px -12px rgba(0,0,0,.7);
 }}
 :root[data-theme="dark"]{
   color-scheme:dark;
-  --bg:#11131B; --surface:#1A1D28; --surface-2:#232736; --ink:#ECEEF4; --muted:#9BA1B4; --line:#2E3345;
-  --accent:#FF5C82; --accent-ink:#1A0B10; --accent-soft:#3A1B26;
-  --st-watching:#4CC38E; --st-completed:#6F9BF0; --st-on_hold:#E0AE45; --st-dropped:#F07086; --st-plan:#A0A5B5; --st-unfinished:#B08CF0;
-  --shadow:0 1px 0 rgba(0,0,0,.3),0 8px 22px -12px rgba(0,0,0,.7);
+  --bg:#150C28; --surface:#1E1240; --surface-2:#2A1A4E; --ink:#F3EEFF; --muted:#9A7FD0; --line:#3A2566;
+  --accent:#B8FF3C; --accent-ink:#150C28; --accent-soft:#273A17;
+  --st-watching:#3DE0A0; --st-completed:#5C9BFF; --st-on_hold:#E0AE45; --st-dropped:#FF5C82; --st-plan:#9A7FD0; --st-unfinished:#C08CFF;
+  --shadow:0 1px 0 rgba(0,0,0,.3),0 10px 26px -12px rgba(0,0,0,.7);
 }
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;padding-inline:16px;padding-block:0 64px}
@@ -85,8 +85,35 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;padding-
 .tab .dot{width:8px;height:8px;border-radius:50%}
 .tab[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .tab.review{border-style:dashed}
-.filters{display:grid;grid-template-columns:minmax(0,2fr) repeat(4,minmax(0,1fr));gap:8px;margin-bottom:16px}
+.filters{display:grid;grid-template-columns:minmax(0,2fr) repeat(3,minmax(0,1fr));gap:8px;margin-bottom:16px}
 @media (max-width:700px){.filters{grid-template-columns:1fr 1fr}.filters .search{grid-column:1/-1}}
+/* stats & taste collapsible */
+.statsToggle{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 14px;font-weight:600;font-size:13.5px;color:var(--ink);margin-bottom:14px;font-family:inherit}
+.statsToggle:hover{border-color:var(--muted)}
+.collapsibleStats[hidden]{display:none}
+/* library: rail + grid */
+.libwrap{display:flex;gap:18px;align-items:flex-start}
+.rail{flex:0 0 212px;position:sticky;top:12px;display:flex;flex-direction:column;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 10px}
+.railSec+.railSec{margin-top:8px}
+.railLbl{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:800;padding:8px 10px 4px}
+.railItem{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:transparent;border:none;color:var(--ink);font-family:inherit;font-size:13.5px;font-weight:600;padding:8px 10px;border-radius:9px;cursor:pointer}
+.railItem:hover{background:var(--surface-2)}
+.railItem[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.railItem .rlabel{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.railItem .rn{font-size:11.5px;color:var(--muted);font-family:var(--mono)}
+.railItem[aria-pressed="true"] .rn{color:var(--accent-ink)}
+.railItem .rdot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+.libmain{flex:1;min-width:0}
+@media (max-width:760px){
+  .libwrap{display:block}
+  .rail{position:static;flex:none;flex-direction:row;align-items:center;overflow-x:auto;gap:6px;margin-bottom:14px;scrollbar-width:none;padding:10px}
+  .rail::-webkit-scrollbar{display:none}
+  .railSec{display:flex;align-items:center;gap:6px;flex:0 0 auto}
+  .railSec+.railSec{margin-top:0;border-left:1px solid var(--line);padding-left:8px}
+  .railLbl{padding:0 2px;white-space:nowrap}
+  .railItem{width:auto;flex:0 0 auto;white-space:nowrap;border:1px solid var(--line)}
+  .railItem .rlabel{overflow:visible}
+}
 .field{display:flex;flex-direction:column;gap:4px;min-width:0}
 .field>label,.lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
 input[type=text],input[type=number],input[type=search],input[type=date],select,textarea{width:100%;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:14px}
@@ -286,29 +313,34 @@ button.tcard{font:inherit;color:inherit;text-align:left;cursor:pointer;position:
     </div>
   </header>
 
-  <section class="band" id="band" aria-label="Library summary"></section>
-  <section class="taste" id="taste" aria-label="Your taste"></section>
+  <button class="statsToggle" id="statsToggle" aria-expanded="false" type="button">▸ Stats &amp; taste</button>
+  <section class="collapsibleStats" id="collapsibleStats" hidden>
+    <section class="band" id="band" aria-label="Library summary"></section>
+    <section class="taste" id="taste" aria-label="Your taste"></section>
+  </section>
 
-  <div class="tabs" id="tabs" role="toolbar" aria-label="Filter by status"></div>
-  <div class="filters">
-    <div class="field search"><label for="fq">Search</label><input type="search" id="fq" placeholder="Title, notes, genre…"></div>
-    <div class="field"><label for="fkind">Kind</label><select id="fkind"></select></div>
-    <div class="field"><label for="fgenre">Genre</label><select id="fgenre"></select></div>
-    <div class="field"><label for="fdemo">Demographic</label><select id="fdemo"></select></div>
-    <div class="field"><label for="fsort">Sort</label><select id="fsort">
-      <option value="updated">Recently updated</option>
-      <option value="title">Title A–Z</option>
-      <option value="score">Score, high to low</option>
-      <option value="year_desc">Release year, newest</option>
-      <option value="year_asc">Release year, oldest</option>
-      <option value="watched">Year watched, newest</option>
-    </select></div>
+  <div class="libwrap">
+    <nav class="rail" id="rail" aria-label="Browse library"></nav>
+    <div class="libmain">
+      <div class="filters">
+        <div class="field search"><label for="fq">Search</label><input type="search" id="fq" placeholder="Title, notes, genre…"></div>
+        <div class="field"><label for="fgenre">Genre</label><select id="fgenre"></select></div>
+        <div class="field"><label for="fdemo">Demographic</label><select id="fdemo"></select></div>
+        <div class="field"><label for="fsort">Sort</label><select id="fsort">
+          <option value="updated">Recently updated</option>
+          <option value="title">Title A–Z</option>
+          <option value="score">Score, high to low</option>
+          <option value="year_desc">Release year, newest</option>
+          <option value="year_asc">Release year, oldest</option>
+          <option value="watched">Year watched, newest</option>
+        </select></div>
+      </div>
+      <div id="bannerSlot"></div>
+      <div id="grid" class="grid"></div>
+      <div id="emptySlot"></div>
+      <div id="moreSlot"></div>
+    </div>
   </div>
-
-  <div id="bannerSlot"></div>
-  <div id="grid" class="grid"></div>
-  <div id="emptySlot"></div>
-  <div id="moreSlot"></div>
 </div>
 
 <div id="sheetSlot"></div>
@@ -436,7 +468,7 @@ function errMsg(e){
 function setSync(cls,txt){const s=$("#sync");s.className="sync "+cls;s.textContent=txt}
 
 /* ---------- state + filters ---------- */
-const state={status:"all",q:"",kind:"",genre:"",demo:"",sort:lsGet("celarchive.sort")||"updated"};
+const state={status:"all",q:"",kind:"",format:"",genre:"",demo:"",sort:lsGet("celarchive.sort")||"updated"};
 $("#fsort").value=state.sort;
 
 function items(){return [...store.items.values()]}
@@ -449,6 +481,8 @@ function viewItems(){
     else if(state.status==="fav"){if(!it.favorite)return false}
     else if(state.status!=="all"&&it.status!==state.status)return false;
     if(state.kind&&it.kind!==state.kind)return false;
+    if(state.format==="film"&&!isMovie(it))return false;
+    if(state.format==="tv"&&isMovie(it))return false;
     if(state.genre&&!(it.genres||[]).includes(state.genre))return false;
     if(state.demo&&it.demo!==state.demo)return false;
     if(q){const hay=[DEMO_LABEL[it.demo],it.title,it.altTitle,it.notes,(it.genres||[]).join(" "),it.year,KIND_LABEL[it.kind]].join(" ").toLowerCase();if(!hay.includes(q))return false}
@@ -660,21 +694,34 @@ $("#taste").addEventListener("click",e=>{
   const tm=e.target.closest("[data-terms]");if(tm){openTerms(tm.dataset.terms);return}
   const b=e.target.closest("[data-set]");if(b)openSet(b.dataset.set);
 });
-function renderTabs(){
+function renderRail(){
   const src=isExampleMode()?EXAMPLES:items();
-  const review=src.filter(x=>x.needsReview).length;
-  const tabs=[{k:"all",label:"All",n:src.length},...STATUSES.map(s=>({k:s.k,label:s.label,n:src.filter(x=>x.status===s.k).length,dot:true}))];
-  tabs.splice(1,0,{k:"fav",label:"Favorites",n:src.filter(x=>x.favorite).length,fav:true});
-  if(review)tabs.push({k:"review",label:"Needs review",n:review,review:true});
-  if(state.status==="review"&&!review)state.status="all";
-  $("#tabs").innerHTML=tabs.map(t=>`<button class="tab${t.review?" review":""}${t.fav?" favtab":""}" data-st="${t.k}" aria-pressed="${state.status===t.k}">${t.fav?`<span class="heart" aria-hidden="true">♥</span>`:""}${t.dot?`<span class="dot" style="background:var(--st-${t.k})"></span>`:""}${esc(t.label)} <span class="n">${t.n}</span></button>`).join("");
+  if(state.status==="review"&&!src.some(x=>x.needsReview))state.status="all";
+  const cS=k=>src.filter(x=>x.status===k).length;
+  const cK=k=>src.filter(x=>x.kind===k).length;
+  const favN=src.filter(x=>x.favorite).length;
+  const reviewN=src.filter(x=>x.needsReview).length;
+  const films=src.filter(isMovie).length, tvN=src.length-films;
+  const allActive=state.status==="all"&&!state.kind&&!state.format;
+  const it=(axis,val,label,n,pressed,dot)=>`<button class="railItem" data-axis="${axis}" data-val="${val}" aria-pressed="${pressed}">${dot?`<span class="rdot" style="background:${dot}"></span>`:""}<span class="rlabel">${esc(label)}</span><span class="rn">${n}</span></button>`;
+  let kinds=KINDS.filter(k=>cK(k.k)>0);
+  if(!kinds.length)kinds=KINDS.slice(0,4);
+  const sec=(label,body)=>`<div class="railSec"><div class="railLbl">${label}</div>${body}</div>`;
+  $("#rail").innerHTML=
+    sec("Library",
+      it("reset","all","All",src.length,allActive)+
+      it("fav","fav","Favorites",favN,state.status==="fav")+
+      (reviewN?it("review","review","Needs review",reviewN,state.status==="review"):""))+
+    sec("By type",kinds.map(k=>it("kind",k.k,k.label.split(" ")[0],cK(k.k),state.kind===k.k)).join(""))+
+    sec("By format",
+      it("format","tv","TV & series",tvN,state.format==="tv")+
+      it("format","film","Films",films,state.format==="film"))+
+    sec("By status",STATUSES.map(s=>it("status",s.k,s.label,cS(s.k),state.status===s.k,`var(--st-${s.k})`)).join(""));
 }
 function renderSelects(){
   const src=items();
   const dsel=$("#fdemo");dsel.innerHTML=`<option value="">All</option>`+DEMOS.map(x=>`<option value="${x.k}">${x.label}</option>`).join("");dsel.value=state.demo;
-  const k=$("#fkind"),g=$("#fgenre");
-  k.innerHTML=`<option value="">All kinds</option>`+KINDS.map(x=>`<option value="${x.k}">${x.label}</option>`).join("");
-  k.value=state.kind;
+  const g=$("#fgenre");
   const used=new Set();src.forEach(x=>(x.genres||[]).forEach(z=>used.add(z)));
   const list=[...new Set([...GENRES.filter(x=>used.has(x)),...[...used].sort()])];
   g.innerHTML=`<option value="">All genres</option>`+(list.length?list:GENRES).map(x=>`<option>${esc(x)}</option>`).join("");
@@ -714,10 +761,10 @@ function cardHTML(it){
 const PAGE_SIZE=500;let shownCount=PAGE_SIZE,lastViewKey="";
 function render(){
   if(!store.loaded){$("#grid").innerHTML="";$("#emptySlot").innerHTML=`<div class="loading">Opening your library…</div>`;return}
-  renderBand();renderTaste();renderTabs();renderSelects();
+  renderBand();renderTaste();renderRail();renderSelects();
   const list=viewItems();
   $("#bannerSlot").innerHTML=isExampleMode()?`<div class="banner"><p><b>Your library is empty.</b> The three cards below are examples so you can see how entries look. Add a title, or paste your Google Doc list into Bulk import. Everything saves in this browser, so download a backup from More now and then.</p><button class="btn primary sm" id="bannerBulk">Bulk import</button></div>`:"";
-  const vk=[state.status,state.q,state.kind,state.genre,state.demo,state.sort].join("|");
+  const vk=[state.status,state.q,state.kind,state.format,state.genre,state.demo,state.sort].join("|");
   if(vk!==lastViewKey){shownCount=PAGE_SIZE;lastViewKey=vk}
   $("#grid").innerHTML=list.slice(0,shownCount).map(cardHTML).join("");
   const left=list.length-shownCount;
@@ -727,9 +774,21 @@ function render(){
 }
 
 /* ---------- events: library ---------- */
-$("#tabs").addEventListener("click",e=>{const b=e.target.closest("[data-st]");if(!b)return;state.status=b.dataset.st;render()});
+$("#rail").addEventListener("click",e=>{const b=e.target.closest("[data-axis]");if(!b)return;const a=b.dataset.axis,v=b.dataset.val;
+  if(a==="reset"){state.status="all";state.kind="";state.format="";}
+  else if(a==="status")state.status=v;
+  else if(a==="fav")state.status=state.status==="fav"?"all":"fav";
+  else if(a==="review")state.status=state.status==="review"?"all":"review";
+  else if(a==="kind")state.kind=state.kind===v?"":v;
+  else if(a==="format")state.format=state.format===v?"":v;
+  render();});
+/* stats & taste collapsible */
+(function(){const t=$("#statsToggle"),box=$("#collapsibleStats");if(!t||!box)return;
+  const set=open=>{box.hidden=!open;t.setAttribute("aria-expanded",String(open));t.innerHTML=(open?"▾":"▸")+" Stats &amp; taste";};
+  set(lsGet("celarchive.statsOpen")==="1");
+  t.onclick=()=>{const open=box.hidden;lsSet("celarchive.statsOpen",open?"1":"0");set(open);};
+})();
 let qTimer;$("#fq").addEventListener("input",e=>{clearTimeout(qTimer);qTimer=setTimeout(()=>{state.q=e.target.value;render()},120)});
-$("#fkind").addEventListener("change",e=>{state.kind=e.target.value;render()});
 $("#fgenre").addEventListener("change",e=>{state.genre=e.target.value;render()});
 $("#fdemo").addEventListener("change",e=>{state.demo=e.target.value;render()});
 $("#fsort").addEventListener("change",e=>{state.sort=e.target.value;lsSet("celarchive.sort",state.sort);render()});
