@@ -122,28 +122,31 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
 
 /* grid */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
-.card{position:relative;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 14px 12px 20px;display:flex;flex-direction:column;gap:8px;box-shadow:var(--shadow);overflow:hidden;min-width:0}
-.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--st,var(--line))}
+@media (max-width:560px){.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.ptitle{font-size:13px}}
+/* poster-forward cards */
+.card{position:relative;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:0;display:flex;flex-direction:column;box-shadow:var(--shadow);overflow:hidden;min-width:0;cursor:pointer}
 .card:hover{border-color:var(--muted)}
-.card .meta{font-family:var(--mono);font-size:11.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 8px}
-.card .row1{display:flex;gap:10px;align-items:flex-start}
-.card .ttl{flex:1;min-width:0}
-.card h3{font-size:16.5px;font-weight:700;line-height:1.3;overflow-wrap:anywhere}
-.card .alt{font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
-.score{flex:0 0 auto;text-align:center;min-width:48px}
-.score .num{font-family:var(--display);font-size:26px;line-height:1}
-.score .lab{font-size:10px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
-.score.none .num{color:var(--line)}
-.chips{display:flex;flex-wrap:wrap;gap:4px}
+.card:hover .pimg,.card:hover .pfallback{transform:scale(1.04)}
+.posterbox{position:relative;aspect-ratio:2/3;overflow:hidden;background:var(--surface-2)}
+.pfallback{position:absolute;inset:0;transition:transform .25s ease}
+.pimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;transition:transform .25s ease}
+.card.noimg .pimg{display:none}
+.medal{position:absolute;top:8px;right:8px;min-width:30px;height:30px;padding:0 7px;border-radius:999px;background:var(--accent);color:var(--accent-ink);font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.45);border:2px solid var(--bg)}
+.medal.none{background:var(--surface-2);color:var(--muted);border-color:var(--line)}
+.favbtn{position:absolute;top:8px;left:8px;width:30px;height:30px;border-radius:50%;border:none;background:rgba(10,6,20,.5);color:#fff;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.favbtn[aria-pressed="true"]{color:var(--accent)}
+.rvwbadge{position:absolute;left:8px;bottom:8px;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;background:var(--st-on_hold);color:#150C28;padding:2px 7px;border-radius:999px}
+.card .example-tag{top:8px;left:8px;right:auto}
+.cardfoot{padding:10px 12px 12px;display:flex;flex-direction:column;gap:7px;min-width:0}
+.ptitle{font-weight:700;font-size:14.5px;line-height:1.22;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.cfrow{display:flex;align-items:center;gap:8px;min-width:0}
+.stchip{flex:0 0 auto;font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:3px 9px;border-radius:999px;background:color-mix(in srgb,var(--st) 24%,transparent);color:var(--st)}
+.cmeta{flex:1;min-width:0;font-family:var(--mono);font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cfrow .plus{flex:0 0 auto;border:1px solid var(--line);background:var(--surface-2);border-radius:8px;color:var(--ink);font-weight:800;font-size:12px;padding:3px 9px;cursor:pointer;line-height:1}
+.cfrow .plus:hover{border-color:var(--accent);color:var(--accent)}
+/* retained (used outside the card too) */
 .chip{font-size:11.5px;padding:2px 8px;border-radius:999px;background:var(--surface-2);color:var(--ink)}
 .flag{font-size:11.5px;padding:2px 8px;border-radius:999px;border:1px dashed var(--st-on_hold);color:var(--st-on_hold)}
-.foot{display:flex;align-items:center;gap:10px;margin-top:auto;padding-top:4px}
-.pill{font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;color:var(--st);background:color-mix(in srgb,var(--st) 14%,transparent);white-space:nowrap}
-.prog{flex:1;display:flex;align-items:center;gap:8px;min-width:0}
-.prog .track{flex:1;height:5px;border-radius:3px;background:var(--surface-2);overflow:hidden}
-.prog .track b{display:block;height:100%;background:var(--st)}
-.prog .t{font-family:var(--mono);font-size:11.5px;color:var(--muted);white-space:nowrap}
-.plus{border:1px solid var(--line);background:var(--surface);border-radius:8px;font-family:var(--mono);font-size:12px;padding:2px 8px}
 .fav{color:var(--accent);font-size:15px;line-height:1}
 .example-tag{position:absolute;top:10px;right:10px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:var(--accent-soft);color:var(--accent);padding:2px 6px;border-radius:4px}
 .card.example{opacity:.8;border-style:dashed}
@@ -727,34 +730,29 @@ function renderSelects(){
   g.innerHTML=`<option value="">All genres</option>`+(list.length?list:GENRES).map(x=>`<option>${esc(x)}</option>`).join("");
   g.value=state.genre;
 }
+function posterGrad(seed){let s=String(seed||""),h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;const a=200+(h%150),b=a+34;return `linear-gradient(150deg,hsl(${a} 45% 30%),hsl(${b} 55% 44%))`}
 function cardHTML(it){
   const st=it.status||"plan";
   const ss=seasonsOf(it),sw=ss.filter(s=>s.watched).length;
-  const pct=st==="completed"?100:(ss.length?sw/ss.length*100:0);
-  const meta=[KIND_LABEL[it.kind],DEMO_LABEL[it.demo],it.type,it.year].filter(Boolean).map(esc).join(" · ");
-  const prev=(it.scoreHistory||[]).slice(-1)[0];
-  const sTxt=isMovie(it)?"Film":(ss.length?(st==="completed"?`${ss.length} season${ss.length>1?"s":""}`:`${sw} of ${ss.length} seasons`):"");
-  const fx=e=>e>0?`+${e}`:e<0?`−${-e}`:"±0";
-  const chips=!isMovie(it)&&ss.some(s=>s.effect!=null)?`<div class="seasons">${ss.filter(s=>s.effect!=null).map(s=>`<span class="${s.effect>0?"up":s.effect<0?"down":""}">S${s.n}<b>${fx(s.effect)}</b></span>`).join("")}</div>`:"";
+  const kindShort=(KIND_LABEL[it.kind]||"").split(" ")[0];
+  const meta=[kindShort,it.type,it.year].filter(Boolean).map(esc).join(" · ");
+  const sTxt=isMovie(it)?"":(ss.length?(st==="completed"?`${ss.length}S`:`${sw}/${ss.length}S`):"");
+  const metaLine=[meta,sTxt].filter(Boolean).join(" · ");
   return `<article class="card${it._example?" example":""}" style="--st:var(--st-${st})" data-id="${esc(it.id)}" tabindex="0" role="button" aria-label="${esc(it.title)}, open details">
-    ${it._example?`<span class="example-tag">Example</span>`:""}
-    <div class="row1">
-      ${it.poster?`<img class="poster" src="${esc(it.poster)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:""}
-      <div class="ttl">
-        <div class="meta">${meta||"&nbsp;"}${it.watchedYear?`<span>· watched ${esc(it.watchedYear)}</span>`:""}</div>
-        <h3>${it.favorite?`<span class="fav" title="Favorite">♥</span> `:""}${esc(it.title)}</h3>
-        ${it.altTitle?`<div class="alt">${esc(it.altTitle)}</div>`:""}
-      </div>
-      <div class="score${it.score?"":" none"}" style="${it._example?"margin-top:14px":""}"><div class="num">${it.score||"–"}</div><div class="lab">${it.score?SCORE_LABEL[Math.round(it.score)]:"unscored"}</div>${prev&&prev.score!==it.score?`<div class="was">was ${prev.score}</div>`:""}</div>
+    <div class="posterbox">
+      <div class="pfallback" style="background:${posterGrad(it.id||it.title)}"></div>
+      ${it.poster?`<img class="pimg" src="${esc(it.poster)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.closest('.card').classList.add('noimg')">`:``}
+      <span class="medal${it.score?"":" none"}">${it.score||"–"}</span>
+      ${it._example?`<span class="example-tag">Example</span>`:`<button class="favbtn" data-fav="${esc(it.id)}" aria-pressed="${!!it.favorite}" aria-label="${it.favorite?"Remove from":"Add to"} favorites">${it.favorite?"♥":"♡"}</button>`}
+      ${it.needsReview?`<span class="rvwbadge">Needs review</span>`:""}
     </div>
-    ${(it.genres||[]).length?`<div class="chips">${it.genres.map(g=>`<span class="chip">${esc(g)}</span>`).join("")}</div>`:""}
-    ${chips}
-    ${it.needsReview?`<div class="chips"><span class="flag">Needs review</span></div>`:""}
-    <div class="foot">
-      <span class="pill">${esc(ST_LABEL[st])}</span>
-      <div class="prog"><div class="track"><b style="width:${pct}%"></b></div><span class="t">${esc(sTxt)}</span></div>
-      ${it._example?"":`<button class="favbtn" data-fav="${esc(it.id)}" aria-pressed="${!!it.favorite}" aria-label="${it.favorite?"Remove from":"Add to"} favorites">${it.favorite?"♥":"♡"}</button>`}
-      ${st==="watching"&&!it._example?`<button class="plus" data-done="${esc(it.id)}" aria-label="Mark ${esc(it.title)} as finished">Finished ✓</button>`:""}
+    <div class="cardfoot">
+      <div class="ptitle">${it.favorite&&!it._example?`<span class="fav" title="Favorite">♥</span> `:""}${esc(it.title)}</div>
+      <div class="cfrow">
+        <span class="stchip">${esc(ST_LABEL[st]||st)}</span>
+        <span class="cmeta">${metaLine||"&nbsp;"}</span>
+        ${st==="watching"&&!it._example?`<button class="plus" data-done="${esc(it.id)}" aria-label="Mark ${esc(it.title)} as finished">✓ Finish</button>`:""}
+      </div>
     </div>
   </article>`;
 }
