@@ -335,6 +335,7 @@ button.tcard{font:inherit;color:inherit;text-align:left;cursor:pointer;position:
           <option value="updated">Recently updated</option>
           <option value="title">Title A–Z</option>
           <option value="score">Score, high to low</option>
+          <option value="score_asc">Score, low to high</option>
           <option value="year_desc">Release year, newest</option>
           <option value="year_asc">Release year, oldest</option>
           <option value="watched">Year watched, newest</option>
@@ -497,6 +498,7 @@ function viewItems(){
     updated:(a,b)=>(b.updatedAt||0)-(a.updatedAt||0),
     title:(a,b)=>String(a.title).localeCompare(String(b.title),undefined,{sensitivity:"base"}),
     score:(a,b)=>(b.score||0)-(a.score||0)||String(a.title).localeCompare(b.title),
+    score_asc:(a,b)=>((a.score||Infinity)-(b.score||Infinity))||String(a.title).localeCompare(b.title),
     year_desc:(a,b)=>(b.year||0)-(a.year||0),
     year_asc:(a,b)=>(a.year||9999)-(b.year||9999),
     watched:(a,b)=>(b.watchedYear||0)-(a.watchedYear||0)||(b.updatedAt||0)-(a.updatedAt||0)};
@@ -2165,6 +2167,21 @@ store.init();
   var DERE_LIST = [["","— archetype (optional)"],["kuudere","Kuudere — cold, hidden soft"],["tsundere","Tsundere — prickly then sweet"],["yandere","Yandere — obsessive love"],["dandere","Dandere — shy, quiet"],["deredere","Deredere — openly loving"],["himedere","Himedere — wants to be adored"],["sadodere","Sadodere — teasing, mean"]];
   var DERE_LABEL = {}; DERE_LIST.forEach(function(e){if(e[0])DERE_LABEL[e[0]]=e[1].split(" — ")[0]});
 
+  /* ---- tiers (S–F) ---- */
+  var TIERS = [["S","#FF7B7B"],["A","#FFB366"],["B","#FFE066"],["C","#8CE99A"],["D","#74C0FC"],["F","#B197FC"]];
+  var TIER_ORDER = ["S","A","B","C","D","F"];
+  var TIER_COLOR = {}; TIERS.forEach(function(t){TIER_COLOR[t[0]]=t[1]});
+  var TIER_SET = {S:1,A:1,B:1,C:1,D:1,F:1};
+  var viewMode = (function(){try{return localStorage.getItem("celarchive.charview")==="tier"?"tier":"ranked"}catch(e){return "ranked"}})();
+  function setView(v){viewMode=(v==="tier"?"tier":"ranked");try{localStorage.setItem("celarchive.charview",viewMode)}catch(e){}}
+  function setTier(id,t){for(var i=0;i<chars.length;i++)if(chars[i].id===id){chars[i].tier=TIER_SET[t]?t:"";break}save();render()}
+  function tierSel(c){
+    return '<select class="cach-tsel" data-tier-for="'+c.id+'" aria-label="Tier for '+esc(c.name)+'">'+
+      '<option value=""'+(c.tier?"":" selected")+'>Tier —</option>'+
+      TIER_ORDER.map(function(k){return '<option value="'+k+'"'+(c.tier===k?" selected":"")+'>'+k+'</option>'}).join("")+
+      '</select>';
+  }
+
   function tasteType(){
     var w={}, total=0, n=chars.length;
     chars.forEach(function(c,i){ if(!c.arche)return; var weight=Math.max(1,n-i); w[c.arche]=(w[c.arche]||0)+weight; total+=weight; });
@@ -2245,7 +2262,24 @@ store.init();
       ".cach-catpick button{background:var(--surface-2);border:2px solid var(--line);color:var(--muted);border-radius:999px;padding:6px 14px;font-weight:700;font-size:12.5px;font-family:inherit;cursor:pointer}"+
       ".cach-catpick button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}"+
       ".cach-msg{font-size:12.5px;color:var(--muted);min-height:16px;margin-top:4px}"+
-      ".cach-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:6px}";
+      ".cach-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:6px}"+
+      /* view toggle */
+      ".cach-vtog{display:inline-flex;gap:4px;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:3px;margin:2px 0 14px}"+
+      ".cach-vtog button{background:transparent;border:none;color:var(--muted);font-family:inherit;font-weight:700;font-size:12.5px;padding:6px 15px;border-radius:999px;cursor:pointer}"+
+      ".cach-vtog button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink)}"+
+      /* tier select on cards */
+      ".cach-tsel{background:var(--surface-2);border:1px solid var(--line);color:var(--ink);border-radius:8px;font-family:inherit;font-size:12px;font-weight:700;padding:3px 6px;cursor:pointer}"+
+      /* tier board */
+      ".cach-tier{display:flex;align-items:stretch;gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:8px;background:var(--surface)}"+
+      ".cach-tlabel{flex:0 0 58px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:22px;color:#1a1020}"+
+      ".cach-trow{flex:1 1 auto;display:flex;flex-wrap:wrap;gap:8px;padding:10px;min-height:76px;align-content:flex-start}"+
+      ".cach-tempty{color:var(--muted);font-size:12px;align-self:center;font-weight:600}"+
+      ".cach-chip{width:60px;text-align:center}"+
+      ".cach-chip .cp{width:60px;height:60px;border-radius:12px;object-fit:cover;background:var(--surface-2);display:block;border:1px solid var(--line)}"+
+      ".cach-chip .cpph{width:60px;height:60px;border-radius:12px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--muted);border:1px solid var(--line)}"+
+      ".cach-chip .cn{display:block;font-size:10px;color:var(--ink);font-weight:700;margin-top:3px;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}"+
+      ".cach-chip .cach-tsel{margin-top:3px;width:100%;padding:2px 4px;font-size:10.5px}"+
+      "@media (max-width:560px){.cach-tlabel{flex-basis:42px;font-size:18px}.cach-chip,.cach-chip .cp,.cach-chip .cpph{width:52px}.cach-chip .cp,.cach-chip .cpph{height:52px}}";
     document.head.appendChild(s);
   }
 
@@ -2264,6 +2298,19 @@ store.init();
     } else if(chars.length){
       html+='<div class="cach-taste"><div class="cach-el">Your anime taste type</div><p style="margin:8px 0 0">Tag your characters with an archetype (kuudere, tsundere, yandere…) to unlock your taste type.</p></div>';
     }
+    /* view toggle (ranking vs tier list) */
+    if(chars.length){
+      html+='<div class="cach-vtog" id="cach-vtog">'+
+        '<button type="button" data-view2="ranked" aria-pressed="'+(viewMode==="ranked")+'">Ranking</button>'+
+        '<button type="button" data-view2="tier" aria-pressed="'+(viewMode==="tier")+'">Tier list</button></div>';
+    }
+
+    if(viewMode==="tier" && chars.length){
+      html+=tierBoardHTML();
+      body.innerHTML=html;
+      return;
+    }
+
     var list = filter==="all" ? ["girl","boy","other"] : [filter];
     var any=false;
     list.forEach(function(cat){
@@ -2275,14 +2322,33 @@ store.init();
         return '<article class="cach-card">'+
           '<div class="cach-port">'+(c.img?'<img src="'+esc(c.img)+'" alt="" referrerpolicy="no-referrer" onerror="this.remove()">':'')+'<span class="ini">'+esc((c.name||"?").split(" ").map(function(w){return w[0]}).join("").slice(0,2))+'</span>'+
           '<span class="cach-rank'+(i===0?" gold":"")+'">'+(i+1)+'</span>'+
+          (c.tier?'<span class="cach-ar" style="left:8px;right:auto;background:'+TIER_COLOR[c.tier]+';color:#1a1020">'+c.tier+'</span>':'')+
           (c.arche?'<span class="cach-ar">'+esc(DERE_LABEL[c.arche]||"")+'</span>':'')+'</div>'+
           '<div class="cach-info"><div class="cach-nm">'+esc(c.name)+'</div><div class="cach-fr">from <b>'+esc(c.from||"—")+'</b></div>'+
-          '<div class="cach-ctrl"><button data-act="up" data-id="'+c.id+'" aria-label="Move up">↑</button><button data-act="down" data-id="'+c.id+'" aria-label="Move down">↓</button><button class="del" data-act="del" data-id="'+c.id+'" aria-label="Remove">Remove</button></div>'+
+          '<div class="cach-ctrl"><button data-act="up" data-id="'+c.id+'" aria-label="Move up">↑</button><button data-act="down" data-id="'+c.id+'" aria-label="Move down">↓</button>'+tierSel(c)+'<button class="del" data-act="del" data-id="'+c.id+'" aria-label="Remove">Remove</button></div>'+
           '</div></article>';
       }).join("")+'</div>';
     });
     if(!any)html+='<div class="cach-empty">No characters yet. Tap <b>+ Add character</b> to search AniList and start your ranking.</div>';
     body.innerHTML=html;
+  }
+
+  /* classic S–F tier board; an "Unranked" tray collects characters with no tier */
+  function tierBoardHTML(){
+    function chip(c){
+      return '<div class="cach-chip">'+
+        (c.img?'<img class="cp" src="'+esc(c.img)+'" alt="" referrerpolicy="no-referrer" onerror="this.outerHTML=\'<span class=&quot;cpph&quot;>'+esc((c.name||"?").slice(0,2))+'</span>\'">':'<span class="cpph">'+esc((c.name||"?").split(" ").map(function(w){return w[0]}).join("").slice(0,2))+'</span>')+
+        '<span class="cn" title="'+esc(c.name)+'">'+esc(c.name)+'</span>'+tierSel(c)+'</div>';
+    }
+    var h="";
+    TIER_ORDER.forEach(function(k){
+      var sub=chars.filter(function(c){return c.tier===k});
+      h+='<div class="cach-tier"><div class="cach-tlabel" style="background:'+TIER_COLOR[k]+'">'+k+'</div>'+
+         '<div class="cach-trow">'+(sub.length?sub.map(chip).join(""):'<span class="cach-tempty">Set a character to '+k+' with its tier menu</span>')+'</div></div>';
+    });
+    var un=chars.filter(function(c){return !c.tier});
+    if(un.length) h+='<div class="cach-tier"><div class="cach-tlabel" style="background:var(--surface-2);color:var(--muted)">?</div><div class="cach-trow">'+un.map(chip).join("")+'</div></div>';
+    return h;
   }
 
   function move(id,dir){
@@ -2307,17 +2373,22 @@ store.init();
       '<div class="cach-res" id="cach-res"></div>'+
       '<div class="cach-field" style="margin-top:14px"><label>Category</label><div class="cach-catpick" id="cach-cat">'+
         cats.map(function(c){return '<button type="button" data-cat="'+c[0]+'">'+c[1].replace("Best ","")+'</button>'}).join("")+'</div></div>'+
-      '<div class="cach-field"><label for="cach-arche">Archetype (powers your taste type)</label><select class="cach-sel" id="cach-arche">'+
-        DERE_LIST.map(function(e){return '<option value="'+e[0]+'">'+esc(e[1])+'</option>'}).join("")+'</select></div>'+
+      '<div class="cach-field"><label>Archetype (powers your taste type)</label><div class="cach-catpick" id="cach-arche">'+
+        DERE_LIST.map(function(e){return '<button type="button" data-ar="'+e[0]+'">'+esc(e[0]?DERE_LABEL[e[0]]:"None")+'</button>'}).join("")+'</div></div>'+
+      '<div class="cach-field"><label>Tier (optional)</label><div class="cach-catpick" id="cach-tierpick">'+
+        '<button type="button" data-tier="">None</button>'+TIER_ORDER.map(function(k){return '<button type="button" data-tier="'+k+'">'+k+'</button>'}).join("")+'</div></div>'+
       '<div class="cach-foot"><button type="button" class="cach-ghost" id="cach-cancel">Cancel</button><button type="button" class="cach-btn" id="cach-save">Add character</button></div>'+
       '</div>';
     document.body.appendChild(scrim);
     function close(){scrim.remove()}
-    function setCat(v){var bs=scrim.querySelectorAll("#cach-cat button");for(var i=0;i<bs.length;i++)bs[i].setAttribute("aria-pressed",String(bs[i].getAttribute("data-cat")===v))}
-    setCat("girl");
+    function setPressed(sel,attr,v){var bs=scrim.querySelectorAll(sel);for(var i=0;i<bs.length;i++)bs[i].setAttribute("aria-pressed",String(bs[i].getAttribute(attr)===v))}
+    function setCat(v){setPressed("#cach-cat button","data-cat",v)}
+    setCat("girl"); setPressed("#cach-arche button","data-ar",""); setPressed("#cach-tierpick button","data-tier","");
     scrim.addEventListener("click",function(e){
       if(e.target===scrim||e.target.closest(".cach-x")||e.target.id==="cach-cancel"){close();return}
       var cb=e.target.closest("#cach-cat button"); if(cb){setCat(cb.getAttribute("data-cat"));return}
+      var ab=e.target.closest("#cach-arche button"); if(ab){setPressed("#cach-arche button","data-ar",ab.getAttribute("data-ar"));return}
+      var tb=e.target.closest("#cach-tierpick button"); if(tb){setPressed("#cach-tierpick button","data-tier",tb.getAttribute("data-tier"));return}
       var rb=e.target.closest("#cach-res button");
       if(rb){var bs=scrim.querySelectorAll("#cach-res button");for(var i=0;i<bs.length;i++)bs[i].setAttribute("aria-pressed","false");rb.setAttribute("aria-pressed","true");
         pending=JSON.parse(rb.getAttribute("data-c"));setCat(pending.cat);return}
@@ -2341,8 +2412,11 @@ store.init();
     q.addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();doSearch()}});
     scrim.querySelector("#cach-save").addEventListener("click",function(){
       if(!pending){msg.textContent="Search and pick a character first.";return}
-      var cat=(scrim.querySelector("#cach-cat button[aria-pressed=true]")||{}).getAttribute?scrim.querySelector("#cach-cat button[aria-pressed=true]").getAttribute("data-cat"):"girl";
-      chars.push({id:newId(),name:pending.name,from:pending.from,img:pending.img||null,cat:cat||"girl",arche:scrim.querySelector("#cach-arche").value||null});
+      var catBtn=scrim.querySelector("#cach-cat button[aria-pressed=true]");
+      var cat=catBtn?catBtn.getAttribute("data-cat"):"girl";
+      var arBtn=scrim.querySelector("#cach-arche button[aria-pressed=true]");
+      var tierBtn=scrim.querySelector("#cach-tierpick button[aria-pressed=true]");
+      chars.push({id:newId(),name:pending.name,from:pending.from,img:pending.img||null,cat:cat||"girl",arche:(arBtn&&arBtn.getAttribute("data-ar"))||null,tier:(tierBtn&&tierBtn.getAttribute("data-tier"))||""});
       save();close();render();
     });
     setTimeout(function(){q.focus()},30);
@@ -2380,6 +2454,8 @@ store.init();
       '<input type="file" id="cach-file" accept=".json,application/json" hidden>'+
       '<div id="cach-body"></div>';
     page.addEventListener("click",function(e){
+      var vt=e.target.closest("[data-view2]");
+      if(vt){setView(vt.getAttribute("data-view2"));render();return}
       var a=e.target.closest("[data-act]"), st=e.target.closest("[data-f]");
       if(st){filter=st.getAttribute("data-f");var bs=page.querySelectorAll("#cach-sub [data-f]");for(var i=0;i<bs.length;i++)bs[i].setAttribute("aria-pressed",String(bs[i].getAttribute("data-f")===filter));render();return}
       if(!a)return;
@@ -2392,6 +2468,10 @@ store.init();
       else if(act==="del")del(id);
     });
     page.querySelector("#cach-file").addEventListener("change",function(e){if(e.target.files&&e.target.files[0])importChars(e.target.files[0]);e.target.value=""});
+    page.addEventListener("change",function(e){
+      var ts=e.target.closest(".cach-tsel");
+      if(ts){setTier(ts.getAttribute("data-tier-for"), ts.value);}
+    });
     render();
   }
 
@@ -2428,7 +2508,7 @@ store.init();
   function lib(){try{var a=JSON.parse(lsGet(LS_LIB)||"[]");return Array.isArray(a)?a:[]}catch(e){return []}}
   function chars(){try{var a=JSON.parse(lsGet(LS_CH)||"[]");return Array.isArray(a)?a:[]}catch(e){return []}}
   var crowns = (function(){try{return JSON.parse(lsGet(LS)||"{}")||{}}catch(e){return {}}})();
-  function saveCrowns(){lsSet(LS, JSON.stringify(crowns))}
+  function saveCrowns(){lsSet(LS, JSON.stringify(crowns));announce()}
 
   var SVG = {
     crown:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 7l4 4 5-7 5 7 4-4-2 12H5L3 7z"/></svg>',
@@ -2517,6 +2597,19 @@ store.init();
     return html+'</div>';
   }
 
+  /* titles that currently hold a crown in the Hall of Fame (signature picks +
+     hot takes that resolve to a real library title — manual pick wins over auto).
+     Character picks (best girl/boy) and genre/format medals are excluded. */
+  function crownedTitles(){
+    var titles={}, set={};
+    lib().forEach(function(x){if(x.title)titles[String(x.title).trim().toLowerCase()]=1});
+    function add(def){var r=resolve(def);if(r&&!r.placeholder&&r.v){var key=String(r.v).trim().toLowerCase();if(titles[key])set[key]=1;}}
+    SIG.forEach(add); HOT.forEach(add);
+    return set;
+  }
+  function announce(){try{window.dispatchEvent(new CustomEvent("celarchive:hof"))}catch(e){}}
+  window.CelArchiveHoF={crownedTitles:crownedTitles};
+
   function render(){
     if(!page)return;
     var body=page.querySelector("#chof-body");if(!body)return;
@@ -2538,6 +2631,7 @@ store.init();
     if(fmtDefs.length)   html+=block("Format champions","auto — top of each kind",fmtDefs,SVG.medal,true);
     if(!items.length && !Object.keys(crowns).length) html+='<div class="chof-note" style="margin-top:14px">Add titles to your library and rank some characters, and your champions appear here automatically. Crown your signature picks any time.</div>';
     body.innerHTML=html;
+    announce();
   }
 
   /* crown picker */
@@ -2734,6 +2828,10 @@ store.init();
   function lib(){try{var a=JSON.parse(g(LS_LIB)||"[]");return Array.isArray(a)?a:[]}catch(e){return[]}}
   function norm(s){return String(s==null?"":s).trim().toLowerCase()}
   function crowned(){
+    /* Preferred: mirror the Hall of Fame exactly (signature picks + hot takes,
+       manual crown winning over auto). Falls back to HoF storage + top score
+       only if the Hall of Fame module hasn't initialised yet. */
+    try{if(window.CelArchiveHoF&&window.CelArchiveHoF.crownedTitles)return window.CelArchiveHoF.crownedTitles();}catch(e){}
     var set={}, items=lib();
     try{var c=JSON.parse(g(LS_HOF)||"{}");if(c&&typeof c==="object")Object.keys(c).forEach(function(k){if(c[k])set[norm(c[k])]=1})}catch(e){}
     var max=0;items.forEach(function(x){var s=+x.score||0;if(s>max)max=s});
@@ -2757,6 +2855,7 @@ store.init();
     decorate();
     try{new MutationObserver(function(){clearTimeout(T);T=setTimeout(decorate,30);}).observe(grid,{childList:true});}catch(e){}
     try{window.addEventListener("storage",function(e){if(e.key===LS_HOF||e.key===LS_LIB)decorate();});}catch(e){}
+    try{window.addEventListener("celarchive:hof",function(){decorate();});}catch(e){}
     document.addEventListener("click",function(e){if(e.target.closest&&e.target.closest('[data-view="library"]'))setTimeout(decorate,60);});
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();
