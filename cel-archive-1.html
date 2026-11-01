@@ -877,15 +877,31 @@ function openEdit(it){
     const got=["title","format",yr?"year":null,"genres",dm?"demographic":null,kd?"kind":null].filter(Boolean).join(", ");
     $("#ePMsg").textContent=`Filled in ${got}. Now just set the score, seasons watched and year watched.`;
   };
+  const applyTvmaze=s=>{
+    if(s.name)$("#eTitle").value=s.name;
+    const yr=s.premiered?+String(s.premiered).slice(0,4):null;
+    if(yr)$("#eYear").value=yr;
+    $("#eKind").value="cartoon";/* TVmaze is used for Western shows — default kind, user can change */
+    let added=0;alGenresToApp(s.genres||[]).forEach(g=>{if(!genres.includes(g)){genres.push(g);added++}});
+    if(added)drawG();
+    const got=["title",yr?"year":null,"kind",added?"genres":null].filter(Boolean).join(", ");
+    $("#ePMsg").textContent=`Filled in ${got}. Set the format if it's a movie, then your score, seasons watched and year watched.`;
+  };
   $("#ePFind").onclick=async()=>{
     const q=cleanForSearch($("#eTitle").value||d.title);if(!q){$("#ePMsg").textContent="Type a title first.";return}
-    $("#ePMsg").textContent="Searching AniList…";$("#ePResults").innerHTML="";
-    try{const list=await alSearchList(q);
-      if(!list.length){$("#ePMsg").textContent="No matches on AniList. It may not list this show (most Western cartoons aren't there).";return}
-      $("#ePMsg").textContent="Tap the right one — it fills in the details too:";
-      $("#ePResults").innerHTML=list.map((m,i)=>`<button type="button" data-pi="${i}"><img src="${esc(m.coverImage.large)}" alt="" referrerpolicy="no-referrer"><span>${esc(m.title.english||m.title.romaji)}</span><small>${[m.format,m.seasonYear].filter(Boolean).join(" · ")}</small></button>`).join("");
-      $("#ePResults").onclick=e=>{const b=e.target.closest("[data-pi]");if(!b)return;const m=list[+b.dataset.pi];poster=m.coverImage.large;alUrl=m.siteUrl;drawP();applyAniList(m);$("#ePResults").innerHTML="";};
-    }catch(err){$("#ePMsg").textContent="Couldn't reach AniList. Check your connection and try again."}
+    $("#ePMsg").textContent="Searching AniList + TVmaze…";$("#ePResults").innerHTML="";
+    const [al,tv]=await Promise.allSettled([alSearchList(q),tvmazeSearchList(q)]);
+    const hits=[];
+    if(al.status==="fulfilled")al.value.forEach(m=>{if(m&&m.coverImage&&m.coverImage.large)hits.push({poster:m.coverImage.large,title:m.title.english||m.title.romaji,sub:[m.format,m.seasonYear].filter(Boolean).join(" · "),badge:"AniList",src:"al",raw:m})});
+    if(tv.status==="fulfilled")tv.value.forEach(s=>hits.push({poster:s.image.original||s.image.medium,title:s.name,sub:[s.type,s.premiered?String(s.premiered).slice(0,4):""].filter(Boolean).join(" · "),badge:"TVmaze",src:"tv",raw:s}));
+    if(!hits.length){
+      const bothFailed=al.status!=="fulfilled"&&tv.status!=="fulfilled";
+      $("#ePMsg").textContent=bothFailed?"Couldn't reach AniList or TVmaze. Check your connection and try again.":"No matches found. Try the exact title, or a shorter version of it.";
+      return;
+    }
+    $("#ePMsg").textContent="Tap the right one — it fills in the details too:";
+    $("#ePResults").innerHTML=hits.map((h,i)=>`<button type="button" data-pi="${i}"><img src="${esc(h.poster)}" alt="" referrerpolicy="no-referrer"><span>${esc(h.title)}</span><small>${esc([h.badge,h.sub].filter(Boolean).join(" · "))}</small></button>`).join("");
+    $("#ePResults").onclick=e=>{const b=e.target.closest("[data-pi]");if(!b)return;const h=hits[+b.dataset.pi];poster=h.poster;alUrl=(h.src==="al"?h.raw.siteUrl:h.raw.url)||null;drawP();if(h.src==="al")applyAniList(h.raw);else applyTvmaze(h.raw);$("#ePResults").innerHTML="";};
   };
   const drawS=()=>{
     seasons.forEach((x,i)=>{x.n=i+1});
@@ -1581,6 +1597,13 @@ async function alQuery(query,variables){
   throw new Error("anilist");
 }
 async function alSearchList(q){const j=await alQuery(`query($q:String){Page(perPage:8){media(search:$q,type:ANIME,sort:SEARCH_MATCH){id siteUrl seasonYear format genres countryOfOrigin startDate{year} title{romaji english native} tags{name category} coverImage{large}}}}`,{q});return (j.data&&j.data.Page&&j.data.Page.media)||[]}
+/* TVmaze — free, no API key, for Western cartoons/animation AniList doesn't list. Returns only shows that have a poster image. */
+async function tvmazeSearchList(q){
+  const r=await fetch(`https://api.tvmaze.com/search/shows?q=${encodeURIComponent(q)}`);
+  if(!r.ok)throw new Error("tvmaze "+r.status);
+  const arr=await r.json();
+  return (arr||[]).map(x=>x&&x.show).filter(s=>s&&s.image&&(s.image.original||s.image.medium)).slice(0,8);
+}
 /* map AniList fields to this app's own vocabulary */
 function alFormatToType(f){return ({TV:"TV",TV_SHORT:"Short",MOVIE:"Movie",SPECIAL:"Special",OVA:"OVA",ONA:"ONA",MUSIC:"Short"})[f]||null}
 function alCountryToKind(c){return ({JP:"anime",CN:"donghua",KR:"aeni"})[c]||null}
