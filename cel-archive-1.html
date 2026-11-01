@@ -2575,7 +2575,20 @@ store.init();
   var SVG = {
     crown:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 7l4 4 5-7 5 7 4-4-2 12H5L3 7z"/></svg>',
     medal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="15" r="6"/><path d="M9 9 6 2m9 7 3-7M8.5 3.5h7"/></svg>',
-    flame:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 4-3 5-3 9a3 3 0 0 0 6 0c0-1-.5-2-1-3 2 1 3 3 3 5a5 5 0 0 1-10 0c0-5 4-7 5-11z"/></svg>'
+    flame:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 4-3 5-3 9a3 3 0 0 0 6 0c0-1-.5-2-1-3 2 1 3 3 3 5a5 5 0 0 1-10 0c0-5 4-7 5-11z"/></svg>',
+    heart:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21l-1.4-1.3C5.4 15 2 11.9 2 8.1 2 5.4 4.1 3.3 6.8 3.3c1.5 0 3 .7 3.9 1.9L12 6.9l1.3-1.7c.9-1.2 2.4-1.9 3.9-1.9C19.9 3.3 22 5.4 22 8.1c0 3.8-3.4 6.9-8.6 11.6L12 21z"/></svg>',
+    star:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.5 7 .8-5.2 4.8L18.4 22 12 18.3 5.6 22 7.2 14.1 2 9.3l7-.8z"/></svg>',
+    tear:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3s7 8 7 12a7 7 0 0 1-14 0c0-4 7-12 7-12z"/></svg>',
+    moon:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 3a9 9 0 1 0 7 14A8 8 0 0 1 14 3z"/></svg>',
+    smile:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><path d="M9 9h.01M15 9h.01"/></svg>',
+    frown:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8 16s1.5-2 4-2 4 2 4 2"/><path d="M9 9h.01M15 9h.01"/></svg>',
+    swirl:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M6 11h12M9 16h6M11 21h2"/></svg>',
+    loop:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11a9 9 0 0 1 15-5l3 3M21 13a9 9 0 0 1-15 5l-3-3"/><path d="M21 3v6h-6M3 21v-6h6"/></svg>',
+    thumbdown:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M15 3H6.5a2 2 0 0 0-2 1.6l-1.3 7A2 2 0 0 0 5.2 15H10v4a2 2 0 0 0 2 2l4-9V3zM18 3h3v10h-3z"/></svg>',
+    trenddown:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l6 6 4-4 8 8"/><path d="M21 17v-5h-5"/></svg>',
+    gem:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 3h12l3 6-9 12L3 9z"/></svg>',
+    sparkle:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.9 6.3L20 10l-6.1 1.7L12 18l-1.9-6.3L4 10l6.1-1.7z"/></svg>',
+    ban:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M6 6l12 12"/></svg>'
   };
 
   function champBy(list){var b=null;list.forEach(function(x){if(x.score&&(!b||x.score>b.score))b=x});return b}
@@ -2583,22 +2596,22 @@ store.init();
 
   /* signature picks — some have an auto default, all can be crowned/overridden */
   var SIG = [
-    {k:"bestAnime", l:"Best Anime of All Time", top:true, auto:function(){var c=champBy(lib().filter(function(x){return x.kind==="anime"}));return c?{v:c.title,sub:c.score+"/10 · top-rated anime"}:null}},
-    {k:"bestGirl",  l:"Best Girl",  auto:function(){var t=topChar("girl");return t?{v:t.name,sub:"your #1 ranked girl"}:null}},
-    {k:"bestBoy",   l:"Best Boy",   auto:function(){var t=topChar("boy");return t?{v:t.name,sub:"your #1 ranked boy"}:null}},
-    {k:"saddest",   l:"Saddest Anime",   sub:"the one that wrecked you"},
-    {k:"darkest",   l:"Darkest Anime",   sub:"went somewhere you didn't expect"},
-    {k:"funniest",  l:"Funniest Anime",  sub:"actual laugh-out-loud"},
-    {k:"twist",     l:"Best Plot Twist", sub:"never saw it coming"},
-    {k:"rewatched", l:"Most Rewatched",  auto:function(){var b=null;lib().forEach(function(x){if(x.rewatches&&(!b||x.rewatches>b.rewatches))b=x});return b?{v:b.title,sub:b.rewatches+"× rewatched"}:null}}
+    {k:"bestAnime", l:"Best Anime of All Time", top:true, ic:"crown", auto:function(){var c=champBy(lib().filter(function(x){return x.kind==="anime"}));return c?{v:c.title,sub:c.score+"/10 · top-rated anime"}:null}},
+    {k:"bestGirl",  l:"Best Girl",  ic:"heart", auto:function(){var t=topChar("girl");return t?{v:t.name,sub:"your #1 ranked girl"}:null}},
+    {k:"bestBoy",   l:"Best Boy",   ic:"star",  auto:function(){var t=topChar("boy");return t?{v:t.name,sub:"your #1 ranked boy"}:null}},
+    {k:"saddest",   l:"Saddest Anime",   ic:"tear",  sub:"the one that wrecked you"},
+    {k:"darkest",   l:"Darkest Anime",   ic:"moon",  sub:"went somewhere you didn't expect"},
+    {k:"funniest",  l:"Funniest Anime",  ic:"smile", sub:"actual laugh-out-loud"},
+    {k:"twist",     l:"Best Plot Twist", ic:"swirl", sub:"never saw it coming"},
+    {k:"rewatched", l:"Most Rewatched",  ic:"loop",  auto:function(){var b=null;lib().forEach(function(x){if(x.rewatches&&(!b||x.rewatches>b.rewatches))b=x});return b?{v:b.title,sub:b.rewatches+"× rewatched"}:null}}
   ];
   var HOT = [
-    {k:"worst",     l:"Worst Anime Ever", sub:"the one you regret finishing"},
-    {k:"overrated", l:"Most Overrated",   sub:"everyone loves it — you don't"},
-    {k:"underrated",l:"Most Underrated",  sub:"deserves way more love"},
-    {k:"guilty",    l:"Guilty Pleasure",  sub:"so bad it's kinda great"},
-    {k:"letdown",   l:"Biggest Letdown",  sub:"started strong, fell off"},
-    {k:"dropped",   l:"Dropped Too Soon", sub:"couldn't push through"}
+    {k:"worst",     l:"Worst Anime Ever", ic:"thumbdown", sub:"the one you regret finishing"},
+    {k:"overrated", l:"Most Overrated",   ic:"trenddown", sub:"everyone loves it — you don't"},
+    {k:"underrated",l:"Most Underrated",  ic:"gem",       sub:"deserves way more love"},
+    {k:"guilty",    l:"Guilty Pleasure",  ic:"sparkle",   sub:"so bad it's kinda great"},
+    {k:"letdown",   l:"Biggest Letdown",  ic:"frown",     sub:"started strong, fell off"},
+    {k:"dropped",   l:"Dropped Too Soon", ic:"ban",       sub:"couldn't push through"}
   ];
 
   function resolve(def){
@@ -2650,7 +2663,7 @@ store.init();
       } else {
         var r=resolve(d);
         html+='<div class="chof-card'+(d.top&&r.v!=="Crown yours"?" top":"")+'">'+
-          '<div class="chof-medal">'+(d.top&&r.v!=="Crown yours"?SVG.crown:icon)+'</div>'+
+          '<div class="chof-medal">'+(SVG[d.ic]||icon)+'</div>'+
           '<div class="chof-info"><div class="chof-l">'+esc(d.l)+'</div><div class="chof-v'+(r.placeholder?" ph":"")+'">'+esc(r.v)+'</div>'+(r.sub?'<div class="chof-s">'+esc(r.sub)+'</div>':'')+'</div>'+
           '<button class="chof-set" data-crown="'+d.k+'" data-label="'+esc(d.l)+'">'+(r.placeholder?"Crown":"Change")+'</button>'+
           '</div>';
