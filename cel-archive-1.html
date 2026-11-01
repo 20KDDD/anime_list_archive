@@ -2718,19 +2718,24 @@ store.init();
     var done=items.filter(function(x){return x.status==="completed"});
     var scored=items.filter(function(x){return x.score});
     var kinds={}; seen.forEach(function(x){if(x.kind)kinds[x.kind]=1});
+    var kindN={}; seen.forEach(function(x){if(x.kind)kindN[x.kind]=(kindN[x.kind]||0)+1});
     var genres={}; items.forEach(function(x){(x.genres||[]).forEach(function(g){genres[g]=1})});
     var decades={}; items.forEach(function(x){if(x.year)decades[Math.floor(x.year/10)*10]=1});
     return {
       total:items.length, done:done.length, scored:scored.length,
       tens:scored.filter(function(x){return Math.round(x.score)===10}).length,
+      nines:scored.filter(function(x){return x.score>=9}).length,
       genres:Object.keys(genres).length, decades:Object.keys(decades).length,
       seasonsWatched:items.reduce(function(a,x){return a+seasonsOf(x).filter(function(s){return s.watched}).length},0),
       movies:done.filter(function(x){return x.type==="Movie"}).length,
       favs:items.filter(function(x){return x.favorite}).length,
       rew:items.reduce(function(a,x){return a+(x.rewatches||0)},0),
+      maxRewatch:items.reduce(function(a,x){return Math.max(a,x.rewatches||0)},0),
       maxSeasons:items.reduce(function(a,x){return Math.max(a,seasonsOf(x).length)},0),
       kindCount:["anime","donghua","cartoon","aeni"].filter(function(k){return kinds[k]}).length,
-      before2000:Object.keys(decades).some(function(d){return +d<2000})
+      animeN:kindN.anime||0, donghuaN:kindN.donghua||0, cartoonN:kindN.cartoon||0,
+      before2000:Object.keys(decades).some(function(d){return +d<2000}),
+      before1980:Object.keys(decades).some(function(d){return +d<1980})
     };
   }
 
@@ -2748,7 +2753,33 @@ store.init();
     {n:"Binge Master",        d:"Watch 100 seasons",                    c:function(S){return {cur:S.seasonsWatched,goal:100}}},
     {n:"Favorites Curator",   d:"Mark 10 favorites",                    c:function(S){return {cur:S.favs,goal:10}}},
     {n:"Rewatcher",           d:"Rack up 10 rewatches",                 c:function(S){return {cur:S.rew,goal:10}}},
-    {n:"Classic Connoisseur", d:"Watch something from before 2000",     c:function(S){return {on:S.before2000}}}
+    {n:"Classic Connoisseur", d:"Watch something from before 2000",     c:function(S){return {on:S.before2000}}},
+
+    /* ---- hard tier ---- */
+    {n:"Double Century",      d:"Complete 250 titles",                  c:function(S){return {cur:S.done,goal:250}}},
+    {n:"Half-Thousand",       d:"Complete 500 titles",                  c:function(S){return {cur:S.done,goal:500}}},
+    {n:"Archivist Supreme",   d:"Complete 1,000 titles",                c:function(S){return {cur:S.done,goal:1000}}},
+    {n:"Seasoned Critic",     d:"Rate 250 titles",                      c:function(S){return {cur:S.scored,goal:250}}},
+    {n:"Review Machine",      d:"Rate 500 titles",                      c:function(S){return {cur:S.scored,goal:500}}},
+    {n:"Discerning Eye",      d:"Rate 100 titles 9/10 or higher",       c:function(S){return {cur:S.nines,goal:100}}},
+    {n:"Perfect Vision",      d:"Hand out fifty 10/10s",                c:function(S){return {cur:S.tens,goal:50}}},
+    {n:"Hall of Tens",        d:"Hand out one hundred 10/10s",          c:function(S){return {cur:S.tens,goal:100}}},
+    {n:"Genre Master",        d:"Watch 20 different genres",            c:function(S){return {cur:S.genres,goal:20}}},
+    {n:"Genre Omnivore",      d:"Watch 25 different genres",            c:function(S){return {cur:S.genres,goal:25}}},
+    {n:"Time Traveler",       d:"Watch titles from 8 decades",          c:function(S){return {cur:S.decades,goal:8}}},
+    {n:"Ancient History",     d:"Watch something from before 1980",     c:function(S){return {on:S.before1980}}},
+    {n:"Epic Marathoner",     d:"Finish a 10+ season series",           c:function(S){return {cur:Math.min(S.maxSeasons,10),goal:10}}},
+    {n:"Season Devourer",     d:"Watch 500 seasons",                    c:function(S){return {cur:S.seasonsWatched,goal:500}}},
+    {n:"Thousand Seasons",    d:"Watch 1,000 seasons",                  c:function(S){return {cur:S.seasonsWatched,goal:1000}}},
+    {n:"Comfort Classic",     d:"Rewatch one title 5+ times",           c:function(S){return {cur:Math.min(S.maxRewatch,5),goal:5}}},
+    {n:"Rewatch Fanatic",     d:"Rack up 50 rewatches",                 c:function(S){return {cur:S.rew,goal:50}}},
+    {n:"Eternal Rewatcher",   d:"Rack up 100 rewatches",                c:function(S){return {cur:S.rew,goal:100}}},
+    {n:"Film Buff",           d:"Complete 50 movies",                   c:function(S){return {cur:S.movies,goal:50}}},
+    {n:"Cinephile",           d:"Complete 100 movies",                  c:function(S){return {cur:S.movies,goal:100}}},
+    {n:"Curator Royale",      d:"Mark 50 favorites",                    c:function(S){return {cur:S.favs,goal:50}}},
+    {n:"Otaku Elite",         d:"Watch 50 anime",                       c:function(S){return {cur:S.animeN,goal:50}}},
+    {n:"Donghua Devotee",     d:"Watch 25 donghua",                     c:function(S){return {cur:S.donghuaN,goal:25}}},
+    {n:"Toon Titan",          d:"Watch 25 cartoons",                    c:function(S){return {cur:S.cartoonN,goal:25}}}
   ];
 
   function styleEl(){
