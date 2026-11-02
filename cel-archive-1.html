@@ -1814,7 +1814,7 @@ store.init();
    ========================================================================== */
 (function () {
   "use strict";
-  var LS_THEME = "celarchive.theme", LS_FX = "celarchive.fx";
+  var LS_THEME = "celarchive.theme", LS_FX = "celarchive.fx", LS_BG = "celarchive.bg";
   function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
   function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
 
@@ -1833,23 +1833,23 @@ store.init();
   ];
   var ANIME_THEMES = [
     {id:"naruto",name:"Naruto",tag:"hidden leaf · autumn",c:{bg:"#141A2E",surface:"#1C2740","surface-2":"#273352",ink:"#FFF2E0",muted:"#9FB0D0",line:"#2E3D5E",accent:"#FF8A2B","accent-ink":"#1A0E02",accent2:"#4A74C8"}},
-    {id:"bleach",name:"Bleach",tag:"soul reaper · ash",c:{bg:"#0C0C0E",surface:"#16161A","surface-2":"#222228",ink:"#F2EEE8",muted:"#9A968E",line:"#2E2E36",accent:"#FF8C1A","accent-ink":"#140A02",accent2:"#38B0D8"}},
+    {id:"steinsgate",name:"Steins;Gate",tag:"clockwork · divergence",c:{bg:"#15161E",surface:"#1E2029","surface-2":"#292C38",ink:"#ECEDF2",muted:"#9195A5",line:"#353949",accent:"#7A68D0","accent-ink":"#FFFFFF",accent2:"#8CA6C4"}},
     {id:"chainsaw",name:"Chainsaw Man",tag:"blood & chainsaws",c:{bg:"#140808",surface:"#1F0E0C","surface-2":"#2E1512",ink:"#FFE6E2",muted:"#C78A82",line:"#40201C",accent:"#E51526","accent-ink":"#FFFFFF",accent2:"#E8A23A"}},
     {id:"jjk",name:"Jujutsu Kaisen",tag:"cursed energy",c:{bg:"#0D0A1A",surface:"#161228","surface-2":"#201A3A",ink:"#EFEAFF",muted:"#9087C0",line:"#2C2550",accent:"#B4133B","accent-ink":"#FFFFFF",accent2:"#6A5CE0"}},
     {id:"demonslayer",name:"Demon Slayer",tag:"water & flame",c:{bg:"#0C1618",surface:"#132225","surface-2":"#1C3034",ink:"#EAF6F5",muted:"#86AEB0",line:"#26444A",accent:"#17B0A6","accent-ink":"#02191A",accent2:"#F26D8E"}},
-    {id:"aot",name:"Attack on Titan",tag:"walls & smoke",c:{bg:"#14140F",surface:"#1E1E16","surface-2":"#2A2A20",ink:"#EFEDE2",muted:"#A09C88",line:"#34342A",accent:"#9A3324","accent-ink":"#FFFFFF",accent2:"#6E7A52"}},
+    {id:"eightysix",name:"86 Eighty-Six",tag:"spider lilies · stormy sky",c:{bg:"#12192A",surface:"#1B2740","surface-2":"#273650",ink:"#EAF1F8",muted:"#8A9CB4",line:"#324563",accent:"#E22338","accent-ink":"#FFFFFF",accent2:"#8FB4D4"}},
     {id:"onepiece",name:"One Piece",tag:"grand line",c:{bg:"#07192E",surface:"#0E2540","surface-2":"#163353",ink:"#E6F2FF",muted:"#7FA6C8",line:"#1E3E5E",accent:"#1E90D8","accent-ink":"#02141F",accent2:"#F2C14E"}},
     {id:"dragonball",name:"Dragon Ball",tag:"ki energy",c:{bg:"#141020",surface:"#1E1830","surface-2":"#2A2242",ink:"#FFF3E2",muted:"#A89AC0",line:"#342C4E",accent:"#FF7A1A","accent-ink":"#1A0D02",accent2:"#3DC0FF"}},
-    {id:"deathnote",name:"Death Note",tag:"shinigami",c:{bg:"#0C0C0D",surface:"#151517","surface-2":"#212124",ink:"#EDEDEE",muted:"#8E8E92",line:"#2C2C30",accent:"#C01622","accent-ink":"#FFFFFF",accent2:"#8E8E92"}},
+    {id:"fma",name:"Fullmetal Alchemist",tag:"alchemy · equivalent exchange",c:{bg:"#160E0A",surface:"#22140D","surface-2":"#301C12",ink:"#FDEFE0",muted:"#C49A78",line:"#422619",accent:"#D4212E","accent-ink":"#FFFFFF",accent2:"#E8A83C"}},
     {id:"yourname",name:"Your Name",tag:"twilight comet",c:{bg:"#0E1030",surface:"#171A42","surface-2":"#212658",ink:"#EFEFFF",muted:"#8E92C8",line:"#2C3068",accent:"#FF9E5A","accent-ink":"#1A0E04",accent2:"#6AA8FF"}},
-    {id:"evangelion",name:"Evangelion",tag:"NERV",c:{bg:"#120A1C",surface:"#1C1230","surface-2":"#281A42",ink:"#F0E8FF",muted:"#9A8AC0",line:"#342450",accent:"#7A2BE0","accent-ink":"#FFFFFF",accent2:"#6CE05A"}},
-    {id:"bebop",name:"Cowboy Bebop",tag:"jazz & space",c:{bg:"#141210",surface:"#1E1B16","surface-2":"#2A261E",ink:"#F2EEE2",muted:"#A89E86",line:"#36302A",accent:"#E0A82E","accent-ink":"#1A1202",accent2:"#2E9E9E"}},
+    {id:"frieren",name:"Frieren",tag:"serene magic · snow",c:{bg:"#101A1C",surface:"#17272A","surface-2":"#20383C",ink:"#EEF7F6",muted:"#8FB5B2",line:"#284A4D",accent:"#8FE0D2","accent-ink":"#06201C",accent2:"#E9C87A"}},
+    {id:"grimgar",name:"Grimgar",tag:"watercolor · ash",c:{bg:"#15171C",surface:"#1F2229","surface-2":"#2B2F38",ink:"#ECEEF2",muted:"#9AA0AC",line:"#363B45",accent:"#9FB3D1","accent-ink":"#0E1218",accent2:"#C99DA0"}},
     {id:"yourlie",name:"Your Lie in April",tag:"stage lights",c:{bg:"#0E1220",surface:"#171C30","surface-2":"#212842",ink:"#EEF2FF",muted:"#8E9AC0",line:"#2C3450",accent:"#6AA8FF","accent-ink":"#02101F",accent2:"#F29ABF"}},
-    {id:"toradora",name:"Toradora",tag:"romance · hearts",c:{bg:"#1E1418",surface:"#2A1C22","surface-2":"#3A262E",ink:"#FFEDF2",muted:"#CC94A6",line:"#4A2E38",accent:"#FF6F8E","accent-ink":"#1C060C",accent2:"#FFC56B"}},
+    {id:"hyouka",name:"Hyouka",tag:"cherry blossom · warm",c:{bg:"#241A1E",surface:"#31242A","surface-2":"#402F37",ink:"#FFF0F3",muted:"#CBA3AE",line:"#4C3842",accent:"#F2869F","accent-ink":"#2A0E16",accent2:"#E8C27A"}},
     {id:"violet",name:"Violet Evergarden",tag:"letters & snow",c:{bg:"#0E1420",surface:"#172030","surface-2":"#212E42",ink:"#EEF3FA",muted:"#8EA0B4",line:"#2C3A4E",accent:"#7FB0E0","accent-ink":"#04121F",accent2:"#E8D9A8"}}
   ];
   var ALL = THEMES.concat(ANIME_THEMES);
-  var FXKEY = {arcade:"spark",sakura:"petal",abyss:"bubble",ember:"ember",matcha:"leaf",mono:"dust",cyberpunk:"neonrain",celestial:"star",rainy:"rain",fireflies:"firefly",naruto:"autumn",bleach:"butterfly",chainsaw:"blood",jjk:"cursed",demonslayer:"petal",aot:"fog",onepiece:"bubble",dragonball:"ember",deathnote:"feather",yourname:"meteor",evangelion:"glitch",bebop:"notes",yourlie:"bokeh",toradora:"hearts",violet:"snow"};
+  var FXKEY = {arcade:"spark",sakura:"petal",abyss:"bubble",ember:"ember",matcha:"leaf",mono:"dust",cyberpunk:"neonrain",celestial:"star",rainy:"rain",fireflies:"firefly",naruto:"autumn",steinsgate:"gears",chainsaw:"bloodrain",jjk:"cursed",demonslayer:"petal",eightysix:"redpetal",onepiece:"bubble",dragonball:"ember",fma:"ember",yourname:"meteor",frieren:"snow",grimgar:"ash",yourlie:"bokeh",hyouka:"petal",violet:"snow"};
 
   /* ---- particle effects ---- */
   var MATRIX_CH = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホ0123456789".split("");
@@ -1879,7 +1879,10 @@ store.init();
     blood:{m:"linear",dir:1,shape:"blood",n:40,size:[2,5],spd:[2.0,4.2],sway:.1},
     neonrain:{m:"linear",dir:1,shape:"nrain",n:90,size:[10,24],spd:[3.2,6.2],sway:.05,vx:[.2,.7],col:["#00F0FF","#FF2EA6","#B14DFF","#39FF14","#FFE53C","#FF7A18","#2E8BFF"]},
     butterfly:{m:"float",shape:"butterfly",n:18,size:[6,11],spd:[.1,.4],sway:.6,col:["#8C6ED0","#B48AE6","#6E5AA8"]},
-    cursed:{m:"float",shape:"cursed",n:24,size:[3,7],spd:[.1,.45],sway:.5}
+    cursed:{m:"float",shape:"cursed",n:24,size:[3,7],spd:[.1,.45],sway:.5},
+    gears:{m:"float",shape:"gear",n:14,size:[9,24],spd:[.04,.16],sway:.3},
+    redpetal:{m:"linear",dir:1,shape:"petal",n:40,size:[4,8],spd:[.5,1.2],sway:1.4,col:["#E2233A","#B01020","#8E0E1E","#C8172C"]},
+    bloodrain:{m:"linear",dir:1,shape:"rain",n:88,size:[9,20],spd:[3.5,6.5],sway:.04,vx:[.1,.5],col:["#C8172C","#9E0E22","#E2233A","#7E0A1A"]}
   };
   var cv, cx, fxType = "spark", fxOn = true, parts = [], W = 0, Ht = 0, COLS = ["#B8FF3C","#FF4D9D"];
   var reduceM = false;
@@ -1924,8 +1927,37 @@ store.init();
       else if(sh==="nrain"){cx.globalAlpha=.62;cx.lineWidth=1.8;cx.shadowBlur=7;cx.shadowColor=p.c;cx.beginPath();cx.moveTo(0,0);cx.lineTo(0,p.s);cx.stroke()}
       else if(sh==="butterfly"){var bw=p.s,fl=.3+.65*Math.abs(Math.sin(p.tw*2));cx.rotate(Math.sin(p.tw)*.3);cx.globalAlpha=.78;cx.beginPath();cx.ellipse(-bw*fl,0,bw*fl,bw*.75,0,0,6.28);cx.fill();cx.beginPath();cx.ellipse(bw*fl,0,bw*fl,bw*.75,0,0,6.28);cx.fill();cx.globalAlpha=.95;cx.fillRect(-.7,-bw*.6,1.4,bw*1.2)}
       else if(sh==="cursed"){cx.globalAlpha=.28+.45*Math.abs(Math.sin(p.tw));cx.shadowBlur=12;cx.shadowColor=p.c;cx.beginPath();cx.arc(0,0,p.s,0,6.28);cx.fill()}
+      else if(sh==="gear"){var gs=p.s,gt,oR=gs,iR=gs*0.72,gd=(p.vr>=0?1:-1);cx.rotate((p.rot||0)+p.tw*0.5*gd);cx.globalAlpha=.5;cx.lineWidth=Math.max(1.4,gs*0.13);cx.beginPath();for(gt=0;gt<8;gt++){var ga=gt/8*6.2832;cx.lineTo(Math.cos(ga-0.13)*iR,Math.sin(ga-0.13)*iR);cx.lineTo(Math.cos(ga-0.07)*oR,Math.sin(ga-0.07)*oR);cx.lineTo(Math.cos(ga+0.07)*oR,Math.sin(ga+0.07)*oR);cx.lineTo(Math.cos(ga+0.13)*iR,Math.sin(ga+0.13)*iR);}cx.closePath();cx.stroke();cx.globalAlpha=.38;cx.beginPath();cx.arc(0,0,gs*0.34,0,6.28);cx.stroke()}
       else{cx.beginPath();cx.arc(0,0,p.s,0,6.28);cx.fill()}
       cx.restore()}
+  }
+
+  /* ---- themed background (gradient wash always; anime banner art for anime themes) ---- */
+  var ANIME_BG = {naruto:"Naruto",steinsgate:"Steins;Gate",chainsaw:"Chainsaw Man",jjk:"Jujutsu Kaisen",demonslayer:"Kimetsu no Yaiba",eightysix:"86",onepiece:"One Piece",dragonball:"Dragon Ball Z",fma:"Fullmetal Alchemist Brotherhood",yourname:"Kimi no Na wa",frieren:"Sousou no Frieren",grimgar:"Hai to Gensou no Grimgar",yourlie:"Shigatsu wa Kimi no Uso",hyouka:"Hyouka",violet:"Violet Evergarden"};
+  var bgCache={}, bgOn = (lsGet(LS_BG)!=="0");
+  function washFor(){
+    return "radial-gradient(1100px 620px at 15% -8%, color-mix(in srgb,var(--accent) 20%,transparent), transparent 60%),"+
+           "radial-gradient(1000px 560px at 100% 0%, color-mix(in srgb,var(--accent2) 16%,transparent), transparent 55%),"+
+           "radial-gradient(900px 760px at 50% 120%, color-mix(in srgb,var(--accent) 12%,transparent), transparent 62%)";
+  }
+  function setBgImage(url){
+    var el=document.getElementById("cafx-bgimg"); if(!el)return;
+    if(url && bgOn){ el.style.backgroundImage="linear-gradient(to bottom, color-mix(in srgb,var(--bg) 60%,transparent), color-mix(in srgb,var(--bg) 88%,transparent)), url('"+url+"')"; el.style.opacity="1"; }
+    else { el.style.backgroundImage=""; el.style.opacity="0"; }
+  }
+  function fetchBanner(id,term){
+    if(bgCache[id]!==undefined){ setBgImage(bgCache[id]); return; }
+    var query="query($s:String){Media(search:$s,type:ANIME){bannerImage coverImage{extraLarge large}}}";
+    fetch("https://graphql.anilist.co",{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify({query:query,variables:{s:term}})})
+      .then(function(r){return r.ok?r.json():null}).then(function(j){
+        var M=j&&j.data&&j.data.Media, url=(M&&(M.bannerImage||(M.coverImage&&(M.coverImage.extraLarge||M.coverImage.large))))||"";
+        bgCache[id]=url; setBgImage(url);
+      }).catch(function(){ bgCache[id]=""; setBgImage(""); });
+  }
+  function applyBg(t){
+    var wash=document.getElementById("cafx-wash"); if(wash)wash.style.background=washFor();
+    if(bgOn && ANIME_BG[t.id]) fetchBanner(t.id, ANIME_BG[t.id]);
+    else setBgImage("");
   }
 
   /* ---- apply a theme (sets CSS vars on :root) ---- */
@@ -1936,12 +1968,15 @@ store.init();
     var sw=document.querySelectorAll(".cafx-sw"),i;
     for(i=0;i<sw.length;i++)sw[i].setAttribute("aria-pressed",String(sw[i].getAttribute("data-id")===t.id));
     setFx(FXKEY[t.id]||"spark");
+    applyBg(t);
   }
 
   /* ---- UI ---- */
   function styleEl(){
     var s=document.createElement("style");
     s.textContent=
+      "#cafx-wash{position:fixed;inset:0;pointer-events:none;z-index:0;transition:background .45s ease}"+
+      "#cafx-bgimg{position:fixed;inset:0;pointer-events:none;z-index:0;background-size:cover;background-position:center;opacity:0;transition:opacity .55s ease}"+
       "#cafx-canvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:.55}"+
       ".wrap{position:relative;z-index:1}"+
       ".cafx-scrim{position:fixed;inset:0;z-index:4000;background:rgba(5,3,12,.55);display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;overflow:auto}"+
@@ -1972,6 +2007,7 @@ store.init();
       grp("Vibe presets",THEMES,"tag")+
       grp("Anime presets — palette + matching effect",ANIME_THEMES,"tag")+
       '<label class="cafx-row"><input type="checkbox" id="cafx-toggle"'+(fxOn?" checked":"")+'> Ambient effects (petals, embers, drifting bits — matches the theme)</label>'+
+      '<label class="cafx-row"><input type="checkbox" id="cafx-bgtoggle"'+(bgOn?" checked":"")+'> Themed background (color wash + anime art for anime themes)</label>'+
       '</div>';
     document.body.appendChild(scrim);
     function close(){scrim.hidden=true}
@@ -1983,6 +2019,8 @@ store.init();
     });
     var tog=scrim.querySelector("#cafx-toggle");
     tog.addEventListener("change",function(){fxOn=tog.checked;lsSet(LS_FX,fxOn?"1":"0");if(!fxOn&&cx)cx.clearRect(0,0,W,Ht)});
+    var togbg=scrim.querySelector("#cafx-bgtoggle");
+    togbg.addEventListener("change",function(){bgOn=togbg.checked;lsSet(LS_BG,bgOn?"1":"0");var cur=null,i;var sid=lsGet(LS_THEME);for(i=0;i<ALL.length;i++)if(ALL[i].id===sid){cur=ALL[i];break}applyBg(cur||{id:""});});
     document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!scrim.hidden)close()});
     return scrim;
   }
@@ -1990,8 +2028,12 @@ store.init();
   function mount(){
     try{reduceM=window.matchMedia("(prefers-reduced-motion:reduce)").matches}catch(e){}
     styleEl();
+    var wash=document.createElement("div");wash.id="cafx-wash";wash.setAttribute("aria-hidden","true");
+    var bgimg=document.createElement("div");bgimg.id="cafx-bgimg";bgimg.setAttribute("aria-hidden","true");
+    document.body.insertBefore(wash,document.body.firstChild);
+    document.body.insertBefore(bgimg,wash.nextSibling);
     cv=document.createElement("canvas");cv.id="cafx-canvas";cv.setAttribute("aria-hidden","true");
-    document.body.insertBefore(cv,document.body.firstChild);
+    document.body.insertBefore(cv,bgimg.nextSibling);
     cx=cv.getContext("2d");sz();window.addEventListener("resize",function(){sz();seedFx()});
 
     var scrim=buildPanel();
@@ -2007,8 +2049,9 @@ store.init();
     var savedFx=lsGet(LS_FX);if(savedFx==="0")fxOn=false;
     var saved=lsGet(LS_THEME),t=null,i;
     for(i=0;i<ALL.length;i++)if(ALL[i].id===saved){t=ALL[i];break}
-    if(t)applyTheme(t);else{seedFx();}
+    if(t)applyTheme(t);else{seedFx();var w0=document.getElementById("cafx-wash");if(w0)w0.style.background=washFor();}
     var tog2=document.getElementById("cafx-toggle");if(tog2)tog2.checked=fxOn;
+    var tog3=document.getElementById("cafx-bgtoggle");if(tog3)tog3.checked=bgOn;
 
     (function loop(){drawFx();window.requestAnimationFrame(loop)})();
   }
@@ -2031,9 +2074,10 @@ store.init();
    ========================================================================== */
 (function () {
   "use strict";
-  var PAGES = ["library", "characters", "hof", "stats"];
+  var PAGES = ["library", "news", "characters", "hof", "stats"];
   var TABS = [
     {id:"library",    label:"Library"},
+    {id:"news",       label:"News"},
     {id:"characters", label:"Characters"},
     {id:"hof",        label:"Hall of Fame"},
     {id:"stats",      label:"Stats"}
@@ -2107,6 +2151,9 @@ store.init();
     pages.hof.innerHTML=
       '<div class="canv-phead"><h2>Hall of Fame</h2><div class="sub">your trophy wall</div></div>'+
       emptyState("Coming next","Your champions, hot takes, and genre trophies. This tab fills in with the Hall of Fame update.");
+    pages.news.innerHTML=
+      '<div class="canv-phead"><h2>News</h2><div class="sub">latest anime headlines</div></div>'+
+      emptyState("Loading…","Fetching the latest anime news.");
 
     function show(id){
       PAGES.forEach(function(x){ if(pages[x]) pages[x].hidden = (x!==id); });
@@ -3022,6 +3069,137 @@ store.init();
     document.addEventListener("click",function(e){if(e.target.closest&&e.target.closest('[data-view="library"]'))setTimeout(decorate,60);});
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();
+})();
+</script>
+<!-- inlined: news feed -->
+<script>
+/* ============================================================================
+   Cel Archive — News feed  (News tab)
+   Reads news.json (built by a scheduled GitHub Action, same origin — no API key,
+   no CORS, no backend). Lets you mark a headline "Watch later" or "Watching";
+   marks save to localStorage and get their own filter. Graceful if news.json
+   isn't there yet (before the first Action run).
+   ========================================================================== */
+(function(){
+  "use strict";
+  var LS="celarchive.newsmarks.v1", page=null, feed=[], marks=load(), filter="all";
+  function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+  function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+  function load(){try{var o=JSON.parse(lsGet(LS)||"{}");return (o&&typeof o==="object")?o:{}}catch(e){return {}}}
+  function saveMarks(){lsSet(LS,JSON.stringify(marks))}
+  function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+  function keyOf(it){return it.link||it.title||""}
+  function when(d){if(!d)return"";var t=new Date(d);if(isNaN(t))return esc(String(d).slice(0,16));
+    var diff=(Date.now()-t.getTime())/36e5;
+    if(diff<1)return"just now";if(diff<24)return Math.round(diff)+"h ago";if(diff<48)return"yesterday";
+    return t.toLocaleDateString(undefined,{month:"short",day:"numeric"});}
+
+  function styleEl(){
+    if(document.getElementById("cnews-style"))return;
+    var s=document.createElement("style");s.id="cnews-style";
+    s.textContent=
+      ".cnews-sub{display:flex;gap:7px;flex-wrap:wrap;margin:6px 0 16px}"+
+      ".cnews-stab{background:var(--surface);border:1px solid var(--line);color:var(--muted);font-family:inherit;font-weight:700;font-size:12.5px;border-radius:999px;padding:6px 14px;cursor:pointer}"+
+      ".cnews-stab[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}"+
+      ".cnews-grid{display:flex;flex-direction:column;gap:12px}"+
+      ".cnews-card{display:flex;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px;align-items:flex-start}"+
+      ".cnews-card.marked{border-color:var(--accent)}"+
+      ".cnews-thumb{flex:0 0 auto;width:74px;height:74px;border-radius:12px;object-fit:cover;background:var(--surface-2)}"+
+      ".cnews-body{min-width:0;flex:1}"+
+      ".cnews-meta{display:flex;gap:8px;align-items:center;font-size:11px;color:var(--muted);margin-bottom:4px;flex-wrap:wrap}"+
+      ".cnews-src{font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--accent)}"+
+      ".cnews-t{font-weight:800;font-size:15px;line-height:1.3;color:var(--ink);text-decoration:none;display:inline-block}"+
+      ".cnews-t:hover{color:var(--accent)}"+
+      ".cnews-d{font-size:12.5px;color:var(--muted);margin-top:4px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}"+
+      ".cnews-acts{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}"+
+      ".cnews-btn{background:var(--surface-2);border:1px solid var(--line);color:var(--ink);border-radius:9px;font-family:inherit;font-weight:700;font-size:12px;padding:5px 11px;cursor:pointer}"+
+      ".cnews-btn:hover{border-color:var(--accent)}"+
+      ".cnews-btn[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}"+
+      ".cnews-empty{border:1px dashed var(--line);border-radius:16px;padding:44px 22px;text-align:center;color:var(--muted)}"+
+      ".cnews-empty h3{color:var(--ink);font-size:17px;margin:0 0 6px}"+
+      ".cnews-upd{font-size:11px;color:var(--muted);margin-bottom:12px}";
+    document.head.appendChild(s);
+  }
+
+  function setMark(k,status){
+    var it=null,i;
+    for(i=0;i<feed.length;i++)if(keyOf(feed[i])===k){it=feed[i];break}
+    if(!it && marks[k])it=marks[k];           /* from the saved store if it aged out of the feed */
+    if(!it)return;
+    if(marks[k]&&marks[k].status===status){delete marks[k];}
+    else{marks[k]={status:status,title:it.title,link:it.link,source:it.source,date:it.date,summary:it.summary,image:it.image};}
+    saveMarks();render();
+  }
+
+  function cardHTML(it){
+    var k=keyOf(it), m=marks[k];
+    var img=it.image?'<img class="cnews-thumb" src="'+esc(it.image)+'" alt="" referrerpolicy="no-referrer" onerror="this.remove()">':'';
+    return '<div class="cnews-card'+(m?" marked":"")+'">'+img+
+      '<div class="cnews-body">'+
+        '<div class="cnews-meta"><span class="cnews-src">'+esc(it.source||"News")+'</span><span>'+esc(when(it.date))+'</span></div>'+
+        '<a class="cnews-t" href="'+esc(it.link||"#")+'" target="_blank" rel="noopener noreferrer">'+esc(it.title||"Untitled")+'</a>'+
+        (it.summary?'<div class="cnews-d">'+esc(it.summary)+'</div>':'')+
+        '<div class="cnews-acts">'+
+          '<button type="button" class="cnews-btn" data-mark="later" data-k="'+esc(k)+'" aria-pressed="'+(m&&m.status==="later")+'">☆ Watch later</button>'+
+          '<button type="button" class="cnews-btn" data-mark="watching" data-k="'+esc(k)+'" aria-pressed="'+(m&&m.status==="watching")+'">▶ Watching</button>'+
+        '</div>'+
+      '</div></div>';
+  }
+
+  function listFor(){
+    if(filter==="all")return feed;
+    return Object.keys(marks).filter(function(k){return marks[k].status===filter})
+      .map(function(k){return marks[k]})
+      .sort(function(a,b){return (new Date(b.date)||0)-(new Date(a.date)||0)});
+  }
+
+  function render(){
+    if(!page)return;
+    var body=page.querySelector("#cnews-body");if(!body)return;
+    var laterN=Object.keys(marks).filter(function(k){return marks[k].status==="later"}).length;
+    var watchN=Object.keys(marks).filter(function(k){return marks[k].status==="watching"}).length;
+    var html='<div class="cnews-sub">'+
+      '<button type="button" class="cnews-stab" data-nf="all" aria-pressed="'+(filter==="all")+'">All news</button>'+
+      '<button type="button" class="cnews-stab" data-nf="later" aria-pressed="'+(filter==="later")+'">☆ Watch later ('+laterN+')</button>'+
+      '<button type="button" class="cnews-stab" data-nf="watching" aria-pressed="'+(filter==="watching")+'">▶ Watching ('+watchN+')</button></div>';
+    var list=listFor();
+    if(!list.length){
+      html+= filter==="all"
+        ? '<div class="cnews-empty"><h3>No news yet</h3><p>Headlines appear here after the scheduled update runs. If you just set it up, give the GitHub Action a few minutes, then refresh.</p></div>'
+        : '<div class="cnews-empty"><h3>Nothing saved here</h3><p>Mark a headline with ☆ Watch later or ▶ Watching and it shows up in this list.</p></div>';
+    } else {
+      html+='<div class="cnews-grid">'+list.map(cardHTML).join("")+'</div>';
+    }
+    body.innerHTML=html;
+  }
+
+  function build(){
+    styleEl();
+    page.innerHTML='<div class="canv-phead"><h2>News</h2><div class="sub">latest anime headlines · mark what you want to watch</div></div>'+
+      '<div class="cnews-upd" id="cnews-upd"></div><div id="cnews-body"></div>';
+    render();
+    page.addEventListener("click",function(e){
+      var nf=e.target.closest("[data-nf]");
+      if(nf){filter=nf.getAttribute("data-nf");render();return}
+      var mb=e.target.closest("[data-mark]");
+      if(mb){setMark(mb.getAttribute("data-k"),mb.getAttribute("data-mark"));return}
+    });
+    /* load the feed built by the GitHub Action (same origin — no key/CORS) */
+    fetch("news.json",{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(j){
+      feed=Array.isArray(j)?j:(j&&j.items)||[];
+      var up=page.querySelector("#cnews-upd");
+      if(up&&j&&j.updated)up.textContent="Updated "+when(j.updated);
+      render();
+    }).catch(function(){ render(); /* keep the empty state */ });
+  }
+
+  function mount(tries){
+    tries=tries||0;
+    var nav=window.CelArchiveNav;
+    if(nav&&nav.pages&&nav.pages.news){page=nav.pages.news;build();return}
+    if(tries<40)return void setTimeout(function(){mount(tries+1)},100);
+  }
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",function(){mount(0)});else mount(0);
 })();
 </script>
 </body></html>
