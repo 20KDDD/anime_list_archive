@@ -23,6 +23,7 @@ const FEEDS = [
 
 const MAX_ITEMS = 60;
 const SUMMARY_LEN = 220;
+const UA = "CelArchiveNewsBot/1.0 (+github pages)";
 
 function decode(s) {
   return String(s == null ? "" : s)
@@ -66,10 +67,23 @@ function parseFeed(xml, source) {
   return items;
 }
 
+// Grab a headline's preview image (og:image) from its article page.
+async function ogImage(url) {
+  try {
+    const res = await fetch(url, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(8000) });
+    if (!res.ok) return "";
+    const html = await res.text();
+    const m = html.match(/<meta[^>]+property=["']og:image(?::secure_url)?["'][^>]+content=["']([^"']+)["']/i)
+      || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)
+      || html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i);
+    return m ? decode(m[1]) : "";
+  } catch (e) { return ""; }
+}
+
 async function fetchFeed(feed) {
   try {
     const res = await fetch(feed.url, {
-      headers: { "User-Agent": "CelArchiveNewsBot/1.0 (+github pages)", "Accept": "application/rss+xml, application/xml, text/xml, */*" },
+      headers: { "User-Agent": UA, "Accept": "application/rss+xml, application/xml, text/xml, */*" },
     });
     if (!res.ok) { console.warn("skip", feed.url, res.status); return []; }
     const xml = await res.text();
@@ -86,7 +100,12 @@ async function main() {
   const seen = {}, merged = [];
   for (const it of all) { const k = it.link; if (k && !seen[k]) { seen[k] = 1; merged.push(it); } }
   merged.sort((a, b) => (new Date(b.date) || 0) - (new Date(a.date) || 0));
-  const out = { updated: new Date().toISOString(), count: Math.min(merged.length, MAX_ITEMS), items: merged.slice(0, MAX_ITEMS) };
+  const items = merged.slice(0, MAX_ITEMS);
+  // enrich each kept headline with its article's preview image
+  let got = 0;
+  for (const it of items) { if (!it.image) { it.image = await ogImage(it.link); if (it.image) got++; } }
+  console.log("images found:", got, "of", items.length);
+  const out = { updated: new Date().toISOString(), count: items.length, items };
   const dest = path.join(process.cwd(), "news.json");
   fs.writeFileSync(dest, JSON.stringify(out, null, 2));
   console.log("wrote", dest, "with", out.items.length, "items");
