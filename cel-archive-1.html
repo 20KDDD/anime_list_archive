@@ -451,6 +451,13 @@ const store={
   onChange(fn){this.listeners.push(fn)},
   emit(){this.loaded=true;if(this._et)return;this._et=setTimeout(()=>{this._et=null;this.listeners.forEach(f=>f())},40)}
 };
+/* hook so other tabs (e.g. Upcoming) can add/update a library entry and trigger a re-render */
+window.CelArchiveLibrary={
+  get:function(id){return store.items.get(id)},
+  has:function(id){return store.items.has(id)},
+  put:function(it){return store.put(it)},
+  remove:function(id){return store.remove(id)}
+};
 async function withRetry(fn){
   for(let a=0;;a++){
     try{return await fn()}catch(e){
@@ -2077,7 +2084,7 @@ store.init();
   var PAGES = ["library", "news", "characters", "hof", "stats"];
   var TABS = [
     {id:"library",    label:"Library"},
-    {id:"news",       label:"News"},
+    {id:"news",       label:"Upcoming"},
     {id:"characters", label:"Characters"},
     {id:"hof",        label:"Hall of Fame"},
     {id:"stats",      label:"Stats"}
@@ -2152,8 +2159,8 @@ store.init();
       '<div class="canv-phead"><h2>Hall of Fame</h2><div class="sub">your trophy wall</div></div>'+
       emptyState("Coming next","Your champions, hot takes, and genre trophies. This tab fills in with the Hall of Fame update.");
     pages.news.innerHTML=
-      '<div class="canv-phead"><h2>News</h2><div class="sub">latest anime headlines</div></div>'+
-      emptyState("Loading…","Fetching the latest anime news.");
+      '<div class="canv-phead"><h2>Upcoming</h2><div class="sub">anime coming next season &amp; beyond</div></div>'+
+      emptyState("Loading…","Fetching upcoming anime from AniList.");
 
     function show(id){
       PAGES.forEach(function(x){ if(pages[x]) pages[x].hidden = (x!==id); });
@@ -3071,126 +3078,194 @@ store.init();
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot);else boot();
 })();
 </script>
-<!-- inlined: news feed -->
+<!-- inlined: upcoming anime -->
 <script>
 /* ============================================================================
-   Cel Archive — News feed  (News tab)
-   Reads news.json (built by a scheduled GitHub Action, same origin — no API key,
-   no CORS, no backend). Lets you mark a headline "Watch later" or "Watching";
-   marks save to localStorage and get their own filter. Graceful if news.json
-   isn't there yet (before the first Action run).
+   Cel Archive — Upcoming anime  (News tab)
+   Pulls not-yet-released anime straight from AniList in the browser (keyless,
+   CORS-friendly, posters included). Mark a title "Watch later" or "Watching";
+   marks save to localStorage and get their own filter. No GitHub Action needed.
    ========================================================================== */
 (function(){
   "use strict";
-  var LS="celarchive.newsmarks.v1", page=null, feed=[], marks=load(), filter="all";
+  var LS="celarchive.newsmarks.v1", page=null, feed=[], marks=load(), filter="all", loaded=false, failed=false;
   function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
   function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
   function load(){try{var o=JSON.parse(lsGet(LS)||"{}");return (o&&typeof o==="object")?o:{}}catch(e){return {}}}
   function saveMarks(){lsSet(LS,JSON.stringify(marks))}
   function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
-  function keyOf(it){return it.link||it.title||""}
-  function when(d){if(!d)return"";var t=new Date(d);if(isNaN(t))return esc(String(d).slice(0,16));
-    var diff=(Date.now()-t.getTime())/36e5;
-    if(diff<1)return"just now";if(diff<24)return Math.round(diff)+"h ago";if(diff<48)return"yesterday";
-    return t.toLocaleDateString(undefined,{month:"short",day:"numeric"});}
+  var MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  var FMT={TV:"TV",TV_SHORT:"TV Short",MOVIE:"Movie",OVA:"OVA",ONA:"ONA",SPECIAL:"Special",MUSIC:"Music"};
+  function cap(s){return s?s.charAt(0)+s.slice(1).toLowerCase():""}
+  function rel(m){
+    if(m.season&&m.seasonYear)return cap(m.season)+" "+m.seasonYear;
+    var d=m.startDate||{};
+    if(d.year&&d.month)return MON[d.month-1]+" "+d.year;
+    if(d.year)return ""+d.year;
+    return "TBA";
+  }
+  var SEASON_ORDER={WINTER:0,SPRING:1,SUMMER:2,FALL:3};
+  /* which season/year section a title belongs to, with a sortable key */
+  function bucket(m){
+    if(m.season&&m.seasonYear)return {sort:m.seasonYear*10+(SEASON_ORDER[m.season]||0), label:cap(m.season)+" "+m.seasonYear};
+    var d=m.startDate||{};
+    if(d.year)return {sort:d.year*10+9, label:""+d.year};
+    return {sort:9e9, label:"To be announced"};
+  }
+  function trailerUrl(t){
+    if(!t||!t.id)return "";
+    if(t.site==="youtube")return "https://www.youtube.com/watch?v="+t.id;
+    if(t.site==="dailymotion")return "https://www.dailymotion.com/video/"+t.id;
+    return "";
+  }
 
   function styleEl(){
-    if(document.getElementById("cnews-style"))return;
-    var s=document.createElement("style");s.id="cnews-style";
+    if(document.getElementById("cupc-style"))return;
+    var s=document.createElement("style");s.id="cupc-style";
     s.textContent=
-      ".cnews-sub{display:flex;gap:7px;flex-wrap:wrap;margin:6px 0 16px}"+
-      ".cnews-stab{background:var(--surface);border:1px solid var(--line);color:var(--muted);font-family:inherit;font-weight:700;font-size:12.5px;border-radius:999px;padding:6px 14px;cursor:pointer}"+
-      ".cnews-stab[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}"+
-      ".cnews-grid{display:flex;flex-direction:column;gap:12px}"+
-      ".cnews-card{display:flex;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px;align-items:flex-start}"+
-      ".cnews-card.marked{border-color:var(--accent)}"+
-      ".cnews-thumb{flex:0 0 auto;width:74px;height:74px;border-radius:12px;object-fit:cover;background:var(--surface-2)}"+
-      ".cnews-body{min-width:0;flex:1}"+
-      ".cnews-meta{display:flex;gap:8px;align-items:center;font-size:11px;color:var(--muted);margin-bottom:4px;flex-wrap:wrap}"+
-      ".cnews-src{font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--accent)}"+
-      ".cnews-t{font-weight:800;font-size:15px;line-height:1.3;color:var(--ink);text-decoration:none;display:inline-block}"+
-      ".cnews-t:hover{color:var(--accent)}"+
-      ".cnews-d{font-size:12.5px;color:var(--muted);margin-top:4px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}"+
-      ".cnews-acts{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}"+
-      ".cnews-btn{background:var(--surface-2);border:1px solid var(--line);color:var(--ink);border-radius:9px;font-family:inherit;font-weight:700;font-size:12px;padding:5px 11px;cursor:pointer}"+
-      ".cnews-btn:hover{border-color:var(--accent)}"+
-      ".cnews-btn[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}"+
-      ".cnews-empty{border:1px dashed var(--line);border-radius:16px;padding:44px 22px;text-align:center;color:var(--muted)}"+
-      ".cnews-empty h3{color:var(--ink);font-size:17px;margin:0 0 6px}"+
-      ".cnews-upd{font-size:11px;color:var(--muted);margin-bottom:12px}";
+      ".cupc-sub{display:flex;gap:7px;flex-wrap:wrap;margin:6px 0 16px}"+
+      ".cupc-stab{background:var(--surface);border:1px solid var(--line);color:var(--muted);font-family:inherit;font-weight:700;font-size:12.5px;border-radius:999px;padding:6px 14px;cursor:pointer}"+
+      ".cupc-stab[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}"+
+      ".cupc-season{display:flex;align-items:baseline;gap:9px;font-size:16px;font-weight:900;color:var(--ink);margin:22px 0 12px;padding-bottom:7px;border-bottom:1px solid var(--line)}"+
+      ".cupc-season:first-child{margin-top:2px}"+
+      ".cupc-season span{font-size:12px;font-weight:700;color:var(--muted)}"+
+      ".cupc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}"+
+      ".cupc-pvbadge{position:absolute;right:8px;top:8px;background:var(--accent);color:var(--accent-ink);font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:999px}"+
+      ".cupc-pv{display:inline-block;color:var(--accent);font-size:11.5px;font-weight:800;text-decoration:none;margin-top:2px}"+
+      ".cupc-pv:hover{text-decoration:underline}"+
+      ".cupc-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}"+
+      ".cupc-card.marked{border-color:var(--accent)}"+
+      ".cupc-pw{position:relative;display:block;aspect-ratio:2/3;background:var(--surface-2)}"+
+      ".cupc-poster{width:100%;height:100%;object-fit:cover;display:block}"+
+      ".cupc-rel{position:absolute;left:8px;bottom:8px;background:rgba(8,6,16,.78);color:#fff;font-size:11px;font-weight:800;letter-spacing:.02em;padding:3px 9px;border-radius:999px}"+
+      ".cupc-info{padding:11px 12px 13px;display:flex;flex-direction:column;gap:4px}"+
+      ".cupc-t{font-weight:800;font-size:14px;line-height:1.25;color:var(--ink);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}"+
+      ".cupc-meta{font-size:11.5px;color:var(--accent);font-weight:700}"+
+      ".cupc-g{font-size:11px;color:var(--muted);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}"+
+      ".cupc-acts{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}"+
+      ".cupc-btn{background:var(--surface-2);border:1px solid var(--line);color:var(--ink);border-radius:8px;font-family:inherit;font-weight:700;font-size:11.5px;padding:5px 9px;cursor:pointer}"+
+      ".cupc-btn:hover{border-color:var(--accent)}"+
+      ".cupc-btn[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}"+
+      ".cupc-empty{border:1px dashed var(--line);border-radius:16px;padding:44px 22px;text-align:center;color:var(--muted)}"+
+      ".cupc-empty h3{color:var(--ink);font-size:17px;margin:0 0 6px}"+
+      ".cupc-empty button{margin-top:12px;background:var(--accent);color:var(--accent-ink);border:none;border-radius:10px;font-family:inherit;font-weight:800;font-size:13px;padding:8px 16px;cursor:pointer}";
     document.head.appendChild(s);
   }
 
+  function buildLibItem(m,lid,status){
+    var f=m.format, type=f==="MOVIE"?"Movie":f==="OVA"?"OVA":f==="ONA"?"ONA":f==="SPECIAL"?"Special":"TV";
+    return {id:lid, title:(m.title&&(m.title.english||m.title.romaji))||"Untitled", kind:"anime", type:type,
+      year:(m.seasonYear||(m.startDate&&m.startDate.year)||null), genres:(m.genres||[]).slice(),
+      poster:(m.coverImage&&m.coverImage.large)||null, status:status, seasons:[], favorite:false, score:null,
+      updatedAt:Date.now(), _fromUpcoming:true};
+  }
+  /* mirror an Upcoming mark into the main Library: Watch later -> Plan, Watching -> Watching */
+  function syncLibrary(m,status){
+    var L=window.CelArchiveLibrary; if(!L)return;
+    var lid="al-"+m.id, libStatus = status==="watching"?"watching" : status==="later"?"plan" : null;
+    var ex=L.get(lid);
+    if(libStatus){
+      if(ex){ ex.status=libStatus; ex.updatedAt=Date.now(); if(!ex.poster&&m.coverImage&&m.coverImage.large)ex.poster=m.coverImage.large; L.put(ex); }
+      else { L.put(buildLibItem(m,lid,libStatus)); }
+    } else if(ex && ex._fromUpcoming && !ex.score && !((ex.seasons||[]).some(function(s){return s.watched}))){
+      L.remove(lid);  /* untick -> remove the auto-added entry, unless you've since edited it */
+    }
+  }
   function setMark(k,status){
-    var it=null,i;
-    for(i=0;i<feed.length;i++)if(keyOf(feed[i])===k){it=feed[i];break}
-    if(!it && marks[k])it=marks[k];           /* from the saved store if it aged out of the feed */
-    if(!it)return;
-    if(marks[k]&&marks[k].status===status){delete marks[k];}
-    else{marks[k]={status:status,title:it.title,link:it.link,source:it.source,date:it.date,summary:it.summary,image:it.image};}
-    saveMarks();render();
+    var m=null,i;
+    for(i=0;i<feed.length;i++)if(String(feed[i].id)===k){m=feed[i];break}
+    if(!m&&marks[k])m=marks[k].m;
+    if(!m)return;
+    var cleared=false;
+    if(marks[k]&&marks[k].status===status){delete marks[k];cleared=true;}
+    else marks[k]={status:status,m:m};
+    saveMarks();
+    syncLibrary(m, cleared?null:status);
+    render();
   }
 
-  function cardHTML(it){
-    var k=keyOf(it), m=marks[k];
-    var img=it.image?'<img class="cnews-thumb" src="'+esc(it.image)+'" alt="" referrerpolicy="no-referrer" onerror="this.remove()">':'';
-    return '<div class="cnews-card'+(m?" marked":"")+'">'+img+
-      '<div class="cnews-body">'+
-        '<div class="cnews-meta"><span class="cnews-src">'+esc(it.source||"News")+'</span><span>'+esc(when(it.date))+'</span></div>'+
-        '<a class="cnews-t" href="'+esc(it.link||"#")+'" target="_blank" rel="noopener noreferrer">'+esc(it.title||"Untitled")+'</a>'+
-        (it.summary?'<div class="cnews-d">'+esc(it.summary)+'</div>':'')+
-        '<div class="cnews-acts">'+
-          '<button type="button" class="cnews-btn" data-mark="later" data-k="'+esc(k)+'" aria-pressed="'+(m&&m.status==="later")+'">☆ Watch later</button>'+
-          '<button type="button" class="cnews-btn" data-mark="watching" data-k="'+esc(k)+'" aria-pressed="'+(m&&m.status==="watching")+'">▶ Watching</button>'+
-        '</div>'+
-      '</div></div>';
+  function cardHTML(m){
+    var k=String(m.id), mk=marks[k];
+    var title=(m.title&&(m.title.english||m.title.romaji))||"Untitled";
+    var img=m.coverImage&&m.coverImage.large;
+    var genres=(m.genres||[]).slice(0,3).join(" · ");
+    var meta=[FMT[m.format]||cap(m.format||""),(m.episodes?m.episodes+" ep":"")].filter(Boolean).join(" · ");
+    var pv=trailerUrl(m.trailer);
+    return '<div class="cupc-card'+(mk?" marked":"")+'">'+
+      '<a class="cupc-pw" href="'+esc(m.siteUrl||"#")+'" target="_blank" rel="noopener noreferrer">'+
+        (img?'<img class="cupc-poster" src="'+esc(img)+'" alt="" referrerpolicy="no-referrer" loading="lazy" onerror="this.style.display=\'none\'">':'')+
+        (pv?'<span class="cupc-pvbadge">▶ PV</span>':'')+
+        '<span class="cupc-rel">'+esc(rel(m))+'</span></a>'+
+      '<div class="cupc-info"><div class="cupc-t" title="'+esc(title)+'">'+esc(title)+'</div>'+
+        (meta?'<div class="cupc-meta">'+esc(meta)+'</div>':'')+
+        (genres?'<div class="cupc-g">'+esc(genres)+'</div>':'')+
+        (pv?'<a class="cupc-pv" href="'+esc(pv)+'" target="_blank" rel="noopener noreferrer">▶ Watch announcement PV</a>':'')+
+        '<div class="cupc-acts">'+
+          '<button type="button" class="cupc-btn" data-mark="later" data-k="'+esc(k)+'" aria-pressed="'+(mk&&mk.status==="later")+'">\u2606 Watch later</button>'+
+          '<button type="button" class="cupc-btn" data-mark="watching" data-k="'+esc(k)+'" aria-pressed="'+(mk&&mk.status==="watching")+'">\u25B6 Watching</button>'+
+        '</div></div></div>';
   }
 
   function listFor(){
     if(filter==="all")return feed;
-    return Object.keys(marks).filter(function(k){return marks[k].status===filter})
-      .map(function(k){return marks[k]})
-      .sort(function(a,b){return (new Date(b.date)||0)-(new Date(a.date)||0)});
+    return Object.keys(marks).filter(function(k){return marks[k].status===filter}).map(function(k){return marks[k].m});
+  }
+  /* group a list into season/year sections, ordered soonest-first */
+  function groupsHTML(list){
+    var map={}, order=[];
+    list.forEach(function(m){var bk=bucket(m);if(!map[bk.label]){map[bk.label]={sort:bk.sort,items:[]};order.push(bk.label);}map[bk.label].items.push(m);});
+    order.sort(function(a,b){return map[a].sort-map[b].sort;});
+    return order.map(function(lab){
+      return '<div class="cupc-season">'+esc(lab)+' <span>'+map[lab].items.length+'</span></div>'+
+        '<div class="cupc-grid">'+map[lab].items.map(cardHTML).join("")+'</div>';
+    }).join("");
   }
 
   function render(){
     if(!page)return;
-    var body=page.querySelector("#cnews-body");if(!body)return;
+    var body=page.querySelector("#cupc-body");if(!body)return;
     var laterN=Object.keys(marks).filter(function(k){return marks[k].status==="later"}).length;
     var watchN=Object.keys(marks).filter(function(k){return marks[k].status==="watching"}).length;
-    var html='<div class="cnews-sub">'+
-      '<button type="button" class="cnews-stab" data-nf="all" aria-pressed="'+(filter==="all")+'">All news</button>'+
-      '<button type="button" class="cnews-stab" data-nf="later" aria-pressed="'+(filter==="later")+'">☆ Watch later ('+laterN+')</button>'+
-      '<button type="button" class="cnews-stab" data-nf="watching" aria-pressed="'+(filter==="watching")+'">▶ Watching ('+watchN+')</button></div>';
+    var html='<div class="cupc-sub">'+
+      '<button type="button" class="cupc-stab" data-nf="all" aria-pressed="'+(filter==="all")+'">Upcoming</button>'+
+      '<button type="button" class="cupc-stab" data-nf="later" aria-pressed="'+(filter==="later")+'">\u2606 Watch later ('+laterN+')</button>'+
+      '<button type="button" class="cupc-stab" data-nf="watching" aria-pressed="'+(filter==="watching")+'">\u25B6 Watching ('+watchN+')</button></div>';
     var list=listFor();
-    if(!list.length){
+    if(filter==="all" && !loaded && !failed){
+      html+='<div class="cupc-empty"><h3>Loading upcoming anime…</h3><p>Pulling the next seasons from AniList.</p></div>';
+    } else if(filter==="all" && failed){
+      html+='<div class="cupc-empty"><h3>Couldn\'t reach AniList</h3><p>Check your connection and try again.</p><button type="button" data-retry>Retry</button></div>';
+    } else if(!list.length){
       html+= filter==="all"
-        ? '<div class="cnews-empty"><h3>No news yet</h3><p>Headlines appear here after the scheduled update runs. If you just set it up, give the GitHub Action a few minutes, then refresh.</p></div>'
-        : '<div class="cnews-empty"><h3>Nothing saved here</h3><p>Mark a headline with ☆ Watch later or ▶ Watching and it shows up in this list.</p></div>';
+        ? '<div class="cupc-empty"><h3>Nothing upcoming right now</h3><p>AniList has no announced titles at the moment — check back soon.</p></div>'
+        : '<div class="cupc-empty"><h3>Nothing saved here</h3><p>Mark an upcoming title with \u2606 Watch later or \u25B6 Watching and it shows up in this list.</p></div>';
     } else {
-      html+='<div class="cnews-grid">'+list.map(cardHTML).join("")+'</div>';
+      html+= groupsHTML(list);
     }
     body.innerHTML=html;
   }
 
+  function fetchUpcoming(){
+    loaded=false;failed=false;render();
+    var query="query($p:Int){Page(perPage:$p){media(type:ANIME,status:NOT_YET_RELEASED,sort:POPULARITY_DESC){id title{english romaji} coverImage{large} startDate{year month} season seasonYear format episodes genres siteUrl trailer{id site}}}}";
+    fetch("https://graphql.anilist.co",{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify({query:query,variables:{p:50}})})
+      .then(function(r){if(!r.ok)throw 0;return r.json()})
+      .then(function(j){feed=(j&&j.data&&j.data.Page&&j.data.Page.media)||[];loaded=true;render();})
+      .catch(function(){failed=true;render();});
+  }
+
   function build(){
     styleEl();
-    page.innerHTML='<div class="canv-phead"><h2>News</h2><div class="sub">latest anime headlines · mark what you want to watch</div></div>'+
-      '<div class="cnews-upd" id="cnews-upd"></div><div id="cnews-body"></div>';
+    page.innerHTML='<div class="canv-phead"><h2>Upcoming</h2><div class="sub">anime coming next season &amp; beyond — from AniList</div></div><div id="cupc-body"></div>';
     render();
     page.addEventListener("click",function(e){
       var nf=e.target.closest("[data-nf]");
       if(nf){filter=nf.getAttribute("data-nf");render();return}
       var mb=e.target.closest("[data-mark]");
       if(mb){setMark(mb.getAttribute("data-k"),mb.getAttribute("data-mark"));return}
+      if(e.target.closest("[data-retry]")){fetchUpcoming();return}
     });
-    /* load the feed built by the GitHub Action (same origin — no key/CORS) */
-    fetch("news.json",{cache:"no-store"}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(j){
-      feed=Array.isArray(j)?j:(j&&j.items)||[];
-      var up=page.querySelector("#cnews-upd");
-      if(up&&j&&j.updated)up.textContent="Updated "+when(j.updated);
-      render();
-    }).catch(function(){ render(); /* keep the empty state */ });
+    fetchUpcoming();
   }
 
   function mount(tries){
