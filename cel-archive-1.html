@@ -2184,12 +2184,34 @@ store.init();
       '</select>';
   }
 
-  function tasteType(){
-    var w={}, total=0, n=chars.length;
-    chars.forEach(function(c,i){ if(!c.arche)return; var weight=Math.max(1,n-i); w[c.arche]=(w[c.arche]||0)+weight; total+=weight; });
+  function tasteType(roster){
+    roster = roster || chars;
+    var w={}, total=0, n=roster.length;
+    roster.forEach(function(c,i){ if(!c.arche)return; var weight=Math.max(1,n-i); w[c.arche]=(w[c.arche]||0)+weight; total+=weight; });
     if(!total) return null;
     var arr=Object.keys(w).map(function(k){return [k,w[k]]}).sort(function(a,b){return b[1]-a[1]});
     return {top:arr[0][0], info:DERE[arr[0][0]], breakdown:arr.map(function(e){return [e[0],Math.round(e[1]/total*100)]})};
+  }
+  var dereOpen = {};  /* cat -> dere key currently expanded under its chart */
+  function tasteBlock(cat,label){
+    var roster=chars.filter(function(c){return c.cat===cat});
+    var tt=tasteType(roster);
+    if(!tt) return "";
+    var open=dereOpen[cat];
+    var reveal="";
+    if(open){
+      var who=roster.filter(function(c){return c.arche===open});
+      reveal='<div class="cach-reveal"><b>'+esc(DERE_LABEL[open]||open)+'</b> in '+esc(label)+': '+
+        (who.length?who.map(function(c){return '<span class="cach-rchip">'+esc(c.name)+(c.from?' <i>· '+esc(c.from)+'</i>':'')+'</span>'}).join(""):'<span class="cach-rnone">none</span>')+'</div>';
+    }
+    return '<div class="cach-taste"><div class="cach-el">'+esc(label)+' — taste type</div>'+
+      '<div class="cach-tt">'+esc(tt.info.t)+'</div><p>'+esc(tt.info.d)+'</p>'+
+      '<div class="cach-bars">'+tt.breakdown.map(function(e){
+        return '<button type="button" class="cach-bar'+(open===e[0]?" on":"")+'" data-dere="'+e[0]+'" data-dcat="'+cat+'" title="See who\'s '+esc(DERE_LABEL[e[0]]||e[0])+'">'+
+          '<span class="n">'+esc(DERE_LABEL[e[0]]||e[0])+'</span><span class="t"><b style="width:'+e[1]+'%"></b></span><span class="p">'+e[1]+'%</span></button>';
+      }).join("")+'</div>'+
+      reveal+
+      '<div class="cach-tags">'+tt.info.traits.map(function(x){return '<span class="cach-tag">'+esc(x)+'</span>'}).join("")+'</div></div>';
   }
 
   function grad(seed){var s=String(seed||""),h=0,i;for(i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;var a=200+(h%150),b=a+34;return "linear-gradient(150deg,hsl("+a+" 40% 34%),hsl("+b+" 50% 46%))"}
@@ -2229,10 +2251,16 @@ store.init();
       ".cach-tt{font-family:var(--display,inherit);font-size:clamp(22px,4vw,30px);margin:6px 0 10px;line-height:1.05;color:var(--ink)}"+
       ".cach-taste p{margin:0 0 12px;max-width:62ch;font-size:14px;color:var(--ink)}"+
       ".cach-bars{display:flex;flex-direction:column;gap:7px;margin:2px 0 14px;max-width:440px}"+
-      ".cach-bar{display:grid;grid-template-columns:96px 1fr 40px;align-items:center;gap:10px;font-size:12.5px}"+
+      ".cach-bar{display:grid;grid-template-columns:96px 1fr 40px;align-items:center;gap:10px;font-size:12.5px;width:100%;background:transparent;border:1px solid transparent;border-radius:9px;padding:4px 6px;margin:0 -6px;font-family:inherit;text-align:left;cursor:pointer;color:inherit}"+
+      ".cach-bar:hover{background:color-mix(in srgb,var(--accent) 10%,transparent)}"+
+      ".cach-bar.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent)}"+
       ".cach-bar .n{font-weight:700;color:var(--ink)}"+
       ".cach-bar .t{height:8px;border-radius:999px;background:var(--surface-2);overflow:hidden}"+
       ".cach-bar .t b{display:block;height:100%;background:var(--accent)}"+
+      ".cach-reveal{font-size:12.5px;color:var(--ink);margin:2px 0 14px;max-width:460px;line-height:1.9}"+
+      ".cach-rchip{display:inline-block;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:3px 10px;margin:0 6px 6px 0;font-size:11.5px}"+
+      ".cach-rchip i{color:var(--muted);font-style:normal}"+
+      ".cach-rnone{color:var(--muted)}"+
       ".cach-bar .p{font-family:var(--mono,monospace);color:var(--muted);text-align:right}"+
       ".cach-tags{display:flex;gap:7px;flex-wrap:wrap}"+
       ".cach-tag{background:var(--surface);border:1px solid var(--line);color:var(--ink);font-size:11.5px;font-weight:700;border-radius:999px;padding:4px 11px}"+
@@ -2309,15 +2337,11 @@ store.init();
     if(!page)return;
     var body=page.querySelector("#cach-body");
     if(!body)return;
-    var tt=tasteType();
     var html="";
-    if(tt){
-      html+='<div class="cach-taste"><div class="cach-el">Your anime taste type — from your ranked characters</div>'+
-        '<div class="cach-tt">'+esc(tt.info.t)+'</div><p>'+esc(tt.info.d)+'</p>'+
-        '<div class="cach-bars">'+tt.breakdown.map(function(e){return '<div class="cach-bar"><span class="n">'+esc(DERE_LABEL[e[0]]||e[0])+'</span><span class="t"><b style="width:'+e[1]+'%"></b></span><span class="p">'+e[1]+'%</span></div>'}).join("")+'</div>'+
-        '<div class="cach-tags">'+tt.info.traits.map(function(x){return '<span class="cach-tag">'+esc(x)+'</span>'}).join("")+'</div></div>';
-    } else if(chars.length){
-      html+='<div class="cach-taste"><div class="cach-el">Your anime taste type</div><p style="margin:8px 0 0">Tag your characters with an archetype (kuudere, tsundere, yandere…) to unlock your taste type.</p></div>';
+    var gBlock=tasteBlock("girl","Best Girls"), bBlock=tasteBlock("boy","Best Boys");
+    html+=gBlock+bBlock;
+    if(!gBlock && !bBlock && chars.length){
+      html+='<div class="cach-taste"><div class="cach-el">Your anime taste type</div><p style="margin:8px 0 0">Tag your characters with an archetype (kuudere, tsundere, yandere…) to unlock your taste type — you get a separate one for Best Girls and Best Boys.</p></div>';
     }
     /* view toggle (ranking vs tier list) */
     if(chars.length){
@@ -2521,6 +2545,8 @@ store.init();
     page.addEventListener("click",function(e){
       var vt=e.target.closest("[data-view2]");
       if(vt){setView(vt.getAttribute("data-view2"));render();return}
+      var db=e.target.closest("[data-dere]");
+      if(db){var dc=db.getAttribute("data-dcat"),dk=db.getAttribute("data-dere");dereOpen[dc]=(dereOpen[dc]===dk?null:dk);render();return}
       /* click a character (card or tier chip) to edit — but not its buttons/menus */
       if(!e.target.closest("button, select, a")){
         var ce=e.target.closest("[data-cid]");
