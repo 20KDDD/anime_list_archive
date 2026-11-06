@@ -329,9 +329,23 @@ button.tcard{font:inherit;color:inherit;text-align:left;cursor:pointer;position:
     <nav class="rail" id="rail" aria-label="Browse library"></nav>
     <div class="libmain">
       <div class="filters">
-        <div class="field search"><label for="fq">Search</label><input type="search" id="fq" placeholder="Title, notes, genre…"></div>
+        <div class="field search"><label for="fq">Search</label><input type="search" id="fq" placeholder="Title, genre, or rating (10, 9 8…)"></div>
         <div class="field"><label for="fgenre">Genre</label><select id="fgenre"></select></div>
         <div class="field"><label for="fdemo">Demographic</label><select id="fdemo"></select></div>
+        <div class="field"><label for="frating">Rating</label><select id="frating">
+          <option value="">All ratings</option>
+          <option value="10">10</option>
+          <option value="9">9</option>
+          <option value="8">8</option>
+          <option value="7">7</option>
+          <option value="6">6</option>
+          <option value="5">5</option>
+          <option value="4">4</option>
+          <option value="3">3</option>
+          <option value="2">2</option>
+          <option value="1">1</option>
+          <option value="none">Unrated</option>
+        </select></div>
         <div class="field"><label for="fsort">Sort</label><select id="fsort">
           <option value="updated">Recently updated</option>
           <option value="title">Title A–Z</option>
@@ -482,14 +496,21 @@ function errMsg(e){
 function setSync(cls,txt){const s=$("#sync");s.className="sync "+cls;s.textContent=txt}
 
 /* ---------- state + filters ---------- */
-const state={status:"all",q:"",kind:"",format:"",genre:"",demo:"",sort:lsGet("celarchive.sort")||"updated"};
+const state={status:"all",q:"",kind:"",format:"",genre:"",demo:"",rating:"",sort:lsGet("celarchive.sort")||"updated"};
 $("#fsort").value=state.sort;
 
 function items(){return [...store.items.values()]}
 function isExampleMode(){return store.loaded&&store.items.size===0}
+/* a search of only rating numbers (1–10, e.g. "10", "9 8 7") filters by score */
+function parseRatingQuery(q){
+  if(!/^(10|[1-9])([\s,\/]+(10|[1-9]))*$/.test(q))return null;
+  const set={};q.split(/[\s,\/]+/).forEach(t=>{const n=+t;if(n>=1&&n<=10)set[n]=1});
+  return Object.keys(set).length?set:null;
+}
 function viewItems(){
   let list=isExampleMode()?EXAMPLES.map(x=>({...x,_example:true})):items();
   const q=state.q.trim().toLowerCase();
+  const ratingQ=q?parseRatingQuery(q):null;
   list=list.filter(it=>{
     if(state.status==="review"){if(!it.needsReview)return false}
     else if(state.status==="fav"){if(!it.favorite)return false}
@@ -499,7 +520,11 @@ function viewItems(){
     if(state.format==="tv"&&isMovie(it))return false;
     if(state.genre&&!(it.genres||[]).includes(state.genre))return false;
     if(state.demo&&it.demo!==state.demo)return false;
-    if(q){const hay=[DEMO_LABEL[it.demo],it.title,it.altTitle,it.notes,(it.genres||[]).join(" "),it.year,KIND_LABEL[it.kind]].join(" ").toLowerCase();if(!hay.includes(q))return false}
+    if(state.rating){ if(state.rating==="none"){ if(it.score!=null)return false } else if(it.score==null||Math.round(it.score)!==+state.rating)return false }
+    if(q){
+      if(ratingQ){ if(it.score==null||!ratingQ[Math.round(it.score)])return false; }
+      else { const hay=[DEMO_LABEL[it.demo],it.title,it.altTitle,it.notes,(it.genres||[]).join(" "),it.year,KIND_LABEL[it.kind]].join(" ").toLowerCase();if(!hay.includes(q))return false }
+    }
     return true;
   });
   const by={
@@ -747,6 +772,7 @@ function renderRail(){
 function renderSelects(){
   const src=items();
   const dsel=$("#fdemo");dsel.innerHTML=`<option value="">All</option>`+DEMOS.map(x=>`<option value="${x.k}">${x.label}</option>`).join("");dsel.value=state.demo;
+  $("#frating").value=state.rating;
   const g=$("#fgenre");
   const used=new Set();src.forEach(x=>(x.genres||[]).forEach(z=>used.add(z)));
   const list=[...new Set([...GENRES.filter(x=>used.has(x)),...[...used].sort()])];
@@ -786,7 +812,7 @@ function render(){
   renderBand();renderTaste();renderRail();renderSelects();
   const list=viewItems();
   $("#bannerSlot").innerHTML=isExampleMode()?`<div class="banner"><p><b>Your library is empty.</b> The three cards below are examples so you can see how entries look. Add a title, or paste your Google Doc list into Bulk import. Everything saves in this browser, so download a backup from More now and then.</p><button class="btn primary sm" id="bannerBulk">Bulk import</button></div>`:"";
-  const vk=[state.status,state.q,state.kind,state.format,state.genre,state.demo,state.sort].join("|");
+  const vk=[state.status,state.q,state.kind,state.format,state.genre,state.demo,state.rating,state.sort].join("|");
   if(vk!==lastViewKey){shownCount=PAGE_SIZE;lastViewKey=vk}
   $("#grid").innerHTML=list.slice(0,shownCount).map(cardHTML).join("");
   const left=list.length-shownCount;
@@ -813,6 +839,7 @@ $("#rail").addEventListener("click",e=>{const b=e.target.closest("[data-axis]");
 let qTimer;$("#fq").addEventListener("input",e=>{clearTimeout(qTimer);qTimer=setTimeout(()=>{state.q=e.target.value;render()},120)});
 $("#fgenre").addEventListener("change",e=>{state.genre=e.target.value;render()});
 $("#fdemo").addEventListener("change",e=>{state.demo=e.target.value;render()});
+$("#frating").addEventListener("change",e=>{state.rating=e.target.value;render()});
 $("#fsort").addEventListener("change",e=>{state.sort=e.target.value;lsSet("celarchive.sort",state.sort);render()});
 $("#grid").addEventListener("click",async e=>{
   const fv=e.target.closest("[data-fav]");
