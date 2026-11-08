@@ -1918,7 +1918,7 @@ store.init();
     redpetal:{m:"linear",dir:1,shape:"petal",n:40,size:[4,8],spd:[.5,1.2],sway:1.4,col:["#E2233A","#B01020","#8E0E1E","#C8172C"]},
     bloodrain:{m:"linear",dir:1,shape:"rain",n:88,size:[9,20],spd:[3.5,6.5],sway:.04,vx:[.1,.5],col:["#C8172C","#9E0E22","#E2233A","#7E0A1A"]},
     sword:{m:"linear",dir:1,shape:"sword",n:26,size:[5,11],spd:[1.1,2.4],sway:.35,col:["#E8C25A","#D4A028","#F0D27A","#C8912A"]},
-    lightning:{m:"linear",dir:1,shape:"bolt",n:15,size:[5,12],spd:[1.3,2.9],sway:.4,col:["#4BE38A","#2FBF71","#8CF0B0","#39D17A"]}
+    lightning:{m:"linear",dir:1,shape:"bolt",n:0,size:[5,12],spd:[1.3,2.9],sway:.4,col:["#4BE38A","#2FBF71","#8CF0B0","#39D17A"]}
   };
   var cv, cx, fxType = "spark", fxOn = true, parts = [], W = 0, Ht = 0, COLS = ["#B8FF3C","#FF4D9D"];
   var reduceM = false;
@@ -1934,21 +1934,30 @@ store.init();
   function seedFx(){COLS=themeCols();var f=FX[fxType]||FX.spark,i;parts=[];for(i=0;i<f.n;i++)parts.push(mk(f,true))}
   function setFx(k){fxType=k;if(cv)seedFx()}
   /* ---- electric helpers (branching bolts + occasional full strike) ---- */
-  var strike=null, strikeSeed=0;
+  var arcs=[], strikeSeed=0;
   function srand(n){var x=Math.sin(n*127.1+311.7)*43758.5453;return x-Math.floor(x)}
   function jagged(ax,ay,bx,by,amp,seed,segs){cx.beginPath();cx.moveTo(ax,ay);for(var j=1;j<segs;j++){var t=j/segs,x=ax+(bx-ax)*t,y=ay+(by-ay)*t,n=(srand(seed+j*3.3)*2-1)*amp*(1-Math.abs(0.5-t)*1.2);cx.lineTo(x+n,y)}cx.lineTo(bx,by);cx.stroke()}
-  function drawStrike(f){
-    if(!strike && Math.random()<0.012) strike={x:rnd(W*0.15,W*0.85),drift:rnd(-W*0.08,W*0.08),life:1,seed:(strikeSeed+=13)};
-    if(!strike)return;
-    var st=strike, col=(f.col&&f.col[0])||COLS[0]||"#4BE38A";
-    cx.save();cx.strokeStyle=col;cx.shadowColor=col;cx.shadowBlur=18;cx.lineCap="round";
-    cx.globalAlpha=Math.min(1,st.life)*0.9;cx.lineWidth=2.4;
-    jagged(st.x,-10,st.x+st.drift,Ht+10,46,st.seed,12);
-    cx.lineWidth=1.5;
-    for(var k=0;k<2;k++){var ty=Ht*(0.32+0.26*k)+srand(st.seed+k)*70,fx=st.x+st.drift*(ty/Ht);jagged(fx,ty,fx+(srand(st.seed+k*5)<0.5?-1:1)*W*0.12,ty+Ht*0.17,28,st.seed+k*9,7)}
-    cx.globalAlpha=st.life*0.05;cx.fillStyle=col;cx.fillRect(0,0,W,Ht);
+  /* pure electricity: occasional full strikes + small crackle arcs that snap and vanish (no flash, no falling glyphs) */
+  function drawElectric(f){
+    var col=(f.col&&f.col[0])||COLS[0]||"#4BE38A";
+    if(Math.random()<0.014) arcs.push({t:"strike",x:rnd(W*0.12,W*0.88),drift:rnd(-W*0.08,W*0.08),seed:(strikeSeed+=13),life:1});
+    if(Math.random()<0.13 && arcs.length<16) arcs.push({t:"crackle",x:rnd(0,W),y:rnd(0,Ht),ang:rnd(0,6.283),len:rnd(38,120),seed:(strikeSeed+=7),life:1});
+    cx.save();cx.strokeStyle=col;cx.shadowColor=col;cx.lineCap="round";
+    for(var a=arcs.length-1;a>=0;a--){var o=arcs[a];
+      if(o.t==="strike"){
+        cx.globalAlpha=Math.min(1,o.life)*0.85;cx.shadowBlur=16;cx.lineWidth=2.2;
+        jagged(o.x,-10,o.x+o.drift,Ht+10,44,o.seed,12);
+        cx.lineWidth=1.3;var ty=Ht*0.4+srand(o.seed)*120,fx=o.x+o.drift*(ty/Ht);
+        jagged(fx,ty,fx+(srand(o.seed+3)<0.5?-1:1)*W*0.12,ty+Ht*0.16,26,o.seed+9,6);
+        o.life-=0.09;
+      } else {
+        cx.globalAlpha=o.life*0.7;cx.shadowBlur=10;cx.lineWidth=1.4;
+        jagged(o.x,o.y,o.x+Math.cos(o.ang)*o.len,o.y+Math.sin(o.ang)*o.len,o.len*0.18,o.seed,5);
+        o.life-=0.14;
+      }
+      if(o.life<=0)arcs.splice(a,1);
+    }
     cx.restore();
-    st.life-=0.08;if(st.life<=0)strike=null;
   }
   function drawFx(){if(!cx)return;cx.clearRect(0,0,W,Ht);if(!fxOn||reduceM)return;var f=FX[fxType]||FX.spark,sh=f.shape,i,p;
     for(i=0;i<parts.length;i++){p=parts[i];
@@ -1987,7 +1996,7 @@ store.init();
         var fy=-bl*0.12+srand(sd)*bl*0.3;cx.lineWidth=Math.max(.8,p.s*0.14);jagged(0,fy,(srand(sd+1)<0.5?-1:1)*bl*0.4,fy+bl*0.32,p.s*0.4,sd+7,4)}
       else{cx.beginPath();cx.arc(0,0,p.s,0,6.28);cx.fill()}
       cx.restore()}
-    if(fxType==="lightning") drawStrike(f);
+    if(fxType==="lightning") drawElectric(f);
   }
 
   /* ---- themed background (gradient wash always; anime banner art for anime themes) ---- */
