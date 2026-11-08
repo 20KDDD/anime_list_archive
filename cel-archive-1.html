@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <style>:root{color-scheme:dark}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
-<title>Anichive</title>
+<title>Cel Archive</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=IBM+Plex+Mono:wght@400;500&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
@@ -1875,7 +1875,7 @@ store.init();
     {id:"onepiece",name:"One Piece",tag:"grand line",c:{bg:"#07192E",surface:"#0E2540","surface-2":"#163353",ink:"#E6F2FF",muted:"#7FA6C8",line:"#1E3E5E",accent:"#1E90D8","accent-ink":"#02141F",accent2:"#F2C14E"}},
     {id:"dragonball",name:"Dragon Ball",tag:"ki energy",c:{bg:"#141020",surface:"#1E1830","surface-2":"#2A2242",ink:"#FFF3E2",muted:"#A89AC0",line:"#342C4E",accent:"#FF7A1A","accent-ink":"#1A0D02",accent2:"#3DC0FF"}},
     {id:"fma",name:"Fullmetal Alchemist",tag:"alchemy · equivalent exchange",c:{bg:"#160E0A",surface:"#22140D","surface-2":"#301C12",ink:"#FDEFE0",muted:"#C49A78",line:"#422619",accent:"#D4212E","accent-ink":"#FFFFFF",accent2:"#E8A83C"}},
-    {id:"fate",name:"Fate/stay night",tag:"unlimited blade works",c:{bg:"#111626",surface:"#1A2135","surface-2":"#262F49",ink:"#F2EFE6",muted:"#99A2BC",line:"#333D58",accent:"#E6B23E","accent-ink":"#1A1204",accent2:"#4C74C8"}},
+    {id:"mha",name:"My Hero Academia",tag:"plus ultra · one for all",c:{bg:"#0E1412",surface:"#17201B","surface-2":"#212E24",ink:"#EDF4EE",muted:"#8FA596",line:"#2B3B2F",accent:"#3DD16B","accent-ink":"#04180B",accent2:"#E8463F"}},
     {id:"frieren",name:"Frieren",tag:"serene magic · snow",c:{bg:"#101A1C",surface:"#17272A","surface-2":"#20383C",ink:"#EEF7F6",muted:"#8FB5B2",line:"#284A4D",accent:"#8FE0D2","accent-ink":"#06201C",accent2:"#E9C87A"}},
     {id:"grimgar",name:"Grimgar",tag:"watercolor · ash",c:{bg:"#15171C",surface:"#1F2229","surface-2":"#2B2F38",ink:"#ECEEF2",muted:"#9AA0AC",line:"#363B45",accent:"#9FB3D1","accent-ink":"#0E1218",accent2:"#C99DA0"}},
     {id:"yourlie",name:"Your Lie in April",tag:"stage lights",c:{bg:"#0E1220",surface:"#171C30","surface-2":"#212842",ink:"#EEF2FF",muted:"#8E9AC0",line:"#2C3450",accent:"#6AA8FF","accent-ink":"#02101F",accent2:"#F29ABF"}},
@@ -1883,7 +1883,7 @@ store.init();
     {id:"violet",name:"Violet Evergarden",tag:"letters & snow",c:{bg:"#0E1420",surface:"#172030","surface-2":"#212E42",ink:"#EEF3FA",muted:"#8EA0B4",line:"#2C3A4E",accent:"#7FB0E0","accent-ink":"#04121F",accent2:"#E8D9A8"}}
   ];
   var ALL = THEMES.concat(ANIME_THEMES);
-  var FXKEY = {arcade:"spark",sakura:"petal",abyss:"bubble",ember:"ember",matcha:"leaf",mono:"dust",cyberpunk:"neonrain",celestial:"star",rainy:"rain",fireflies:"firefly",naruto:"autumn",steinsgate:"gears",chainsaw:"bloodrain",jjk:"cursed",demonslayer:"petal",eightysix:"redpetal",onepiece:"bubble",dragonball:"ember",fma:"ember",fate:"sword",frieren:"snow",grimgar:"ash",yourlie:"bokeh",hyouka:"petal",violet:"snow"};
+  var FXKEY = {arcade:"spark",sakura:"petal",abyss:"bubble",ember:"ember",matcha:"leaf",mono:"dust",cyberpunk:"neonrain",celestial:"star",rainy:"rain",fireflies:"firefly",naruto:"autumn",steinsgate:"gears",chainsaw:"bloodrain",jjk:"cursed",demonslayer:"petal",eightysix:"redpetal",onepiece:"bubble",dragonball:"ember",fma:"ember",mha:"lightning",frieren:"snow",grimgar:"ash",yourlie:"bokeh",hyouka:"petal",violet:"snow"};
 
   /* ---- particle effects ---- */
   var MATRIX_CH = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホ0123456789".split("");
@@ -1917,7 +1917,8 @@ store.init();
     gears:{m:"float",shape:"gear",n:14,size:[9,24],spd:[.04,.16],sway:.3},
     redpetal:{m:"linear",dir:1,shape:"petal",n:40,size:[4,8],spd:[.5,1.2],sway:1.4,col:["#E2233A","#B01020","#8E0E1E","#C8172C"]},
     bloodrain:{m:"linear",dir:1,shape:"rain",n:88,size:[9,20],spd:[3.5,6.5],sway:.04,vx:[.1,.5],col:["#C8172C","#9E0E22","#E2233A","#7E0A1A"]},
-    sword:{m:"linear",dir:1,shape:"sword",n:26,size:[5,11],spd:[1.1,2.4],sway:.35,col:["#E8C25A","#D4A028","#F0D27A","#C8912A"]}
+    sword:{m:"linear",dir:1,shape:"sword",n:26,size:[5,11],spd:[1.1,2.4],sway:.35,col:["#E8C25A","#D4A028","#F0D27A","#C8912A"]},
+    lightning:{m:"linear",dir:1,shape:"bolt",n:22,size:[5,12],spd:[1.3,2.9],sway:.4,col:["#4BE38A","#2FBF71","#8CF0B0","#39D17A"]}
   };
   var cv, cx, fxType = "spark", fxOn = true, parts = [], W = 0, Ht = 0, COLS = ["#B8FF3C","#FF4D9D"];
   var reduceM = false;
@@ -1964,12 +1965,13 @@ store.init();
       else if(sh==="cursed"){cx.globalAlpha=.28+.45*Math.abs(Math.sin(p.tw));cx.shadowBlur=12;cx.shadowColor=p.c;cx.beginPath();cx.arc(0,0,p.s,0,6.28);cx.fill()}
       else if(sh==="gear"){var gs=p.s,gt,oR=gs,iR=gs*0.72,gd=(p.vr>=0?1:-1);cx.rotate((p.rot||0)+p.tw*0.5*gd);cx.globalAlpha=.5;cx.lineWidth=Math.max(1.4,gs*0.13);cx.beginPath();for(gt=0;gt<8;gt++){var ga=gt/8*6.2832;cx.lineTo(Math.cos(ga-0.13)*iR,Math.sin(ga-0.13)*iR);cx.lineTo(Math.cos(ga-0.07)*oR,Math.sin(ga-0.07)*oR);cx.lineTo(Math.cos(ga+0.07)*oR,Math.sin(ga+0.07)*oR);cx.lineTo(Math.cos(ga+0.13)*iR,Math.sin(ga+0.13)*iR);}cx.closePath();cx.stroke();cx.globalAlpha=.38;cx.beginPath();cx.arc(0,0,gs*0.34,0,6.28);cx.stroke()}
       else if(sh==="sword"){var sl=p.s*2.8,sw=Math.max(1.3,p.s*0.45);cx.rotate((p.rot||0)+Math.sin(p.tw)*0.12);cx.globalAlpha=.6;cx.beginPath();cx.moveTo(0,sl*0.55);cx.lineTo(sw,-sl*0.25);cx.lineTo(0,-sl*0.38);cx.lineTo(-sw,-sl*0.25);cx.closePath();cx.fill();cx.fillRect(-sw*2.4,-sl*0.44,sw*4.8,Math.max(1.2,sw));cx.fillRect(-sw*0.6,-sl*0.52,sw*1.2,sl*0.12)}
+      else if(sh==="bolt"){var bl=p.s*2.6,bw=p.s*0.5;cx.rotate(p.rot||0);cx.globalAlpha=.35+.5*Math.abs(Math.sin(p.tw*3));cx.lineWidth=Math.max(1,p.s*0.22);cx.shadowBlur=8;cx.shadowColor=p.c;cx.beginPath();cx.moveTo(0,-bl*0.5);cx.lineTo(bw,-bl*0.15);cx.lineTo(-bw*0.7,bl*0.05);cx.lineTo(bw*0.8,bl*0.28);cx.lineTo(0,bl*0.5);cx.stroke()}
       else{cx.beginPath();cx.arc(0,0,p.s,0,6.28);cx.fill()}
       cx.restore()}
   }
 
   /* ---- themed background (gradient wash always; anime banner art for anime themes) ---- */
-  var ANIME_BG = {naruto:"Naruto",steinsgate:"Steins;Gate",chainsaw:"Chainsaw Man",jjk:"Jujutsu Kaisen",demonslayer:"Kimetsu no Yaiba",eightysix:"86",onepiece:"One Piece",dragonball:"Dragon Ball Z",fma:"Fullmetal Alchemist Brotherhood",fate:"Fate stay night Unlimited Blade Works",frieren:"Sousou no Frieren",grimgar:"Hai to Gensou no Grimgar",yourlie:"Shigatsu wa Kimi no Uso",hyouka:"Hyouka",violet:"Violet Evergarden"};
+  var ANIME_BG = {naruto:"Naruto",steinsgate:"Steins;Gate",chainsaw:"Chainsaw Man",jjk:"Jujutsu Kaisen",demonslayer:"Kimetsu no Yaiba",eightysix:"86",onepiece:"One Piece",dragonball:"Dragon Ball Z",fma:"Fullmetal Alchemist Brotherhood",mha:"Boku no Hero Academia",frieren:"Sousou no Frieren",grimgar:"Hai to Gensou no Grimgar",yourlie:"Shigatsu wa Kimi no Uso",hyouka:"Hyouka",violet:"Violet Evergarden"};
   var bgCache={}, bgOn = (lsGet(LS_BG)!=="0");
   function washFor(){
     return "radial-gradient(1100px 620px at 15% -8%, color-mix(in srgb,var(--accent) 20%,transparent), transparent 60%),"+
@@ -3129,7 +3131,9 @@ store.init();
    ========================================================================== */
 (function(){
   "use strict";
-  var LS="celarchive.newsmarks.v1", page=null, feed=[], marks=load(), filter="all", loaded=false, failed=false;
+  var LS="celarchive.newsmarks.v1", page=null, feed=[], marks=load(), filter="all", loaded=false, failed=false, lastFetch=0;
+  function nowTime(){try{return new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})}catch(e){return ""}}
+  function setUpd(t){var el=page&&page.querySelector("#cupc-upd");if(el)el.textContent=t;}
   function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
   function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
   function load(){try{var o=JSON.parse(lsGet(LS)||"{}");return (o&&typeof o==="object")?o:{}}catch(e){return {}}}
@@ -3164,6 +3168,10 @@ store.init();
     if(document.getElementById("cupc-style"))return;
     var s=document.createElement("style");s.id="cupc-style";
     s.textContent=
+      ".cupc-bar{display:flex;align-items:center;gap:12px;margin:2px 0 10px}"+
+      ".cupc-refresh{background:var(--surface-2);border:1px solid var(--line);color:var(--ink);font-family:inherit;font-weight:700;font-size:12.5px;border-radius:9px;padding:6px 13px;cursor:pointer}"+
+      ".cupc-refresh:hover{border-color:var(--accent);color:var(--accent)}"+
+      ".cupc-upd{font-size:11.5px;color:var(--muted)}"+
       ".cupc-sub{display:flex;gap:7px;flex-wrap:wrap;margin:6px 0 16px}"+
       ".cupc-stab{background:var(--surface);border:1px solid var(--line);color:var(--muted);font-family:inherit;font-weight:700;font-size:12.5px;border-radius:999px;padding:6px 14px;cursor:pointer}"+
       ".cupc-stab[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}"+
@@ -3287,25 +3295,32 @@ store.init();
   }
 
   function fetchUpcoming(){
-    loaded=false;failed=false;render();
+    loaded=false;failed=false;render();setUpd("Loading…");
     var query="query($p:Int){Page(perPage:$p){media(type:ANIME,status:NOT_YET_RELEASED,sort:POPULARITY_DESC){id title{english romaji} coverImage{large} startDate{year month} season seasonYear format episodes genres siteUrl trailer{id site}}}}";
-    fetch("https://graphql.anilist.co",{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify({query:query,variables:{p:50}})})
+    fetch("https://graphql.anilist.co",{method:"POST",cache:"no-store",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify({query:query,variables:{p:50}})})
       .then(function(r){if(!r.ok)throw 0;return r.json()})
-      .then(function(j){feed=(j&&j.data&&j.data.Page&&j.data.Page.media)||[];loaded=true;render();})
-      .catch(function(){failed=true;render();});
+      .then(function(j){feed=(j&&j.data&&j.data.Page&&j.data.Page.media)||[];loaded=true;lastFetch=Date.now();render();setUpd("Updated "+nowTime());})
+      .catch(function(){failed=true;render();setUpd("");});
   }
+  function refreshIfStale(ms){ if(Date.now()-lastFetch>(ms||120000)) fetchUpcoming(); }
 
   function build(){
     styleEl();
-    page.innerHTML='<div class="canv-phead"><h2>Upcoming</h2><div class="sub">anime coming next season &amp; beyond — from AniList</div></div><div id="cupc-body"></div>';
+    page.innerHTML='<div class="canv-phead"><h2>Upcoming</h2><div class="sub">anime coming next season &amp; beyond — live from AniList</div></div>'+
+      '<div class="cupc-bar"><button type="button" class="cupc-refresh" data-refresh>↻ Refresh</button><span class="cupc-upd" id="cupc-upd"></span></div><div id="cupc-body"></div>';
     render();
     page.addEventListener("click",function(e){
+      if(e.target.closest("[data-refresh]")){fetchUpcoming();return}
       var nf=e.target.closest("[data-nf]");
       if(nf){filter=nf.getAttribute("data-nf");render();return}
       var mb=e.target.closest("[data-mark]");
       if(mb){setMark(mb.getAttribute("data-k"),mb.getAttribute("data-mark"));return}
       if(e.target.closest("[data-retry]")){fetchUpcoming();return}
     });
+    /* re-pull fresh data when you open the tab again, or return to the page */
+    var navBtn=document.querySelector('#canv-nav [data-view="news"]');
+    if(navBtn)navBtn.addEventListener("click",function(){refreshIfStale(120000)});
+    document.addEventListener("visibilitychange",function(){ if(!document.hidden && page && !page.hidden) refreshIfStale(300000); });
     fetchUpcoming();
   }
 
