@@ -1868,7 +1868,7 @@ store.init();
   var ANIME_THEMES = [
     {id:"naruto",name:"Naruto",tag:"hidden leaf · autumn",c:{bg:"#141A2E",surface:"#1C2740","surface-2":"#273352",ink:"#FFF2E0",muted:"#9FB0D0",line:"#2E3D5E",accent:"#FF8A2B","accent-ink":"#1A0E02",accent2:"#4A74C8"}},
     {id:"steinsgate",name:"Steins;Gate",tag:"clockwork · divergence",c:{bg:"#15161E",surface:"#1E2029","surface-2":"#292C38",ink:"#ECEDF2",muted:"#9195A5",line:"#353949",accent:"#7A68D0","accent-ink":"#FFFFFF",accent2:"#8CA6C4"}},
-    {id:"chainsaw",name:"Chainsaw Man",tag:"blood & chainsaws",c:{bg:"#140808",surface:"#1F0E0C","surface-2":"#2E1512",ink:"#FFE6E2",muted:"#C78A82",line:"#40201C",accent:"#E51526","accent-ink":"#FFFFFF",accent2:"#E8A23A"}},
+    {id:"fairytail",name:"Fairy Tail",tag:"guild magic · dragon fire",c:{bg:"#16110C",surface:"#211A11","surface-2":"#2E2417",ink:"#F6EFE2",muted:"#B59C7E",line:"#3E3220",accent:"#F2822E","accent-ink":"#1A0E03",accent2:"#F2C94C"}},
     {id:"jjk",name:"Jujutsu Kaisen",tag:"cursed energy",c:{bg:"#0D0A1A",surface:"#161228","surface-2":"#201A3A",ink:"#EFEAFF",muted:"#9087C0",line:"#2C2550",accent:"#B4133B","accent-ink":"#FFFFFF",accent2:"#6A5CE0"}},
     {id:"demonslayer",name:"Demon Slayer",tag:"water & flame",c:{bg:"#0C1618",surface:"#132225","surface-2":"#1C3034",ink:"#EAF6F5",muted:"#86AEB0",line:"#26444A",accent:"#17B0A6","accent-ink":"#02191A",accent2:"#F26D8E"}},
     {id:"eightysix",name:"86 Eighty-Six",tag:"spider lilies · stormy sky",c:{bg:"#12192A",surface:"#1B2740","surface-2":"#273650",ink:"#EAF1F8",muted:"#8A9CB4",line:"#324563",accent:"#E22338","accent-ink":"#FFFFFF",accent2:"#8FB4D4"}},
@@ -1883,7 +1883,7 @@ store.init();
     {id:"violet",name:"Violet Evergarden",tag:"letters & snow",c:{bg:"#0E1420",surface:"#172030","surface-2":"#212E42",ink:"#EEF3FA",muted:"#8EA0B4",line:"#2C3A4E",accent:"#7FB0E0","accent-ink":"#04121F",accent2:"#E8D9A8"}}
   ];
   var ALL = THEMES.concat(ANIME_THEMES);
-  var FXKEY = {arcade:"spark",sakura:"petal",abyss:"bubble",ember:"ember",matcha:"leaf",mono:"dust",cyberpunk:"neonrain",celestial:"star",rainy:"rain",fireflies:"firefly",naruto:"autumn",steinsgate:"gears",chainsaw:"bloodrain",jjk:"cursed",demonslayer:"petal",eightysix:"redpetal",onepiece:"bubble",dragonball:"ember",fma:"ember",mha:"lightning",frieren:"snow",grimgar:"ash",yourlie:"bokeh",hyouka:"petal",violet:"snow"};
+  var FXKEY = {arcade:"spark",sakura:"petal",abyss:"bubble",ember:"ember",matcha:"leaf",mono:"dust",cyberpunk:"neonrain",celestial:"star",rainy:"rain",fireflies:"firefly",naruto:"autumn",steinsgate:"gears",fairytail:"ember",jjk:"cursed",demonslayer:"petal",eightysix:"redpetal",onepiece:"bubble",dragonball:"ember",fma:"ember",mha:"lightning",frieren:"snow",grimgar:"ash",yourlie:"bokeh",hyouka:"petal",violet:"snow"};
 
   /* ---- particle effects ---- */
   var MATRIX_CH = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホ0123456789".split("");
@@ -2000,7 +2000,7 @@ store.init();
   }
 
   /* ---- themed background (gradient wash always; anime banner art for anime themes) ---- */
-  var ANIME_BG = {naruto:"Naruto",steinsgate:"Steins;Gate",chainsaw:"Chainsaw Man",jjk:"Jujutsu Kaisen",demonslayer:"Kimetsu no Yaiba",eightysix:"86",onepiece:"One Piece",dragonball:"Dragon Ball Z",fma:"Fullmetal Alchemist Brotherhood",mha:"Boku no Hero Academia",frieren:"Sousou no Frieren",grimgar:"Hai to Gensou no Grimgar",yourlie:"Shigatsu wa Kimi no Uso",hyouka:"Hyouka",violet:"Violet Evergarden"};
+  var ANIME_BG = {naruto:"Naruto",steinsgate:"Steins;Gate",fairytail:"Fairy Tail",jjk:"Jujutsu Kaisen",demonslayer:"Kimetsu no Yaiba",eightysix:"86",onepiece:"One Piece",dragonball:"Dragon Ball Z",fma:"Fullmetal Alchemist Brotherhood",mha:"Boku no Hero Academia",frieren:"Sousou no Frieren",grimgar:"Hai to Gensou no Grimgar",yourlie:"Shigatsu wa Kimi no Uso",hyouka:"Hyouka",violet:"Violet Evergarden"};
   var bgCache={}, bgOn = (lsGet(LS_BG)!=="0");
   function washFor(){
     return "radial-gradient(1100px 620px at 15% -8%, color-mix(in srgb,var(--accent) 20%,transparent), transparent 60%),"+
