@@ -807,7 +807,8 @@ function renderRail(){
     sec("By format",
       it("format","tv","TV & series",tvN,state.format==="tv")+
       it("format","film","Films",films,state.format==="film"))+
-    sec("By status",STATUSES.map(s=>it("status",s.k,s.label,cS(s.k),state.status===s.k,`var(--st-${s.k})`)).join(""));
+    sec("By status",STATUSES.map(s=>it("status",s.k,s.label,cS(s.k),state.status===s.k,`var(--st-${s.k})`)).join(""))+
+    (hiddenN?sec("",`<button class="railItem" data-axis="hidden" data-val="hidden" aria-pressed="${state.status==="hidden"}"><span class="rlabel">Hidden</span></button>`):"");
 }
 function renderSelects(){
   const src=items();
