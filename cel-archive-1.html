@@ -645,7 +645,7 @@ function renderBand(){
   }
   const mode=countMode();
   bar.innerHTML=`<span class="modelbl">Counting</span><div class="modeseg"><button data-mode="franchise" aria-pressed="${mode!=="mal"}">Series</button><button data-mode="mal" aria-pressed="${mode==="mal"}">MAL style</button></div><span class="modehint">${mode==="mal"?"Each season, OVA and movie counted as its own entry, MAL-style.":"Your original tracking — one card per series, seasons nested inside."}</span>`;
-  const src=isExampleMode()?EXAMPLES:items().filter(x=>!x.hidden);
+  const src=isExampleMode()?EXAMPLES:items();
   if(mode==="mal"){renderBandMal(src);return}
   const SEEN=["completed","unfinished","dropped","watching","on_hold"];
   const done=src.filter(x=>x.status==="completed");
@@ -677,7 +677,7 @@ function renderBand(){
 let TASTE_SETS={};
 function renderTaste(){
   const el=$("#taste");
-  const src=isExampleMode()?EXAMPLES:items().filter(x=>!x.hidden);
+  const src=isExampleMode()?EXAMPLES:items();
   const done=src.filter(x=>x.status==="completed");
   if(!src.length){el.innerHTML="";TASTE_SETS={};return}
   const hidden=lsGet("celarchive.tasteHidden")==="1";
