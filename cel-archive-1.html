@@ -153,6 +153,22 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
 .fav{color:var(--accent);font-size:15px;line-height:1}
 .example-tag{position:absolute;top:10px;right:10px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:var(--accent-soft);color:var(--accent);padding:2px 6px;border-radius:4px}
 .card.example{opacity:.8;border-style:dashed}
+.hpass-scrim{position:fixed;inset:0;background:rgba(6,4,12,.72);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px}
+.hpass{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px;width:min(340px,92vw);box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.hpass h3{margin:0 0 6px;font-size:18px}
+.hpass p{margin:0 0 14px;color:var(--muted);font-size:13px}
+.hpass input{width:100%;box-sizing:border-box;background:var(--bg);border:2px solid var(--line);color:var(--ink);border-radius:10px;padding:11px 13px;font-size:16px;font-family:inherit;letter-spacing:.2em}
+.hpass input:focus{outline:none;border-color:var(--accent)}
+.hpass-msg{color:var(--st-dropped);font-size:12.5px;min-height:16px;margin-top:8px}
+.hpass-row{display:flex;justify-content:flex-end;gap:10px;margin-top:14px}
+#favbar:empty{display:none}
+.favbar-lbl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:800;margin:2px 0 9px}
+.favbar-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.favchip{display:inline-flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--line);color:var(--ink);font-family:inherit;font-weight:700;font-size:12.5px;border-radius:999px;padding:6px 13px;cursor:pointer}
+.favchip:hover{border-color:var(--accent)}
+.favchip.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.favchip span{font-size:11px;opacity:.7;font-weight:700}
+.favchip.on span{opacity:.85}
 .banner{border:1px dashed var(--accent);background:var(--accent-soft);border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
 .banner p{margin:0;max-width:70ch}
 .empty{padding:40px 16px;text-align:center;color:var(--muted)}
@@ -357,6 +373,7 @@ button.tcard{font:inherit;color:inherit;text-align:left;cursor:pointer;position:
         </select></div>
       </div>
       <div id="bannerSlot"></div>
+      <div id="favbar"></div>
       <div id="grid" class="grid"></div>
       <div id="emptySlot"></div>
       <div id="moreSlot"></div>
@@ -496,11 +513,28 @@ function errMsg(e){
 function setSync(cls,txt){const s=$("#sync");s.className="sync "+cls;s.textContent=txt}
 
 /* ---------- state + filters ---------- */
-const state={status:"all",q:"",kind:"",format:"",genre:"",demo:"",rating:"",sort:lsGet("celarchive.sort")||"updated"};
+const state={status:"all",q:"",kind:"",format:"",genre:"",demo:"",rating:"",favGenre:"",sort:lsGet("celarchive.sort")||"updated"};
 $("#fsort").value=state.sort;
 
 function items(){return [...store.items.values()]}
 function isExampleMode(){return store.loaded&&store.items.size===0}
+/* ---- hidden-titles password gate (soft lock; default 1234, change via celarchive.hidePass) ---- */
+let hiddenUnlocked=false;
+function hidePass(){return lsGet("celarchive.hidePass")||"1234"}
+function openHidePass(){
+  if(document.querySelector(".hpass-scrim"))return;
+  const scrim=document.createElement("div");scrim.className="hpass-scrim";
+  scrim.innerHTML=`<div class="hpass" role="dialog" aria-modal="true"><h3>🔒 Hidden titles</h3><p>Enter your password to view hidden titles.</p><input type="password" id="hpassInput" inputmode="numeric" autocomplete="off" placeholder="Password"><div class="hpass-msg" id="hpassMsg"></div><div class="hpass-row"><button type="button" class="btn" id="hpassCancel">Cancel</button><button type="button" class="btn primary" id="hpassGo">Unlock</button></div></div>`;
+  document.body.appendChild(scrim);
+  const input=scrim.querySelector("#hpassInput"), close=()=>scrim.remove();
+  const go=()=>{ if(input.value===hidePass()){hiddenUnlocked=true;state.status="hidden";state.favGenre="";close();render();} else {scrim.querySelector("#hpassMsg").textContent="Wrong password.";input.value="";input.focus();} };
+  scrim.querySelector("#hpassGo").onclick=go;
+  scrim.querySelector("#hpassCancel").onclick=close;
+  scrim.addEventListener("click",e=>{if(e.target===scrim)close()});
+  input.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();go()}});
+  document.addEventListener("keydown",function esc(e){if(e.key==="Escape"){close();document.removeEventListener("keydown",esc)}});
+  setTimeout(()=>input.focus(),30);
+}
 /* a search of only rating numbers (1–10, e.g. "10", "9 8 7") filters by score */
 function parseRatingQuery(q){
   if(!/^(10|[1-9])([\s,\/]+(10|[1-9]))*$/.test(q))return null;
@@ -511,10 +545,15 @@ function viewItems(){
   let list=isExampleMode()?EXAMPLES.map(x=>({...x,_example:true})):items();
   const q=state.q.trim().toLowerCase();
   const ratingQ=q?parseRatingQuery(q):null;
+  if(state.status==="hidden"&&!hiddenUnlocked)return [];
   list=list.filter(it=>{
+    if(state.status==="hidden"){ if(!it.hidden)return false; }
+    else {
+    if(it.hidden)return false;
     if(state.status==="review"){if(!it.needsReview)return false}
-    else if(state.status==="fav"){if(!it.favorite)return false}
+    else if(state.status==="fav"){if(!it.favorite)return false; if(state.favGenre&&!(it.genres||[]).includes(state.favGenre))return false}
     else if(state.status!=="all"&&it.status!==state.status)return false;
+    }
     if(state.kind&&it.kind!==state.kind)return false;
     if(state.format==="film"&&!isMovie(it))return false;
     if(state.format==="tv"&&isMovie(it))return false;
@@ -606,7 +645,7 @@ function renderBand(){
   }
   const mode=countMode();
   bar.innerHTML=`<span class="modelbl">Counting</span><div class="modeseg"><button data-mode="franchise" aria-pressed="${mode!=="mal"}">Series</button><button data-mode="mal" aria-pressed="${mode==="mal"}">MAL style</button></div><span class="modehint">${mode==="mal"?"Each season, OVA and movie counted as its own entry, MAL-style.":"Your original tracking — one card per series, seasons nested inside."}</span>`;
-  const src=isExampleMode()?EXAMPLES:items();
+  const src=isExampleMode()?EXAMPLES:items().filter(x=>!x.hidden);
   if(mode==="mal"){renderBandMal(src);return}
   const SEEN=["completed","unfinished","dropped","watching","on_hold"];
   const done=src.filter(x=>x.status==="completed");
@@ -638,7 +677,7 @@ function renderBand(){
 let TASTE_SETS={};
 function renderTaste(){
   const el=$("#taste");
-  const src=isExampleMode()?EXAMPLES:items();
+  const src=isExampleMode()?EXAMPLES:items().filter(x=>!x.hidden);
   const done=src.filter(x=>x.status==="completed");
   if(!src.length){el.innerHTML="";TASTE_SETS={};return}
   const hidden=lsGet("celarchive.tasteHidden")==="1";
@@ -703,7 +742,6 @@ function renderTaste(){
     oldestC?card("oldc","Oldest cartoon",esc(oldestC.title),`${oldestC.year} · ${withYearCartoon.filter(x=>x.year<2000).length} from before 2000`,withYearCartoon,"Oldest cartoons you've watched"):card("oldc","Oldest cartoon","—","Add cartoons with release years"),
     card("rec","Keeping up",recent.length,`titles released ${nowY-3}–${nowY}`,recent,`Released ${nowY-3}–${nowY}`),
     card("unf","Unfinished business",unf.length,unf.length?`${unf.filter(x=>x.status==="unfinished").length} unfinished · ${unf.filter(x=>x.status==="dropped").length} dropped · ${unf.filter(x=>x.status==="on_hold").length} on hold`:"Nothing left hanging",unf,"Unfinished, dropped and on hold"),
-    card("chg","Changed your mind",changed.length,changed.length?`${up} went up · ${changed.length-up} went down`:"No score changes yet",changed,"Scores you've changed"),
     card("crit","Critic style",critic,`mean ${f1(mean)} · ${hi}% rated 8+ · ${lo}% 6 or below`,harsh,"You rated these 6 or below")
   ].join("");
   const top=gl.slice(0,8),maxC=Math.max(1,...top.map(x=>x.all.length));
@@ -746,8 +784,10 @@ $("#taste").addEventListener("click",e=>{
   const b=e.target.closest("[data-set]");if(b)openSet(b.dataset.set);
 });
 function renderRail(){
-  const src=isExampleMode()?EXAMPLES:items();
+  const src=isExampleMode()?EXAMPLES:items().filter(x=>!x.hidden);
+  const hiddenN=isExampleMode()?0:items().filter(x=>x.hidden).length;
   if(state.status==="review"&&!src.some(x=>x.needsReview))state.status="all";
+  if(state.status==="hidden"&&!hiddenN)state.status="all";
   const cS=k=>src.filter(x=>x.status===k).length;
   const cK=k=>src.filter(x=>x.kind===k).length;
   const favN=src.filter(x=>x.favorite).length;
@@ -762,7 +802,8 @@ function renderRail(){
     sec("Library",
       it("reset","all","All",src.length,allActive)+
       it("fav","fav","Favorites",favN,state.status==="fav")+
-      (reviewN?it("review","review","Needs review",reviewN,state.status==="review"):""))+
+      (reviewN?it("review","review","Needs review",reviewN,state.status==="review"):"")+
+      (hiddenN?`<button class="railItem" data-axis="hidden" data-val="hidden" aria-pressed="${state.status==="hidden"}"><span class="rlabel">Hidden</span></button>`:""))+
     sec("By type",kinds.map(k=>it("kind",k.k,k.label.split(" ")[0],cK(k.k),state.kind===k.k)).join(""))+
     sec("By format",
       it("format","tv","TV & series",tvN,state.format==="tv")+
@@ -807,12 +848,28 @@ function cardHTML(it){
   </article>`;
 }
 const PAGE_SIZE=500;let shownCount=PAGE_SIZE,lastViewKey="";
+/* Favorites view: a genre nav bar to browse your favorites by genre (no new marking — just the hearts you already have) */
+function renderFavbar(){
+  const bar=$("#favbar"); if(!bar)return;
+  if(state.status!=="fav"){ bar.innerHTML=""; if(state.favGenre)state.favGenre=""; return; }
+  const favs=items().filter(x=>x.favorite);
+  const counts={}; favs.forEach(x=>(x.genres||[]).forEach(g=>{counts[g]=(counts[g]||0)+1}));
+  const genres=Object.keys(counts).sort((a,b)=>counts[b]-counts[a]||a.localeCompare(b));
+  if(state.favGenre && !counts[state.favGenre]) state.favGenre="";  /* genre no longer has favorites */
+  if(!genres.length){ bar.innerHTML=""; return; }
+  const chip=(val,label,n,on)=>`<button type="button" class="favchip${on?" on":""}" data-favg="${esc(val)}">${esc(label)}<span>${n}</span></button>`;
+  bar.innerHTML=`<div class="favbar-lbl">Your favorites by genre</div><div class="favbar-row">`+
+    chip("","All",favs.length,!state.favGenre)+
+    genres.map(g=>chip(g,g,counts[g],state.favGenre===g)).join("")+
+    `</div>`;
+}
 function render(){
   if(!store.loaded){$("#grid").innerHTML="";$("#emptySlot").innerHTML=`<div class="loading">Opening your library…</div>`;return}
-  renderBand();renderTaste();renderRail();renderSelects();
+  if(state.status!=="hidden")hiddenUnlocked=false;
+  renderBand();renderTaste();renderRail();renderSelects();renderFavbar();
   const list=viewItems();
-  $("#bannerSlot").innerHTML=isExampleMode()?`<div class="banner"><p><b>Your library is empty.</b> The three cards below are examples so you can see how entries look. Add a title, or paste your Google Doc list into Bulk import. Everything saves in this browser, so download a backup from More now and then.</p><button class="btn primary sm" id="bannerBulk">Bulk import</button></div>`:"";
-  const vk=[state.status,state.q,state.kind,state.format,state.genre,state.demo,state.rating,state.sort].join("|");
+  $("#bannerSlot").innerHTML=isExampleMode()?`<div class="banner"><p><b>Your library is empty.</b> The three cards below are examples so you can see how entries look. Add a title, or paste your Google Doc list into Bulk import. Everything saves in this browser, so download a backup from More now and then.</p><button class="btn primary sm" id="bannerBulk">Bulk import</button></div>`:(state.status==="hidden"?`<div class="banner"><p><b>Hidden titles.</b> These stay out of the rest of your library. Open one and uncheck <b>“Hide from library”</b> in its editor to bring it back.</p></div>`:"");
+  const vk=[state.status,state.q,state.kind,state.format,state.genre,state.demo,state.rating,state.favGenre,state.sort].join("|");
   if(vk!==lastViewKey){shownCount=PAGE_SIZE;lastViewKey=vk}
   $("#grid").innerHTML=list.slice(0,shownCount).map(cardHTML).join("");
   const left=list.length-shownCount;
@@ -825,8 +882,9 @@ function render(){
 $("#rail").addEventListener("click",e=>{const b=e.target.closest("[data-axis]");if(!b)return;const a=b.dataset.axis,v=b.dataset.val;
   if(a==="reset"){state.status="all";state.kind="";state.format="";}
   else if(a==="status")state.status=v;
-  else if(a==="fav")state.status=state.status==="fav"?"all":"fav";
+  else if(a==="fav"){state.status=state.status==="fav"?"all":"fav";state.favGenre="";}
   else if(a==="review")state.status=state.status==="review"?"all":"review";
+  else if(a==="hidden"){ if(state.status==="hidden"){state.status="all";hiddenUnlocked=false;state.favGenre="";} else { openHidePass(); return; } }
   else if(a==="kind")state.kind=state.kind===v?"":v;
   else if(a==="format")state.format=state.format===v?"":v;
   render();});
@@ -837,6 +895,7 @@ $("#rail").addEventListener("click",e=>{const b=e.target.closest("[data-axis]");
   t.onclick=()=>{const open=box.hidden;lsSet("celarchive.statsOpen",open?"1":"0");set(open);};
 })();
 let qTimer;$("#fq").addEventListener("input",e=>{clearTimeout(qTimer);qTimer=setTimeout(()=>{state.q=e.target.value;render()},120)});
+$("#favbar").addEventListener("click",e=>{const b=e.target.closest("[data-favg]");if(!b)return;state.favGenre=b.getAttribute("data-favg");render()});
 $("#fgenre").addEventListener("change",e=>{state.genre=e.target.value;render()});
 $("#fdemo").addEventListener("change",e=>{state.demo=e.target.value;render()});
 $("#frating").addEventListener("change",e=>{state.rating=e.target.value;render()});
@@ -897,10 +956,7 @@ function openEdit(it){
   const opt=(arr,val)=>arr.map(o=>`<option value="${esc(o.k??o)}"${(o.k??o)===val?" selected":""}>${esc(o.label??o)}</option>`).join("");
   const effOpts=v=>`<option value=""${v==null?" selected":""}>Effect on rating</option>`+[[3,"+3 raised it a lot"],[2,"+2 raised it"],[1,"+1 raised it"],[0,"±0 no change"],[-1,"−1 lowered it"],[-2,"−2 lowered it"],[-3,"−3 lowered it a lot"]].map(([k,l])=>`<option value="${k}"${v===k?" selected":""}>${l}</option>`).join("");
   const scoreOpts=v=>`<option value="">No score</option>`+Array.from({length:10},(_,i)=>`<option value="${10-i}"${v===10-i?" selected":""}>${10-i} · ${SCORE_LABEL[10-i]}</option>`).join("");
-  const past=!isNew&&(hist.length||d.score)?`<div class="past"><span class="lbl">What you thought</span><ul>
-      ${d.score?`<li class="now"><span class="sc">${d.score}</span><span>${SCORE_LABEL[d.score]} · current${d.scoreDate?` · since ${fmtDate(d.scoreDate)}`:""}</span>${d.scoreReason?`<span class="q">“${esc(d.scoreReason)}”</span>`:""}</li>`:""}
-      ${[...hist].reverse().map(h=>`<li><span class="sc">${h.score}</span><span>${SCORE_LABEL[h.score]||""}${h.date?` · <span class="when">${fmtDate(h.date)}</span>`:""}</span>${h.note?`<span class="q">“${esc(h.note)}”</span>`:""}</li>`).join("")}
-    </ul></div>`:"";
+  const past="";
   const sheet=openSheet(`
     <header><h2>${isNew?"Add a title":"Edit title"}</h2><button class="x" data-close aria-label="Close">×</button></header>
     <form class="body" id="editForm" autocomplete="off">
@@ -928,7 +984,6 @@ function openEdit(it){
         <div class="scorepick" id="scorePick">${Array.from({length:10},(_,i)=>`<button type="button" data-s="${i+1}" aria-pressed="${score===i+1}">${i+1}</button>`).join("")}</div>
         <div class="scorehint" id="scoreHint"></div>
       </div>
-      <div class="field" id="reasonWrap" hidden><label for="eReason">What changed your mind? (optional)</label><input type="text" id="eReason" placeholder="e.g. Season 3 was a letdown"></div>
       <div class="field" id="seasonsWrap"${isMovie(d)?" hidden":""}>
         <div class="shead"><span class="lbl">Seasons</span>
           <label for="eSCount" style="font-size:13px;color:var(--muted)">How many</label><input type="number" id="eSCount" min="0" max="60" inputmode="numeric" value="${seasons.length}">
@@ -944,6 +999,7 @@ function openEdit(it){
       <div class="form-grid">
         <div class="field c3"><label for="eRe">Times rewatched</label><input type="number" id="eRe" min="0" inputmode="numeric" value="${esc(d.rewatches||"")}"></div>
         <div class="field c3" style="justify-content:flex-end"><label class="check"><input type="checkbox" id="eFav"${d.favorite?" checked":""}> Favorite</label></div>
+        <div class="field c3" style="justify-content:flex-end"><label class="check"><input type="checkbox" id="eHidden"${d.hidden?" checked":""}> Hide from library</label></div>
       </div>
       <details class="opt"${d.startDate||d.finishDate?" open":""}><summary>Dates (optional)</summary>
         <div class="form-grid">
@@ -960,7 +1016,6 @@ function openEdit(it){
     </div>`);
   const hint=()=>{
     $("#scoreHint").textContent=score?`${score} · ${SCORE_LABEL[score]}${origScore&&score!==origScore?` (was ${origScore})`:""} — tap again to clear`:"Not scored yet";
-    $("#reasonWrap").hidden=!(origScore&&score&&score!==origScore);
   };hint();
   $("#scorePick").onclick=e=>{const b=e.target.closest("[data-s]");if(!b)return;const s=+b.dataset.s;score=score===s?null:s;
     sheet.querySelectorAll("#scorePick button").forEach(x=>x.setAttribute("aria-pressed",String(+x.dataset.s===score)));hint()};
@@ -1067,16 +1122,15 @@ function openEdit(it){
     const now=Date.now();
     const out={...d,poster:poster||null,alUrl:poster?(alUrl||null):null,posterTried:poster?false:!!d.posterTried,title,altTitle:$("#eAlt").value.trim()||null,kind:$("#eKind").value,demo:$("#eDemo").value||null,type,year:toInt($("#eYear").value),
       status,watchedYear:toInt($("#eWatched").value),startDate:$("#eStart").value||null,finishDate:$("#eFinish").value||null,score,genres,
-      rewatches:toInt($("#eRe").value),favorite:$("#eFav").checked,notes:$("#eNotes").value.trim()||null,updatedAt:now};
+      rewatches:toInt($("#eRe").value),favorite:$("#eFav").checked,hidden:$("#eHidden").checked,notes:$("#eNotes").value.trim()||null,updatedAt:now};
     delete out.epWatched;delete out.epTotal;
     const wasWatched=new Set(seasonsOf(d).filter(x=>x.watched).map(x=>x.n));
     const fin=seasons.map((x,i)=>({x,i,w:status==="completed"?true:!!x.watched})).filter(o=>o.w&&!wasWatched.has(o.i+1)&&!o.x._manual&&o.x.effect==null);
     if(!isNew&&origScore&&score&&fin.length){fin[fin.length-1].x.effect=score-origScore}
     out.seasons=type==="Movie"?[]:seasons.map((x,i)=>{const y={n:i+1,watched:status==="completed"?true:!!x.watched};if(x.effect!=null)y.effect=x.effect;if(x.note)y.note=x.note;if(x.addedAt)y.addedAt=x.addedAt;return y});
-    const h=[...hist];
-    if(origScore&&score!==origScore){h.push({score:origScore,date:d.scoreDate||d.updatedAt||d.createdAt||now,note:d.scoreReason||d.notes||null});out.scoreDate=now;out.scoreReason=$("#eReason").value.trim()||null}
+    if(origScore&&score!==origScore){out.scoreDate=now}
     else if(score&&!origScore){out.scoreDate=now}
-    out.scoreHistory=h;
+    out.scoreHistory=hist;
     let reviewMsg="";
     if(d.needsReview){
       const left=[];if(!out.year)left.push("No release year");if(!out.kind)left.push("Kind not set");
@@ -1091,14 +1145,13 @@ function openEdit(it){
         notes:out.notes||dup.notes||null,rewatches:out.rewatches??dup.rewatches??null,startDate:out.startDate||dup.startDate||null,finishDate:out.finishDate||dup.finishDate||null,
         watchedYear:out.watchedYear||dup.watchedYear||null,year:out.year||dup.year||null,altTitle:out.altTitle||dup.altTitle||null,demo:out.demo||dup.demo||null,
         genres:out.genres.length?out.genres:(dup.genres||[])});
-      const dh=[...(dup.scoreHistory||[])];
-      if(dup.score&&out.score&&out.score!==dup.score){dh.push({score:dup.score,date:dup.scoreDate||dup.updatedAt||now,note:dup.scoreReason||null});out.scoreDate=now}
+      if(dup.score&&out.score&&out.score!==dup.score){out.scoreDate=now}
       else if(!out.score){out.score=dup.score||null;out.scoreDate=dup.scoreDate||null;out.scoreReason=dup.scoreReason||null}
-      out.scoreHistory=dh;
+      out.scoreHistory=dup.scoreHistory||[];
       const left=[];if(!out.year)left.push("No release year");if(!out.kind)left.push("Kind not set");out.flags=left;out.needsReview=left.length>0;
     }}
     $("#eSave").disabled=true;
-    try{await store.put(out);if(isNew&&!out.poster)findPosters([out],false);closeSheet();toast((updatedDup?`Updated “${updatedDup.title}”. It was already in your library, so no copy was made.`:isNew?`Added ${title}`:(origScore&&score!==origScore?`Score changed ${origScore} → ${score||"none"}. Your old take is saved.`:"Saved"))+reviewMsg)}catch(err){$("#eSave").disabled=false;toast(errMsg(err))}
+    try{await store.put(out);if(isNew&&!out.poster)findPosters([out],false);closeSheet();toast((updatedDup?`Updated “${updatedDup.title}”. It was already in your library, so no copy was made.`:isNew?`Added ${title}`:(origScore&&score!==origScore?`Score changed ${origScore} → ${score||"none"}.`:"Saved"))+reviewMsg)}catch(err){$("#eSave").disabled=false;toast(errMsg(err))}
   }
   $("#eSave").onclick=()=>save(false);
   const rv=$("#eReviewed");if(rv)rv.onclick=()=>save(true);
@@ -1402,8 +1455,7 @@ function mergeImported(ex,r,now){
   if(r.genres&&r.genres.length)out.genres=[...r.genres];
   if(r.notes&&!(ex.notes||"").includes(r.notes))out.notes=ex.notes?`${ex.notes}\n${r.notes}`:r.notes;
   if(r.score&&r.score!==ex.score){
-    if(ex.score)out.scoreHistory=[...(ex.scoreHistory||[]),{score:ex.score,date:ex.scoreDate||ex.updatedAt||ex.createdAt||now,note:ex.scoreReason||null}];
-    out.score=r.score;out.scoreDate=now;out.scoreReason="Updated from import";
+    out.score=r.score;out.scoreDate=now;
   }
   if(out.type==="Movie")out.seasons=[];
   else{
@@ -2750,7 +2802,7 @@ store.init();
   function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
   function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
 
-  function lib(){try{var a=JSON.parse(lsGet(LS_LIB)||"[]");return Array.isArray(a)?a:[]}catch(e){return []}}
+  function lib(){try{var a=JSON.parse(lsGet(LS_LIB)||"[]");return Array.isArray(a)?a.filter(function(x){return x&&!x.hidden}):[]}catch(e){return []}}
   function chars(){try{var a=JSON.parse(lsGet(LS_CH)||"[]");return Array.isArray(a)?a:[]}catch(e){return []}}
   var crowns = (function(){try{return JSON.parse(lsGet(LS)||"{}")||{}}catch(e){return {}}})();
   function saveCrowns(){lsSet(LS, JSON.stringify(crowns));announce()}
@@ -2962,7 +3014,7 @@ store.init();
 
   function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
   function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
-  function lib(){try{var a=JSON.parse(lsGet(LS_LIB)||"[]");return Array.isArray(a)?a:[]}catch(e){return []}}
+  function lib(){try{var a=JSON.parse(lsGet(LS_LIB)||"[]");return Array.isArray(a)?a.filter(function(x){return x&&!x.hidden}):[]}catch(e){return []}}
 
   var SVG = {
     star:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.5 7 .8-5.2 4.8L18.4 22 12 18.3 5.6 22 7.2 14.1 2 9.3l7-.8z"/></svg>',
@@ -3114,7 +3166,7 @@ store.init();
   var LS_LIB="celarchive.items.v1", LS_HOF="celarchive.hof.v1", T=null;
   var CROWN='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2.5 7.2l4.2 3.1L11 3.6a1.2 1.2 0 0 1 2 0l4.3 6.7 4.2-3.1c.8-.6 1.9.2 1.6 1.1l-2.3 9.1a1 1 0 0 1-1 .8H5.2a1 1 0 0 1-1-.8L2 8.3c-.3-.9.8-1.7 1.6-1.1z"/></svg>';
   function g(k){try{return localStorage.getItem(k)}catch(e){return null}}
-  function lib(){try{var a=JSON.parse(g(LS_LIB)||"[]");return Array.isArray(a)?a:[]}catch(e){return[]}}
+  function lib(){try{var a=JSON.parse(g(LS_LIB)||"[]");return Array.isArray(a)?a.filter(function(x){return x&&!x.hidden}):[]}catch(e){return[]}}
   function norm(s){return String(s==null?"":s).trim().toLowerCase()}
   function crowned(){
     /* Preferred: mirror the Hall of Fame exactly (signature picks + hot takes,
