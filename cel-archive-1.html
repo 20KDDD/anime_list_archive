@@ -802,8 +802,7 @@ function renderRail(){
     sec("Library",
       it("reset","all","All",src.length,allActive)+
       it("fav","fav","Favorites",favN,state.status==="fav")+
-      (reviewN?it("review","review","Needs review",reviewN,state.status==="review"):"")+
-      (hiddenN?`<button class="railItem" data-axis="hidden" data-val="hidden" aria-pressed="${state.status==="hidden"}"><span class="rlabel">Hidden</span></button>`:""))+
+      (reviewN?it("review","review","Needs review",reviewN,state.status==="review"):""))+
     sec("By type",kinds.map(k=>it("kind",k.k,k.label.split(" ")[0],cK(k.k),state.kind===k.k)).join(""))+
     sec("By format",
       it("format","tv","TV & series",tvN,state.format==="tv")+
