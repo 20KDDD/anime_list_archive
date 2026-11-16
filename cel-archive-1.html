@@ -991,7 +991,7 @@ function awardUnits(pool){
     const al=x.alSeasons||[];
     const segs=(x.seasons||[]).map((s,i)=>({n:s.n||i+1,year:s.year!=null?s.year:((al[i]&&al[i].year)||null)})).filter(s=>s.year);
     const base={genres:x.genres||[],movie:isMovie(x),score:x.score,id:x.id,poster:x.poster||null,baseTitle:x.title};
-    if(segs.length) segs.forEach(s=>units.push(Object.assign({},base,{year:s.year,key:x.id+"#"+s.n,label:`${x.title} — Season ${s.n}`})));
+    if(segs.length){const multi=segs.length>1;segs.forEach(s=>units.push(Object.assign({},base,{year:s.year,key:x.id+"#"+s.n,label:multi?`${x.title} — Season ${s.n}`:x.title,seasonN:s.n})));}
     else if(x.year) units.push(Object.assign({},base,{year:x.year,key:x.id+"#0",label:x.title}));
   });
   return units;
