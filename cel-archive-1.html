@@ -8,7 +8,7 @@
 <style>
 :root{
   --bg:#150C28; --surface:#1E1240; --surface-2:#2A1A4E; --ink:#F3EEFF; --muted:#9A7FD0; --line:#3A2566;
-  --accent:#B8FF3C; --accent-ink:#150C28; --accent-soft:#273A17;
+  --accent:#B8FF3C; --accent-ink:#150C28; --accent-soft:#273A17; --gold:#F5C542; --silver:#C6CFDE;
   --st-watching:#3DE0A0; --st-completed:#5C9BFF; --st-on_hold:#E0AE45; --st-dropped:#FF5C82; --st-plan:#9A7FD0; --st-unfinished:#C08CFF;
   --shadow:0 1px 0 rgba(0,0,0,.3),0 10px 26px -12px rgba(0,0,0,.7);
   --display:"Dela Gothic One","Arial Black",Impact,sans-serif;
@@ -18,14 +18,14 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   color-scheme:dark;
   --bg:#150C28; --surface:#1E1240; --surface-2:#2A1A4E; --ink:#F3EEFF; --muted:#9A7FD0; --line:#3A2566;
-  --accent:#B8FF3C; --accent-ink:#150C28; --accent-soft:#273A17;
+  --accent:#B8FF3C; --accent-ink:#150C28; --accent-soft:#273A17; --gold:#F5C542; --silver:#C6CFDE;
   --st-watching:#3DE0A0; --st-completed:#5C9BFF; --st-on_hold:#E0AE45; --st-dropped:#FF5C82; --st-plan:#9A7FD0; --st-unfinished:#C08CFF;
   --shadow:0 1px 0 rgba(0,0,0,.3),0 10px 26px -12px rgba(0,0,0,.7);
 }}
 :root[data-theme="dark"]{
   color-scheme:dark;
   --bg:#150C28; --surface:#1E1240; --surface-2:#2A1A4E; --ink:#F3EEFF; --muted:#9A7FD0; --line:#3A2566;
-  --accent:#B8FF3C; --accent-ink:#150C28; --accent-soft:#273A17;
+  --accent:#B8FF3C; --accent-ink:#150C28; --accent-soft:#273A17; --gold:#F5C542; --silver:#C6CFDE;
   --st-watching:#3DE0A0; --st-completed:#5C9BFF; --st-on_hold:#E0AE45; --st-dropped:#FF5C82; --st-plan:#9A7FD0; --st-unfinished:#C08CFF;
   --shadow:0 1px 0 rgba(0,0,0,.3),0 10px 26px -12px rgba(0,0,0,.7);
 }
@@ -136,6 +136,11 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
 .favbtn{position:absolute;top:8px;left:8px;width:30px;height:30px;border-radius:50%;border:none;background:rgba(10,6,20,.5);color:#fff;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .favbtn[aria-pressed="true"]{color:var(--accent)}
 .rvwbadge{position:absolute;left:8px;bottom:8px;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;background:var(--st-on_hold);color:#150C28;padding:2px 7px;border-radius:999px}
+.aotybadge{position:absolute;top:8px;left:8px;font-size:10px;font-weight:800;background:var(--gold);color:#2A1E02;padding:3px 7px;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.45);border:2px solid var(--bg);white-space:nowrap}
+.aotybadge.silver{background:var(--silver);color:#20262F}
+.awchips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.awchip{font-size:10px;font-weight:700;color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,transparent);border:1px solid color-mix(in srgb,var(--gold) 30%,transparent);border-radius:999px;padding:2px 8px;white-space:nowrap}
+.awchip.silver{color:var(--silver);background:color-mix(in srgb,var(--silver) 12%,transparent);border-color:color-mix(in srgb,var(--silver) 32%,transparent)}
 .card .example-tag{top:8px;left:8px;right:auto}
 .cardfoot{padding:10px 12px 12px;display:flex;flex-direction:column;gap:7px;min-width:0}
 .ptitle{font-weight:700;font-size:14.5px;line-height:1.22;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
@@ -161,14 +166,6 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
 .hpass input:focus{outline:none;border-color:var(--accent)}
 .hpass-msg{color:var(--st-dropped);font-size:12.5px;min-height:16px;margin-top:8px}
 .hpass-row{display:flex;justify-content:flex-end;gap:10px;margin-top:14px}
-#favbar:empty{display:none}
-.favbar-lbl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:800;margin:2px 0 9px}
-.favbar-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
-.favchip{display:inline-flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--line);color:var(--ink);font-family:inherit;font-weight:700;font-size:12.5px;border-radius:999px;padding:6px 13px;cursor:pointer}
-.favchip:hover{border-color:var(--accent)}
-.favchip.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-.favchip span{font-size:11px;opacity:.7;font-weight:700}
-.favchip.on span{opacity:.85}
 .banner{border:1px dashed var(--accent);background:var(--accent-soft);border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
 .banner p{margin:0;max-width:70ch}
 .empty{padding:40px 16px;text-align:center;color:var(--muted)}
@@ -233,12 +230,18 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
 .shead .lbl{margin-right:auto}
 .shead input{width:72px}
 .slist{display:flex;flex-direction:column;gap:6px}
-.srow{display:grid;grid-template-columns:80px auto 170px minmax(0,1fr) auto;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.srow{display:grid;grid-template-columns:80px auto 160px 84px minmax(0,1fr) auto;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
 .srow .sn{font-weight:700;font-size:13.5px}
-.srow select,.srow input[type=text]{padding:6px 8px;font-size:13.5px}.srow .sdel{padding:5px 8px;font-size:12px}
+.srow select,.srow input[type=text],.srow input[type=number]{padding:6px 8px;font-size:13.5px}.srow .sdel{padding:5px 8px;font-size:12px}
+.srow .syear{width:100%}
 .srow.new{border-color:var(--accent)}
-@media (max-width:520px){.srow{grid-template-columns:auto auto 1fr auto}.srow input[type=text]{grid-column:1/-1}.srow select{grid-column:1/3}}
+@media (max-width:520px){.srow{grid-template-columns:auto auto 1fr auto}.srow input[type=text]{grid-column:1/-1}.srow select{grid-column:1/3}.srow .syear{grid-column:3/5}}
 .shint{font-size:13px;color:var(--accent);min-height:0}
+.sguard{font-size:12.5px;margin:2px 0 0;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.sguard.warn{color:var(--st-on_hold,#f2b84b)}
+.sguard.meta{color:var(--muted)}
+.sguard .ovr{background:none;border:0;color:var(--accent);font:inherit;font-weight:700;font-size:12.5px;text-decoration:underline;cursor:pointer;padding:0}
+.btn.sm.blocked{opacity:.5;border-style:dashed;cursor:not-allowed}
 details.opt summary{cursor:pointer;font-size:13px;color:var(--muted);font-weight:500}
 details.opt[open] summary{margin-bottom:10px}
 .taste{margin-bottom:18px;display:flex;flex-direction:column;gap:10px}
@@ -287,6 +290,85 @@ button.tcard{font:inherit;color:inherit;text-align:left;cursor:pointer;position:
 .tcard.click:hover{border-color:var(--accent)}
 .tcard .go{position:absolute;top:10px;right:12px;font-family:var(--mono);font-size:11px;color:var(--muted)}
 .tcard .k{padding-right:40px}
+.aoty{margin-top:18px}
+.aoty .thead{display:flex;align-items:baseline;gap:10px}
+.aoty-list{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.aoty-row{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.aoty-row.open{border-color:var(--accent)}
+.aoty-pick{display:grid;grid-template-columns:54px 1fr auto 18px;gap:12px;align-items:center;width:100%;background:none;border:0;font:inherit;color:var(--ink);text-align:left;cursor:pointer;padding:11px 13px}
+.aoty-pick:hover{background:var(--surface-2)}
+.aoty-yr{font-weight:800;font-size:16px;font-family:var(--mono)}
+.aoty-win{display:flex;align-items:center;gap:8px;min-width:0}
+.aoty-wt{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aoty-sc{background:var(--accent);color:var(--accent-ink);font-weight:800;font-size:11px;border-radius:999px;padding:2px 7px;flex:none}
+.aoty-trophy{flex:none}
+.aoty-empty{color:var(--muted);font-style:italic}
+.aoty-note{color:var(--muted);font-size:11px;white-space:nowrap}
+.aoty-caret{color:var(--muted);text-align:center}
+.aoty-cands{display:flex;flex-wrap:wrap;gap:7px;padding:0 13px 12px}
+.aoty-cand{display:inline-flex;align-items:center;gap:7px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink);font:inherit;font-weight:600;font-size:12.5px;border-radius:999px;padding:6px 12px;cursor:pointer}
+.aoty-cand:hover{border-color:var(--accent)}
+.aoty-cand.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.aoty-cand span{font-size:11px;opacity:.75;font-weight:800}
+.aoty-cand.clear{color:var(--st-dropped);font-weight:700}
+@media(max-width:560px){.aoty-pick{grid-template-columns:44px 1fr 18px}.aoty-note{display:none}}
+/* Anime Awards (Crunchyroll vs you) */
+.aw-score{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:12px}
+.aw-chipstat{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 13px;font-size:12px;font-weight:700}
+.aw-chipstat b{color:var(--gold)}
+.aw-chipstat .g{color:var(--st-watching)}.aw-chipstat .r{color:#FF7A59}
+.aw-stage{background:linear-gradient(180deg,var(--surface),color-mix(in srgb,var(--surface) 68%,#0a0714));border:1px solid var(--line);border-radius:16px;padding:15px 14px 16px;margin-bottom:16px}
+.aw-styr{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.aw-stnote{color:var(--muted);font-size:11.5px}
+.aw-chips{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0 2px}
+.aw-chip{background:var(--surface-2);border:1px solid var(--line);color:var(--ink);font:inherit;font-weight:700;font-size:12px;border-radius:999px;padding:5px 11px;cursor:pointer}
+.aw-chip:hover{border-color:var(--accent)}
+.aw-chip.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.aw-slotsel{display:inline-flex;gap:0;margin-top:10px;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.aw-slotbtn{background:none;border:0;color:var(--muted);font:inherit;font-weight:700;font-size:12px;padding:6px 13px;cursor:pointer}
+.aw-slotbtn.on:first-child{background:var(--gold);color:#2A1E02}
+.aw-slotbtn.on:last-child{background:var(--silver);color:#20262F}
+.aw-lead{font-size:13px;color:var(--muted);margin:11px 0 11px}
+.aw-lead b{color:var(--ink)}
+.aw-noms{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+@media(min-width:520px){.aw-noms{grid-template-columns:repeat(4,1fr)}}
+.aw-nom{border:0;background:none;padding:0;cursor:pointer;text-align:left}
+.aw-pic{aspect-ratio:2/3;border-radius:11px;border:2px solid var(--line);display:block;position:relative;overflow:hidden;transition:transform .12s ease,border-color .12s ease}
+.aw-nom:hover .aw-pic{transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 60%,var(--line))}
+.aw-sc{position:absolute;top:6px;right:6px;background:rgba(6,4,14,.74);color:var(--gold);font-weight:800;font-size:11px;border-radius:999px;padding:2px 7px}
+.aw-ini{position:absolute;left:0;right:0;bottom:0;padding:7px 8px;font-size:11px;font-weight:800;color:rgba(255,255,255,.92);text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.aw-crn{position:absolute;top:6px;left:6px;font-size:15px;opacity:0;transform:scale(.4);transition:all .2s ease}
+.aw-nom.win .aw-crn{opacity:1;transform:scale(1)}
+.aw-nom.win .aw-pic{border-color:var(--gold);box-shadow:0 0 0 3px rgba(245,197,66,.22),0 8px 26px rgba(245,197,66,.16);animation:awglow .55s ease}
+@keyframes awglow{0%{box-shadow:0 0 0 0 rgba(245,197,66,.55)}100%{box-shadow:0 0 0 3px rgba(245,197,66,.22),0 8px 26px rgba(245,197,66,.16)}}
+.aw-nom.runner .aw-pic{border-color:var(--silver);box-shadow:0 0 0 2px rgba(198,207,222,.22),0 6px 20px rgba(198,207,222,.12)}
+.aw-nm{font-size:11.5px;font-weight:700;margin-top:6px;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.aw-nom.win .aw-nm{color:var(--gold)}
+.aw-nom.runner .aw-nm{color:var(--silver)}
+.aw-runner{font-size:12px;color:var(--silver);margin-top:9px}
+.aw-runner b{color:var(--ink)}
+.aw-empty{color:var(--muted);font-size:12.5px;padding:16px 6px;text-align:center}
+.aw-verdict{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:13px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.aw-vcr{font-size:12.5px;color:#D7CBF5;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aw-vcr b{color:var(--muted);font-weight:800;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;margin-right:6px}
+.aw-vcr.none{color:var(--muted)}
+.aw-badge{flex:none;font-weight:800;font-size:12px;border-radius:999px;padding:6px 12px;border:1px solid}
+.aw-badge.wait{color:var(--muted);border-color:var(--line)}
+.aw-badge.agree{color:var(--st-watching);border-color:color-mix(in srgb,var(--st-watching) 45%,transparent);background:color-mix(in srgb,var(--st-watching) 13%,transparent)}
+.aw-badge.rogue{color:#FF7A59;border-color:color-mix(in srgb,#FF7A59 45%,transparent);background:color-mix(in srgb,#FF7A59 13%,transparent)}
+.aw-badge.yours{color:var(--gold);border-color:color-mix(in srgb,var(--gold) 45%,transparent);background:color-mix(in srgb,var(--gold) 13%,transparent)}
+.aw-stfoot{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.aw-clear{color:var(--muted)}
+.shelflbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:800;margin:2px 2px 9px}
+.aw-shelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:9px}
+.aw-slot{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px 8px 10px;text-align:center;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--ink);font:inherit}
+.aw-slot .aw-t{font-size:20px;line-height:1}
+.aw-slot .aw-yy{font-family:var(--mono);font-weight:800;font-size:13px}
+.aw-slot .aw-wn{font-size:10px;color:var(--muted);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aw-slot.done{border-color:color-mix(in srgb,var(--gold) 45%,transparent)}
+.aw-slot.empty .aw-t{filter:grayscale(1);opacity:.4}
+.aw-slot.cur{outline:2px solid var(--accent);outline-offset:-1px}
+.aw-slot:hover{border-color:var(--accent)}
 .dlist{display:flex;flex-direction:column;gap:6px}
 .drow{display:grid;grid-template-columns:42px 1fr auto;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px 12px 6px 6px;text-align:left;font:inherit;color:var(--ink)}
 .drow:hover{border-color:var(--accent)}
@@ -339,6 +421,7 @@ button.tcard{font:inherit;color:inherit;text-align:left;cursor:pointer;position:
   <section class="collapsibleStats" id="collapsibleStats" hidden>
     <section class="band" id="band" aria-label="Library summary"></section>
     <section class="taste" id="taste" aria-label="Your taste"></section>
+    <section class="aoty" id="aoty" aria-label="Anime of the Year"></section>
   </section>
 
   <div class="libwrap">
@@ -373,7 +456,6 @@ button.tcard{font:inherit;color:inherit;text-align:left;cursor:pointer;position:
         </select></div>
       </div>
       <div id="bannerSlot"></div>
-      <div id="favbar"></div>
       <div id="grid" class="grid"></div>
       <div id="emptySlot"></div>
       <div id="moreSlot"></div>
@@ -513,7 +595,7 @@ function errMsg(e){
 function setSync(cls,txt){const s=$("#sync");s.className="sync "+cls;s.textContent=txt}
 
 /* ---------- state + filters ---------- */
-const state={status:"all",q:"",kind:"",format:"",genre:"",demo:"",rating:"",favGenre:"",sort:lsGet("celarchive.sort")||"updated"};
+const state={status:"all",q:"",kind:"",format:"",genre:"",demo:"",rating:"",sort:lsGet("celarchive.sort")||"updated"};
 $("#fsort").value=state.sort;
 
 function items(){return [...store.items.values()]}
@@ -527,7 +609,7 @@ function openHidePass(){
   scrim.innerHTML=`<div class="hpass" role="dialog" aria-modal="true"><h3>🔒 Hidden titles</h3><p>Enter your password to view hidden titles.</p><input type="password" id="hpassInput" inputmode="numeric" autocomplete="off" placeholder="Password"><div class="hpass-msg" id="hpassMsg"></div><div class="hpass-row"><button type="button" class="btn" id="hpassCancel">Cancel</button><button type="button" class="btn primary" id="hpassGo">Unlock</button></div></div>`;
   document.body.appendChild(scrim);
   const input=scrim.querySelector("#hpassInput"), close=()=>scrim.remove();
-  const go=()=>{ if(input.value===hidePass()){hiddenUnlocked=true;state.status="hidden";state.favGenre="";close();render();} else {scrim.querySelector("#hpassMsg").textContent="Wrong password.";input.value="";input.focus();} };
+  const go=()=>{ if(input.value===hidePass()){hiddenUnlocked=true;state.status="hidden";close();render();} else {scrim.querySelector("#hpassMsg").textContent="Wrong password.";input.value="";input.focus();} };
   scrim.querySelector("#hpassGo").onclick=go;
   scrim.querySelector("#hpassCancel").onclick=close;
   scrim.addEventListener("click",e=>{if(e.target===scrim)close()});
@@ -551,7 +633,7 @@ function viewItems(){
     else {
     if(it.hidden)return false;
     if(state.status==="review"){if(!it.needsReview)return false}
-    else if(state.status==="fav"){if(!it.favorite)return false; if(state.favGenre&&!(it.genres||[]).includes(state.favGenre))return false}
+    else if(state.status==="fav"){if(!it.favorite)return false}
     else if(state.status!=="all"&&it.status!==state.status)return false;
     }
     if(state.kind&&it.kind!==state.kind)return false;
@@ -695,6 +777,11 @@ function renderTaste(){
   const erl=group(done,x=>x.year?Math.floor(x.year/10)*10:null);
   const topG=gl[0],bestG=byAvg(gl),topD=dl[0],bestD=byAvg(dl),bestK=byAvg(kl)||kl[0];
   const topE=[...erl].sort(byCount)[0],favE=byAvg(erl);
+  const yrl=group(done,x=>x.year?String(x.year):null);
+  const yrRated=yrl.filter(x=>x.sc.length>=2);
+  const topY=[...yrl].sort(byCount)[0];
+  const bestY=[...yrRated].sort((a,b)=>avgOf(b.sc)-avgOf(a.sc)||b.sc.length-a.sc.length)[0];
+  const worstY=[...yrRated].sort((a,b)=>avgOf(a.sc)-avgOf(b.sc)||b.sc.length-a.sc.length)[0];
   const mv=done.filter(x=>x.type==="Movie"),sr=done.filter(x=>x.type!=="Movie");
   const tens=rated.filter(x=>Math.round(x.score)===10).sort(bySc);
   const favs=src.filter(x=>x.favorite).sort(bySc);
@@ -732,6 +819,9 @@ function renderTaste(){
     bestK?card("k1","You rate highest",esc(KIND_LABEL[bestK.k]||"—"),kl.filter(x=>x.sc.length).map(x=>`${(KIND_LABEL[x.k]||"").split(" ")[0]} ${f1(avgOf(x.sc))}`).join(" · "),[...bestK.all].sort(bySc),KIND_LABEL[bestK.k]):card("k1","You rate highest","—",""),
     topE?card("e1","Most watched era",`${topE.k}s`,`${topE.all.length} titles · avg ${f1(avgOf(topE.sc))}`,[...topE.all].sort(bySc),`${topE.k}s · most watched`):card("e1","Most watched era","—","Add release years to see this"),
     favE?card("e2","Favorite era",`${favE.k}s`,`highest avg: ${f1(avgOf(favE.sc))} across ${favE.sc.length} rated${topE&&favE.k===topE.k?" · also your most watched":""}`,[...favE.all].sort(bySc),`${favE.k}s · favorite era`):card("e2","Favorite era","—","Needs a few more ratings"),
+    topY?card("y1","Most-watched year",topY.k,`${topY.all.length} titles · avg ${f1(avgOf(topY.sc))}`,[...topY.all].sort(bySc),`${topY.k} · most watched`):card("y1","Most-watched year","—","Add release years to see this"),
+    bestY?card("y2","Your best year",bestY.k,`avg ${f1(avgOf(bestY.sc))} across ${bestY.sc.length} rated`,[...bestY.all].sort(bySc),`${bestY.k} · your best batch`):card("y2","Your best year","—","Needs 2+ rated from one year"),
+    worstY&&!(bestY&&worstY.k===bestY.k)?card("y3","Your worst year",worstY.k,`avg ${f1(avgOf(worstY.sc))} across ${worstY.sc.length} rated`,[...worstY.all].sort(bySc),`${worstY.k} · your weakest batch`):card("y3","Your worst year","—","Needs 2+ rated from one year"),
     card("m1","Series vs movies",`${sr.length} / ${mv.length}`,`series avg ${f1(avgOf(sr.filter(x=>x.score)))} · movies avg ${f1(avgOf(mv.filter(x=>x.score)))}`,[...mv].sort(bySc),"Your movies"),
     card("t10","Masterpieces",tens.length,tens.length?names(tens,3):"No 10s yet",tens,"Your 10/10s"),
     longestA&&seasonsOf(longestA).length>1?card("longa","Longest anime",esc(longestA.title),`${seasonsOf(longestA).length} seasons · ${animeDone.filter(x=>seasonsOf(x).length>=3).length} anime with 3+`,animeSeasoned.length?animeSeasoned:[longestA],"Anime by season count"):card("longa","Longest anime","—","Add anime season counts"),
@@ -821,8 +911,16 @@ function renderSelects(){
   g.value=state.genre;
 }
 function posterGrad(seed){let s=String(seed||""),h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;const a=200+(h%150),b=a+34;return `linear-gradient(150deg,hsl(${a} 45% 30%),hsl(${b} 55% 44%))`}
+function aoBase(k){return k?String(k).split("#")[0]:null}
+function aotyYearsFor(id){const m=getAoty();const ys=[];Object.keys(m).forEach(y=>{if(aoBase((m[y]["Anime of the Year"]||{}).w)===String(id))ys.push(+y)});return ys.sort((a,b)=>a-b);}
+function aotySilverYearsFor(id){const m=getAoty();const ys=[];Object.keys(m).forEach(y=>{if(aoBase((m[y]["Anime of the Year"]||{}).r)===String(id))ys.push(+y)});return ys.sort((a,b)=>a-b);}
+const AW_SHORT={"Film of the Year":"Best Film"};
+function awardChipsFor(id){const m=getAoty();const out=[];Object.keys(m).forEach(y=>{const yo=m[y]||{};Object.keys(yo).forEach(cat=>{if(cat==="Anime of the Year")return;const v=yo[cat]||{};if(aoBase(v.w)===String(id))out.push({cat,year:+y,slot:"w"});if(aoBase(v.r)===String(id))out.push({cat,year:+y,slot:"r"})})});out.sort((a,b)=>b.year-a.year||a.cat.localeCompare(b.cat));return out;}
 function cardHTML(it){
   const st=it.status||"plan";
+  const aoYears=it._example?[]:aotyYearsFor(it.id);
+  const aoSilver=it._example?[]:aotySilverYearsFor(it.id);
+  const awChips=it._example?[]:awardChipsFor(it.id);
   const ss=seasonsOf(it),sw=ss.filter(s=>s.watched).length;
   const kindShort=(KIND_LABEL[it.kind]||"").split(" ")[0];
   const meta=[kindShort,it.type,it.year].filter(Boolean).map(esc).join(" · ");
@@ -833,11 +931,13 @@ function cardHTML(it){
       <div class="pfallback" style="background:${posterGrad(it.id||it.title)}"></div>
       ${it.poster?`<img class="cposter" src="${esc(it.poster)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.closest('.card').classList.add('noimg')">`:``}
       <span class="medal${it.score?"":" none"}">${it.score||"–"}</span>
+      ${aoYears.length?`<span class="aotybadge" title="Your Anime of the Year">🏆 ${aoYears.join(", ")}</span>`:(aoSilver.length?`<span class="aotybadge silver" title="Your AOTY runner-up">🥈 ${aoSilver.join(", ")}</span>`:"")}
       ${it._example?`<span class="example-tag">Example</span>`:""}
       ${it.needsReview?`<span class="rvwbadge">Needs review</span>`:""}
     </div>
     <div class="cardfoot">
       <div class="ptitle">${esc(it.title)}</div>
+      ${awChips.length?`<div class="awchips">${awChips.map(a=>`<span class="awchip${a.slot==="r"?" silver":""}">${a.slot==="r"?"🥈 ":""}${esc((AW_SHORT[a.cat]||a.cat)+" ’"+String(a.year).slice(-2))}</span>`).join("")}</div>`:""}
       <div class="cfrow">
         <span class="stchip">${esc(ST_LABEL[st]||st)}</span>
         <span class="cmeta">${metaLine||"&nbsp;"}</span>
@@ -848,28 +948,141 @@ function cardHTML(it){
   </article>`;
 }
 const PAGE_SIZE=500;let shownCount=PAGE_SIZE,lastViewKey="";
-/* Favorites view: a genre nav bar to browse your favorites by genre (no new marking — just the hearts you already have) */
-function renderFavbar(){
-  const bar=$("#favbar"); if(!bar)return;
-  if(state.status!=="fav"){ bar.innerHTML=""; if(state.favGenre)state.favGenre=""; return; }
-  const favs=items().filter(x=>x.favorite);
-  const counts={}; favs.forEach(x=>(x.genres||[]).forEach(g=>{counts[g]=(counts[g]||0)+1}));
-  const genres=Object.keys(counts).sort((a,b)=>counts[b]-counts[a]||a.localeCompare(b));
-  if(state.favGenre && !counts[state.favGenre]) state.favGenre="";  /* genre no longer has favorites */
-  if(!genres.length){ bar.innerHTML=""; return; }
-  const chip=(val,label,n,on)=>`<button type="button" class="favchip${on?" on":""}" data-favg="${esc(val)}">${esc(label)}<span>${n}</span></button>`;
-  bar.innerHTML=`<div class="favbar-lbl">Your favorites by genre</div><div class="favbar-row">`+
-    chip("","All",favs.length,!state.favGenre)+
-    genres.map(g=>chip(g,g,counts[g],state.favGenre===g)).join("")+
-    `</div>`;
+/* ---------- Anime Awards: your personal picks vs Crunchyroll's official winners, by release year ----------
+   Crunchyroll has no public API for awards, so this is a hand-curated list keyed by the anime's year
+   (each ceremony honors the prior year's titles). Edit CR_AWARDS to add/fix a winner — one line each. */
+const CR_CATS=[
+  {k:"Anime of the Year",f:null},
+  {k:"Film of the Year",f:u=>u.movie},
+  {k:"Best Action",f:u=>u.genres.includes("Action")},
+  {k:"Best Comedy",f:u=>u.genres.includes("Comedy")},
+  {k:"Best Drama",f:u=>u.genres.includes("Drama")},
+  {k:"Best Romance",f:u=>u.genres.includes("Romance")}
+];
+const CR_AWARDS={
+  2016:{"Anime of the Year":"Yuri!!! on Ice","Best Action":"Mob Psycho 100","Best Comedy":"Haven't You Heard? I'm Sakamoto","Best Drama":"Erased"},
+  2017:{"Anime of the Year":"Made in Abyss","Film of the Year":"Your Name","Best Action":"My Hero Academia Season 2","Best Comedy":"Miss Kobayashi's Dragon Maid","Best Drama":"The Ancient Magus' Bride"},
+  2018:{"Anime of the Year":"Devilman Crybaby","Film of the Year":"My Hero Academia: Two Heroes"},
+  2019:{"Anime of the Year":"Demon Slayer: Kimetsu no Yaiba","Best Comedy":"Kaguya-sama: Love Is War","Best Drama":"Vinland Saga"},
+  2020:{"Anime of the Year":"Jujutsu Kaisen","Best Comedy":"Kaguya-sama: Love Is War Season 2","Best Drama":"Fruits Basket Season 2"},
+  2021:{"Anime of the Year":"Attack on Titan: The Final Season Part 1","Film of the Year":"Demon Slayer: Mugen Train","Best Action":"Jujutsu Kaisen","Best Comedy":"Komi Can't Communicate","Best Drama":"To Your Eternity","Best Romance":"Horimiya"},
+  2022:{"Anime of the Year":"Cyberpunk: Edgerunners","Film of the Year":"Jujutsu Kaisen 0","Best Action":"Demon Slayer: Entertainment District Arc","Best Comedy":"Spy × Family","Best Drama":"Attack on Titan: The Final Season Part 2","Best Romance":"Kaguya-sama: Love Is War – Ultra Romantic"},
+  2023:{"Anime of the Year":"Jujutsu Kaisen Season 2","Film of the Year":"Suzume","Best Action":"Jujutsu Kaisen Season 2","Best Comedy":"Spy × Family Season 2","Best Drama":"Attack on Titan: The Final Chapters","Best Romance":"Horimiya: The Missing Pieces"},
+  2024:{"Anime of the Year":"Solo Leveling","Film of the Year":"Look Back","Best Action":"Solo Leveling","Best Comedy":"Mashle: Magic and Muscles Season 2","Best Drama":"Frieren: Beyond Journey's End","Best Romance":"Blue Box"},
+  2025:{"Anime of the Year":"My Hero Academia: Final Season","Film of the Year":"Demon Slayer: Infinity Castle","Best Action":"Solo Leveling: Arise from the Shadow","Best Comedy":"Dandadan Season 2","Best Drama":"The Apothecary Diaries Season 2","Best Romance":"The Fragrant Flower Blooms with Dignity"}
+};
+/* normalize storage: {year:{category:{w:winnerKey, r:runnerUpKey}}} — migrates legacy string forms */
+function getAoty(){try{const raw=JSON.parse(lsGet("celarchive.aoty")||"{}")||{};const out={};
+  Object.keys(raw).forEach(y=>{let yo=raw[y];if(typeof yo==="string")yo={"Anime of the Year":yo};const cat={};
+    Object.keys(yo||{}).forEach(c=>{const v=yo[c];cat[c]=(typeof v==="string")?{w:v}:(v||{})});out[y]=cat;});
+  return out;}catch(e){return {}}}
+function setAwardPick(y,cat,slot,key){const m=getAoty();m[y]=m[y]||{};m[y][cat]=m[y][cat]||{};
+  const other=slot==="w"?"r":"w";
+  if(key){m[y][cat][slot]=key;if(m[y][cat][other]===key)delete m[y][cat][other];}else delete m[y][cat][slot];
+  if(!m[y][cat].w&&!m[y][cat].r)delete m[y][cat];
+  if(!Object.keys(m[y]).length)delete m[y];
+  lsSet("celarchive.aoty",JSON.stringify(m));}
+let aotyOpenY=null,aotyCat="Anime of the Year",aotySlot="w";
+function awColor(s){let h=0;s=String(s||"");for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))%360;return `linear-gradient(135deg,hsl(${h},42%,30%),hsl(${(h+42)%360},42%,17%))`;}
+function awNorm(s){return String(s||"").toLowerCase().replace(/[^a-z0-9]+/g,"");}
+function awardUnits(pool){
+  const units=[];
+  pool.forEach(x=>{
+    const al=x.alSeasons||[];
+    const segs=(x.seasons||[]).map((s,i)=>({n:s.n||i+1,year:s.year!=null?s.year:((al[i]&&al[i].year)||null)})).filter(s=>s.year);
+    const base={genres:x.genres||[],movie:isMovie(x),score:x.score,id:x.id,poster:x.poster||null,baseTitle:x.title};
+    if(segs.length) segs.forEach(s=>units.push(Object.assign({},base,{year:s.year,key:x.id+"#"+s.n,label:`${x.title} — Season ${s.n}`})));
+    else if(x.year) units.push(Object.assign({},base,{year:x.year,key:x.id+"#0",label:x.title}));
+  });
+  return units;
+}
+function awCandsFor(year,cat){
+  const pool=(isExampleMode()?EXAMPLES:items().filter(x=>!x.hidden));
+  const u=awardUnits(pool).filter(x=>x.year===+year);
+  const def=CR_CATS.find(c=>c.k===cat);
+  return (def&&def.f?u.filter(def.f):u).slice().sort((a,b)=>(b.score||0)-(a.score||0)||String(a.label).localeCompare(String(b.label)));
+}
+function renderAoty(){
+  const el=$("#aoty"); if(!el)return;
+  const pool=(isExampleMode()?EXAMPLES:items().filter(x=>!x.hidden));
+  const units=awardUnits(pool);
+  const byYear={}; units.forEach(u=>{(byYear[u.year]=byYear[u.year]||[]).push(u)});
+  const years=[...new Set([...Object.keys(byYear).map(Number),...Object.keys(CR_AWARDS).map(Number)])].sort((a,b)=>b-a);
+  if(!years.length){ el.innerHTML=""; return; }
+  const crown=getAoty();
+  const bySc=(a,b)=>(b.score||0)-(a.score||0)||String(a.label).localeCompare(String(b.label));
+  const userYears=Object.keys(byYear).map(Number).sort((a,b)=>b-a);
+  if(aotyOpenY==null||!years.includes(+aotyOpenY))aotyOpenY=(userYears.length?userYears[0]:years[0]);
+  const openY=+aotyOpenY;
+  // scoreboard across all years (based on your AOTY winner)
+  let troph=0,agree=0,rogue=0;
+  years.forEach(y=>{
+    const w=((crown[y]||{})["Anime of the Year"]||{}).w; if(w)troph++;
+    const crA=(CR_AWARDS[y]||{})["Anime of the Year"];
+    if(w&&crA){const u=(byYear[y]||[]).find(x=>x.key===w);if(u){const nb=awNorm(u.baseTitle),nc=awNorm(crA);(nb&&nc&&(nb.includes(nc)||nc.includes(nb)))?agree++:rogue++;}}
+  });
+  const cr=CR_AWARDS[openY]||{}, myU=byYear[openY]||[];
+  const avail=CR_CATS.filter(cat=>{const c=cat.f?myU.filter(cat.f):myU;return (cr[cat.k]||c.length)});
+  if(!avail.find(c=>c.k===aotyCat))aotyCat=(avail[0]&&avail[0].k)||"Anime of the Year";
+  const catDef=CR_CATS.find(c=>c.k===aotyCat)||CR_CATS[0];
+  const cands=(catDef.f?myU.filter(catDef.f):myU).slice().sort(bySc);
+  const picks=(crown[openY]||{})[aotyCat]||{};
+  const wKey=picks.w, rKey=picks.r;
+  const mine=wKey&&cands.find(u=>u.key===wKey), runner=rKey&&cands.find(u=>u.key===rKey);
+  const crWin=cr[aotyCat]||null;
+  const chips=avail.map(cat=>{const pk=(crown[openY]||{})[cat.k]||{};return `<button type="button" class="aw-chip${cat.k===aotyCat?" on":""}" data-awchip="${esc(cat.k)}">${pk.w?"🏆 ":""}${pk.r?"🥈 ":""}${esc(cat.k)}</button>`}).join("");
+  const toggle=cands.length?`<div class="aw-slotsel"><button type="button" class="aw-slotbtn${aotySlot==="w"?" on":""}" data-awslotsel="w">🏆 Winner</button><button type="button" class="aw-slotbtn${aotySlot==="r"?" on":""}" data-awslotsel="r">🥈 Runner-up</button></div>`:"";
+  const tile=u=>{
+    const isW=wKey===u.key, isR=rKey===u.key;
+    const pic=u.poster?`background-image:url('${esc(u.poster)}');background-size:cover;background-position:center`:awColor(u.label).replace(/^/,"background:");
+    const ini=esc(String(u.label).slice(0,24));
+    const mark=isW?`<span class="aw-crn">🏆</span>`:(isR?`<span class="aw-crn silver">🥈</span>`:"");
+    return `<button type="button" class="aw-nom${isW?" win":""}${isR?" runner":""}" data-awy="${openY}" data-awcat="${esc(aotyCat)}" data-awslot="${aotySlot}" data-awkey="${esc(u.key)}"><span class="aw-pic" style="${pic}">${mark}${u.score?`<span class="aw-sc">${u.score}</span>`:""}${u.poster?"":`<span class="aw-ini">${ini}</span>`}</span><span class="aw-nm">${esc(u.label)}</span></button>`;
+  };
+  const noms=cands.length?`<div class="aw-noms">${cands.map(tile).join("")}</div>`
+    :`<div class="aw-empty">No ${esc(aotyCat.replace(/^Best /,"").toLowerCase())} titles logged for ${openY}.${crWin?" Add one to challenge Crunchyroll’s pick.":""}</div>`;
+  let verdict;
+  if(openY>=2016&&crWin){
+    const agreed=mine&&(()=>{const nb=awNorm(mine.baseTitle),nc=awNorm(crWin);return nb&&(nb.includes(nc)||nc.includes(nb))})();
+    const badge=!mine?`<span class="aw-badge wait">pick a winner…</span>`:(agreed?`<span class="aw-badge agree">🤝 Agreed</span>`:`<span class="aw-badge rogue">🔥 Went rogue</span>`);
+    verdict=`<div class="aw-verdict"><span class="aw-vcr"><b>Crunchyroll</b> ${esc(crWin)}</span>${badge}</div>`;
+  } else {
+    const badge=mine?`<span class="aw-badge yours">🏆 Your call</span>`:`<span class="aw-badge wait">pick a winner…</span>`;
+    verdict=`<div class="aw-verdict"><span class="aw-vcr none"><b>Crunchyroll</b> ${openY<2016?"wasn’t around yet":"—"}</span>${badge}</div>`;
+  }
+  const runnerLine=runner?`<div class="aw-runner">🥈 Runner-up: <b>${esc(runner.label)}</b>${runner.score?` · ${runner.score}`:""}</div>`:"";
+  const note=openY<2016?"Before the Crunchyroll era · your retro canon":`Crunchyroll Anime Awards · early ${openY+1}`;
+  const lead=mine?`And the winner is… <b>${esc(mine.label)}</b> 🏆`:`And the winner is… <b>tap a nominee</b>.`;
+  const stage=`<div class="aw-stage">
+    <div class="aw-styr"><span class="aoty-yr">${openY}</span><span class="aw-stnote">${note}</span></div>
+    <div class="aw-chips">${chips}</div>
+    ${toggle}
+    <div class="aw-lead">${lead}</div>
+    ${noms}
+    ${verdict}
+    ${runnerLine}
+    <div class="aw-stfoot">${cands.length?`<button type="button" class="btn sm aw-auto" data-awauto>⚡ Auto-crown my top-rated</button>`:""}${mine?`<button type="button" class="btn sm aw-clear" data-awy="${openY}" data-awcat="${esc(aotyCat)}" data-awslot="w" data-awkey="">Remove winner</button>`:""}${runner?`<button type="button" class="btn sm aw-clear" data-awy="${openY}" data-awcat="${esc(aotyCat)}" data-awslot="r" data-awkey="">Remove runner-up</button>`:""}</div>
+  </div>`;
+  const shelf=years.map(y=>{
+    const w=((crown[y]||{})["Anime of the Year"]||{}).w;
+    const u=w&&(byYear[y]||[]).find(x=>x.key===w);
+    const label=u?esc(u.label):(y<2016?"pre-CR · yours":"open it →");
+    return `<button type="button" class="aw-slot${w?" done":" empty"}${y===openY?" cur":""}" data-awshelf="${y}"><span class="aw-t">🏆</span><span class="aw-yy">${y}</span><span class="aw-wn">${label}</span></button>`;
+  }).join("");
+  el.innerHTML=`<div class="thead"><h2>Your Awards Night</h2></div>
+    <p class="help" style="margin:0 0 10px">Host your own anime awards for every year you’ve logged. Pick 🏆 Winner or 🥈 Runner-up, then tap a nominee. For 2016–2025 you’re up against Crunchyroll’s real winners; older years are yours alone.</p>
+    <div class="aw-score"><span class="aw-chipstat"><b>${troph}</b> ${troph===1?"year":"years"} crowned</span><span class="aw-chipstat">vs CR <span class="g">🤝 ${agree}</span> <span class="r">🔥 ${rogue}</span></span></div>
+    ${stage}
+    <div class="shelflbl">Your trophy shelf</div>
+    <div class="aw-shelf">${shelf}</div>`;
 }
 function render(){
   if(!store.loaded){$("#grid").innerHTML="";$("#emptySlot").innerHTML=`<div class="loading">Opening your library…</div>`;return}
   if(state.status!=="hidden")hiddenUnlocked=false;
-  renderBand();renderTaste();renderRail();renderSelects();renderFavbar();
+  renderBand();renderTaste();renderAoty();renderRail();renderSelects();
   const list=viewItems();
   $("#bannerSlot").innerHTML=isExampleMode()?`<div class="banner"><p><b>Your library is empty.</b> The three cards below are examples so you can see how entries look. Add a title, or paste your Google Doc list into Bulk import. Everything saves in this browser, so download a backup from More now and then.</p><button class="btn primary sm" id="bannerBulk">Bulk import</button></div>`:(state.status==="hidden"?`<div class="banner"><p><b>Hidden titles.</b> These stay out of the rest of your library. Open one and uncheck <b>“Hide from library”</b> in its editor to bring it back.</p></div>`:"");
-  const vk=[state.status,state.q,state.kind,state.format,state.genre,state.demo,state.rating,state.favGenre,state.sort].join("|");
+  const vk=[state.status,state.q,state.kind,state.format,state.genre,state.demo,state.rating,state.sort].join("|");
   if(vk!==lastViewKey){shownCount=PAGE_SIZE;lastViewKey=vk}
   $("#grid").innerHTML=list.slice(0,shownCount).map(cardHTML).join("");
   const left=list.length-shownCount;
@@ -878,13 +1091,26 @@ function render(){
   const bb=$("#bannerBulk");if(bb)bb.onclick=openBulk;
 }
 
+/* ---------- events: Anime of the Year ---------- */
+$("#aoty").addEventListener("click",e=>{
+  const k=e.target.closest("[data-awkey]");
+  if(k){setAwardPick(k.getAttribute("data-awy"),k.getAttribute("data-awcat"),k.getAttribute("data-awslot")||"w",k.getAttribute("data-awkey"));render();return;}
+  const ss=e.target.closest("[data-awslotsel]");
+  if(ss){aotySlot=ss.getAttribute("data-awslotsel");renderAoty();return;}
+  const au=e.target.closest("[data-awauto]");
+  if(au){const c=awCandsFor(aotyOpenY,aotyCat);if(c[0])setAwardPick(aotyOpenY,aotyCat,"w",c[0].key);render();return;}
+  const ch=e.target.closest("[data-awchip]");
+  if(ch){aotyCat=ch.getAttribute("data-awchip");renderAoty();return;}
+  const sh=e.target.closest("[data-awshelf]");
+  if(sh){aotyOpenY=+sh.getAttribute("data-awshelf");aotyCat="Anime of the Year";renderAoty();}
+});
 /* ---------- events: library ---------- */
 $("#rail").addEventListener("click",e=>{const b=e.target.closest("[data-axis]");if(!b)return;const a=b.dataset.axis,v=b.dataset.val;
   if(a==="reset"){state.status="all";state.kind="";state.format="";}
   else if(a==="status")state.status=v;
-  else if(a==="fav"){state.status=state.status==="fav"?"all":"fav";state.favGenre="";}
+  else if(a==="fav")state.status=state.status==="fav"?"all":"fav";
   else if(a==="review")state.status=state.status==="review"?"all":"review";
-  else if(a==="hidden"){ if(state.status==="hidden"){state.status="all";hiddenUnlocked=false;state.favGenre="";} else { openHidePass(); return; } }
+  else if(a==="hidden"){ if(state.status==="hidden"){state.status="all";hiddenUnlocked=false;} else { openHidePass(); return; } }
   else if(a==="kind")state.kind=state.kind===v?"":v;
   else if(a==="format")state.format=state.format===v?"":v;
   render();});
@@ -895,7 +1121,6 @@ $("#rail").addEventListener("click",e=>{const b=e.target.closest("[data-axis]");
   t.onclick=()=>{const open=box.hidden;lsSet("celarchive.statsOpen",open?"1":"0");set(open);};
 })();
 let qTimer;$("#fq").addEventListener("input",e=>{clearTimeout(qTimer);qTimer=setTimeout(()=>{state.q=e.target.value;render()},120)});
-$("#favbar").addEventListener("click",e=>{const b=e.target.closest("[data-favg]");if(!b)return;state.favGenre=b.getAttribute("data-favg");render()});
 $("#fgenre").addEventListener("change",e=>{state.genre=e.target.value;render()});
 $("#fdemo").addEventListener("change",e=>{state.demo=e.target.value;render()});
 $("#frating").addEventListener("change",e=>{state.rating=e.target.value;render()});
@@ -953,6 +1178,11 @@ function openEdit(it){
   if(!isNew&&!isMovie(d)&&!seasons.length)seasons=[{n:1,watched:d.status==="completed"}];
   const hist=[...(d.scoreHistory||[])];
   const origSeasonCount=seasons.length;
+  let alChain=(d.alSeasons&&d.alSeasons.length?d.alSeasons:null)||SEASON_CACHE[alIdFromUrl(d.alUrl)]||null;
+  let alCount=alChain?alChain.length:(d.alSeasonCount||null);
+  let guardOverride=false;
+  const fillSeasonYears=()=>{ if(!alChain)return; seasons.forEach((s,i)=>{ if(!s.yearManual&&alChain[i]&&alChain[i].year)s.year=alChain[i].year; }); };
+  fillSeasonYears();
   const opt=(arr,val)=>arr.map(o=>`<option value="${esc(o.k??o)}"${(o.k??o)===val?" selected":""}>${esc(o.label??o)}</option>`).join("");
   const effOpts=v=>`<option value=""${v==null?" selected":""}>Effect on rating</option>`+[[3,"+3 raised it a lot"],[2,"+2 raised it"],[1,"+1 raised it"],[0,"±0 no change"],[-1,"−1 lowered it"],[-2,"−2 lowered it"],[-3,"−3 lowered it a lot"]].map(([k,l])=>`<option value="${k}"${v===k?" selected":""}>${l}</option>`).join("");
   const scoreOpts=v=>`<option value="">No score</option>`+Array.from({length:10},(_,i)=>`<option value="${10-i}"${v===10-i?" selected":""}>${10-i} · ${SCORE_LABEL[10-i]}</option>`).join("");
@@ -988,6 +1218,7 @@ function openEdit(it){
         <div class="shead"><span class="lbl">Seasons</span>
           <label for="eSCount" style="font-size:13px;color:var(--muted)">How many</label><input type="number" id="eSCount" min="0" max="60" inputmode="numeric" value="${seasons.length}">
           <button type="button" class="btn sm" id="eSAdd">+ New season came out</button></div>
+        <div class="sguard" id="sGuard"></div>
         <div class="slist" id="sList"></div>
         <div class="shint" id="sHint"></div>
       </div>
@@ -1066,17 +1297,38 @@ function openEdit(it){
     $("#ePResults").innerHTML=hits.map((h,i)=>`<button type="button" data-pi="${i}"><img src="${esc(h.poster)}" alt="" referrerpolicy="no-referrer"><span>${esc(h.title)}</span><small>${esc([h.badge,h.sub].filter(Boolean).join(" · "))}</small></button>`).join("");
     $("#ePResults").onclick=e=>{const b=e.target.closest("[data-pi]");if(!b)return;const h=hits[+b.dataset.pi];poster=h.poster;alUrl=(h.src==="al"?h.raw.siteUrl:h.raw.url)||null;drawP();if(h.src==="al")applyAniList(h.raw);else applyTvmaze(h.raw);$("#ePResults").innerHTML="";};
   };
+  const drawGuard=()=>{
+    const g=$("#sGuard"),add=$("#eSAdd");if(!g||!add)return;
+    if(alCount&&seasons.length>=alCount&&!guardOverride){
+      add.classList.add("blocked");add.setAttribute("aria-disabled","true");
+      g.className="sguard warn";
+      g.innerHTML=`⚠︎ AniList lists ${alCount} season${alCount===1?"":"s"} for this title, so a Season ${alCount+1} isn't out yet. <button type="button" class="ovr" id="sOvr">Add anyway</button>`;
+      const ov=$("#sOvr");if(ov)ov.onclick=()=>{guardOverride=true;addSeason();};
+    } else {
+      add.classList.remove("blocked");add.removeAttribute("aria-disabled");
+      if(alChain){g.className="sguard meta";g.innerHTML=`Release years auto-filled from AniList (${alCount} season${alCount===1?"":"s"} known) — edit any to override.`;}
+      else {g.className="sguard";g.innerHTML="";}
+    }
+  };
   const drawS=()=>{
     seasons.forEach((x,i)=>{x.n=i+1});
     $("#sList").innerHTML=seasons.map((x,i)=>`<div class="srow${x._new?" new":""}" data-si="${i}">
       <span class="sn">Season ${x.n}</span>
       <label class="check"><input type="checkbox" data-sw="${i}"${x.watched?" checked":""}> Watched</label>
       <select data-se="${i}" aria-label="How season ${x.n} changed your overall rating">${effOpts(x.effect)}</select>
+      <input type="number" class="syear" data-syr="${i}" value="${x.year!=null?esc(x.year):""}" placeholder="Year" min="1950" max="2100" inputmode="numeric" aria-label="Season ${x.n} release year">
       <input type="text" data-sn="${i}" value="${esc(x.note||"")}" placeholder="Thoughts on season ${x.n}" aria-label="Season ${x.n} thoughts">
       <button type="button" class="btn danger sm sdel" data-sdel="${i}" aria-label="Delete season ${x.n}" title="Delete this season">Delete</button>
     </div>`).join("");
     $("#eSCount").value=seasons.length;
+    drawGuard();
   };drawS();
+  if(!alChain&&!isMovie(d)&&d.alUrl){
+    const aid=alIdFromUrl(d.alUrl);
+    if(aid){ const g0=$("#sGuard");if(g0){g0.className="sguard meta";g0.innerHTML="Checking AniList for season info…";}
+      alSeasonChain(aid).then(ch=>{ if(!ch||!ch.length||!$("#sList"))return; alChain=ch;alCount=ch.length;SEASON_CACHE[aid]=ch;fillSeasonYears();drawS(); })
+        .catch(()=>{ const g=$("#sGuard");if(g&&/Checking AniList/.test(g.textContent)){g.className="sguard";g.innerHTML="";} }); }
+  }
   $("#sList").addEventListener("click",e=>{
     const b=e.target.closest("[data-sdel]");
     if(!b)return;
@@ -1095,17 +1347,22 @@ function openEdit(it){
       if(all&&$("#eStatus").value==="watching"){$("#eStatus").value="completed";$("#sHint").textContent="All seasons watched, so status is now Completed."}}
     if(t.dataset.se!=null){seasons[+t.dataset.se].effect=t.value===""?null:+t.value;seasons[+t.dataset.se]._manual=true}
   });
-  $("#sList").addEventListener("input",e=>{const t=e.target;if(t.dataset.sn!=null)seasons[+t.dataset.sn].note=t.value.trim()||null});
+  $("#sList").addEventListener("input",e=>{const t=e.target;
+    if(t.dataset.sn!=null)seasons[+t.dataset.sn].note=t.value.trim()||null;
+    if(t.dataset.syr!=null){const s=seasons[+t.dataset.syr];const v=toInt(t.value);s.year=v||null;s.yearManual=true}
+  });
   $("#eSCount").onchange=e=>{let n=Math.max(0,Math.min(60,toInt(e.target.value)??0));const done=$("#eStatus").value==="completed";
     while(seasons.length<n)seasons.push({n:seasons.length+1,watched:done});
-    while(seasons.length>n)seasons.pop();drawS()};
-  $("#eSAdd").onclick=()=>{
+    while(seasons.length>n)seasons.pop();fillSeasonYears();drawS()};
+  const addSeason=()=>{
     seasons.push({n:seasons.length+1,watched:false,addedAt:Date.now(),_new:true});
+    fillSeasonYears();
     const st=$("#eStatus");
     if(st.value==="completed")st.value="watching";
     $("#sHint").textContent=`Season ${seasons.length} added and status set to Watching.${origScore?` You gave it ${origScore} last time.`:""} When you finish it, tick Watched and change your overall score. The season will record how much it raised or lowered it.`;
     drawS();
   };
+  $("#eSAdd").onclick=()=>{ if($("#eSAdd").classList.contains("blocked"))return; addSeason(); };
   $("#eType").onchange=e=>{$("#seasonsWrap").hidden=e.target.value==="Movie";if(e.target.value!=="Movie"&&!seasons.length){seasons=[{n:1,watched:$("#eStatus").value==="completed"}];drawS()}};
   const drawG=()=>{const all=[...new Set([...GENRES,...genres])];$("#gPick").innerHTML=all.map(g=>`<button type="button" data-g="${esc(g)}" aria-pressed="${genres.includes(g)}">${esc(g)}</button>`).join("")};drawG();
   $("#gPick").onclick=e=>{const b=e.target.closest("[data-g]");if(!b)return;const g=b.dataset.g;genres=genres.includes(g)?genres.filter(x=>x!==g):[...genres,g];b.setAttribute("aria-pressed",String(genres.includes(g)))};
@@ -1127,7 +1384,8 @@ function openEdit(it){
     const wasWatched=new Set(seasonsOf(d).filter(x=>x.watched).map(x=>x.n));
     const fin=seasons.map((x,i)=>({x,i,w:status==="completed"?true:!!x.watched})).filter(o=>o.w&&!wasWatched.has(o.i+1)&&!o.x._manual&&o.x.effect==null);
     if(!isNew&&origScore&&score&&fin.length){fin[fin.length-1].x.effect=score-origScore}
-    out.seasons=type==="Movie"?[]:seasons.map((x,i)=>{const y={n:i+1,watched:status==="completed"?true:!!x.watched};if(x.effect!=null)y.effect=x.effect;if(x.note)y.note=x.note;if(x.addedAt)y.addedAt=x.addedAt;return y});
+    out.seasons=type==="Movie"?[]:seasons.map((x,i)=>{const y={n:i+1,watched:status==="completed"?true:!!x.watched};if(x.effect!=null)y.effect=x.effect;if(x.note)y.note=x.note;if(x.addedAt)y.addedAt=x.addedAt;if(x.year!=null)y.year=x.year;if(x.yearManual)y.yearManual=true;return y});
+    if(alChain)out.alSeasons=alChain;if(alCount)out.alSeasonCount=alCount;
     if(origScore&&score!==origScore){out.scoreDate=now}
     else if(score&&!origScore){out.scoreDate=now}
     out.scoreHistory=hist;
@@ -1779,6 +2037,24 @@ async function alSearchMany(list){
     parts.push(`m${i}:Media(search:$s${i},type:ANIME${it.type==="Movie"?",format:MOVIE":""}){id siteUrl seasonYear format coverImage{large}}`)});
   const j=await alQuery(`query(${defs.join(",")}){${parts.join(" ")}}`,vars);
   return list.map((_,i)=>(j.data&&j.data["m"+i])||null);
+}
+/* ---- AniList season chain: walk SEQUEL/PREQUEL edges among TV entries to list a franchise's seasons + release years ---- */
+const SEASON_CACHE={};
+function alIdFromUrl(u){const m=String(u||"").match(/anime\/(\d+)/);return m?+m[1]:null}
+async function alSeasonChain(id){
+  const Q=`query($id:Int){Media(id:$id){id type format seasonYear startDate{year} title{romaji english} relations{edges{relationType node{id type format seasonYear startDate{year} title{romaji english}}}}}}`;
+  const yearOf=n=>n?(n.seasonYear||(n.startDate&&n.startDate.year)||null):null;
+  const isTV=n=>n&&n.type==="ANIME"&&(n.format==="TV"||n.format==="TV_SHORT");
+  const edge=(node,rel)=>{const es=(node.relations&&node.relations.edges)||[];const e=es.find(x=>x.relationType===rel&&isTV(x.node));return e?e.node:null};
+  const nodeOf=async nid=>{const j=await alQuery(Q,{id:nid});return j&&j.data&&j.data.Media};
+  const start=await nodeOf(id); if(!start)return null;
+  let root=start,g=0,seen={};seen[start.id]=1;
+  while(g++<12){const p=edge(root,"PREQUEL");if(!p||seen[p.id])break;seen[p.id]=1;const pn=await nodeOf(p.id);if(!pn)break;root=pn;}
+  const name=n=>(n.title&&(n.title.english||n.title.romaji))||"";
+  const chain=[{id:root.id,year:yearOf(root),title:name(root)}];
+  let cur=root,g2=0,vis={};vis[root.id]=1;
+  while(g2++<12){const s=edge(cur,"SEQUEL");if(!s||vis[s.id])break;vis[s.id]=1;const sn=await nodeOf(s.id);if(!sn)break;chain.push({id:sn.id,year:yearOf(sn),title:name(sn)});cur=sn;}
+  return chain;
 }
 let postersRunning=false;
 async function findPosters(src,manual){
