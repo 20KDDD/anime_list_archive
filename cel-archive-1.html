@@ -985,14 +985,20 @@ function setAwardPick(y,cat,slot,key){const m=getAoty();m[y]=m[y]||{};m[y][cat]=
 let aotyOpenY=null,aotyCat="Anime of the Year",aotySlot="w";
 function awColor(s){let h=0;s=String(s||"");for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))%360;return `linear-gradient(135deg,hsl(${h},42%,30%),hsl(${(h+42)%360},42%,17%))`;}
 function awNorm(s){return String(s||"").toLowerCase().replace(/[^a-z0-9]+/g,"");}
+/* Map an air date (year,month) to the Crunchyroll AWARDS year (its ceremony edition's bucket).
+   Normally the awards year = the air year. The one exception is the schedule shift for the 9th
+   Awards, whose eligibility ran ~Sept 2023–Dec 2024 — so late-2023 premieres (e.g. Frieren,
+   which debuted end of Sept 2023) competed against 2024 anime (e.g. Solo Leveling). We need the
+   air MONTH to tell those apart; without a month a late-2023 show stays in 2023 until AniList fills it. */
+function editionYearFor(year,month){if(year===2023&&month&&month>=9)return 2024;return year;}
 function awardUnits(pool){
   const units=[];
   pool.forEach(x=>{
     const al=x.alSeasons||[];
-    const segs=(x.seasons||[]).map((s,i)=>({n:s.n||i+1,year:s.year!=null?s.year:((al[i]&&al[i].year)||null)})).filter(s=>s.year);
+    const segs=(x.seasons||[]).map((s,i)=>({n:s.n||i+1,year:s.year!=null?s.year:((al[i]&&al[i].year)||null),month:s.month!=null?s.month:((al[i]&&al[i].month)||null)})).filter(s=>s.year);
     const base={genres:x.genres||[],movie:isMovie(x),score:x.score,id:x.id,poster:x.poster||null,baseTitle:x.title};
-    if(segs.length){const multi=segs.length>1;segs.forEach(s=>units.push(Object.assign({},base,{year:s.year,key:x.id+"#"+s.n,label:multi?`${x.title} — Season ${s.n}`:x.title,seasonN:s.n})));}
-    else if(x.year) units.push(Object.assign({},base,{year:x.year,key:x.id+"#0",label:x.title}));
+    if(segs.length){const multi=segs.length>1;segs.forEach(s=>units.push(Object.assign({},base,{year:editionYearFor(s.year,s.month),airYear:s.year,key:x.id+"#"+s.n,label:multi?`${x.title} — Season ${s.n}`:x.title,seasonN:s.n})));}
+    else if(x.year) units.push(Object.assign({},base,{year:editionYearFor(x.year,x.month),airYear:x.year,key:x.id+"#0",label:x.title}));
   });
   return units;
 }
@@ -1051,7 +1057,7 @@ function renderAoty(){
     verdict=`<div class="aw-verdict"><span class="aw-vcr none"><b>Crunchyroll</b> ${openY<2016?"wasn’t around yet":"—"}</span>${badge}</div>`;
   }
   const runnerLine=runner?`<div class="aw-runner">🥈 Runner-up: <b>${esc(runner.label)}</b>${runner.score?` · ${runner.score}`:""}</div>`:"";
-  const note=openY<2016?"Before the Crunchyroll era · your retro canon":`Crunchyroll Anime Awards · early ${openY+1}`;
+  const note=openY<2016?"Before the Crunchyroll era · your retro canon":(openY===2024?"Crunchyroll 9th Awards · eligibility Sept 2023–Dec 2024":`Crunchyroll Anime Awards · early ${openY+1}`);
   const lead=mine?`And the winner is… <b>${esc(mine.label)}</b> 🏆`:`And the winner is… <b>tap a nominee</b>.`;
   const stage=`<div class="aw-stage">
     <div class="aw-styr"><span class="aoty-yr">${openY}</span><span class="aw-stnote">${note}</span></div>
@@ -1181,7 +1187,7 @@ function openEdit(it){
   let alChain=(d.alSeasons&&d.alSeasons.length?d.alSeasons:null)||SEASON_CACHE[alIdFromUrl(d.alUrl)]||null;
   let alCount=alChain?alChain.length:(d.alSeasonCount||null);
   let guardOverride=false;
-  const fillSeasonYears=()=>{ if(!alChain)return; seasons.forEach((s,i)=>{ if(!s.yearManual&&alChain[i]&&alChain[i].year)s.year=alChain[i].year; }); };
+  const fillSeasonYears=()=>{ if(!alChain)return; seasons.forEach((s,i)=>{ if(!s.yearManual&&alChain[i]&&alChain[i].year)s.year=alChain[i].year; if(alChain[i]&&alChain[i].month)s.month=alChain[i].month; }); };
   fillSeasonYears();
   const opt=(arr,val)=>arr.map(o=>`<option value="${esc(o.k??o)}"${(o.k??o)===val?" selected":""}>${esc(o.label??o)}</option>`).join("");
   const effOpts=v=>`<option value=""${v==null?" selected":""}>Effect on rating</option>`+[[3,"+3 raised it a lot"],[2,"+2 raised it"],[1,"+1 raised it"],[0,"±0 no change"],[-1,"−1 lowered it"],[-2,"−2 lowered it"],[-3,"−3 lowered it a lot"]].map(([k,l])=>`<option value="${k}"${v===k?" selected":""}>${l}</option>`).join("");
@@ -1384,7 +1390,7 @@ function openEdit(it){
     const wasWatched=new Set(seasonsOf(d).filter(x=>x.watched).map(x=>x.n));
     const fin=seasons.map((x,i)=>({x,i,w:status==="completed"?true:!!x.watched})).filter(o=>o.w&&!wasWatched.has(o.i+1)&&!o.x._manual&&o.x.effect==null);
     if(!isNew&&origScore&&score&&fin.length){fin[fin.length-1].x.effect=score-origScore}
-    out.seasons=type==="Movie"?[]:seasons.map((x,i)=>{const y={n:i+1,watched:status==="completed"?true:!!x.watched};if(x.effect!=null)y.effect=x.effect;if(x.note)y.note=x.note;if(x.addedAt)y.addedAt=x.addedAt;if(x.year!=null)y.year=x.year;if(x.yearManual)y.yearManual=true;return y});
+    out.seasons=type==="Movie"?[]:seasons.map((x,i)=>{const y={n:i+1,watched:status==="completed"?true:!!x.watched};if(x.effect!=null)y.effect=x.effect;if(x.note)y.note=x.note;if(x.addedAt)y.addedAt=x.addedAt;if(x.year!=null)y.year=x.year;if(x.yearManual)y.yearManual=true;if(x.month!=null)y.month=x.month;return y});
     if(alChain)out.alSeasons=alChain;if(alCount)out.alSeasonCount=alCount;
     if(origScore&&score!==origScore){out.scoreDate=now}
     else if(score&&!origScore){out.scoreDate=now}
@@ -2042,8 +2048,9 @@ async function alSearchMany(list){
 const SEASON_CACHE={};
 function alIdFromUrl(u){const m=String(u||"").match(/anime\/(\d+)/);return m?+m[1]:null}
 async function alSeasonChain(id){
-  const Q=`query($id:Int){Media(id:$id){id type format seasonYear startDate{year} title{romaji english} relations{edges{relationType node{id type format seasonYear startDate{year} title{romaji english}}}}}}`;
+  const Q=`query($id:Int){Media(id:$id){id type format seasonYear startDate{year month} title{romaji english} relations{edges{relationType node{id type format seasonYear startDate{year month} title{romaji english}}}}}}`;
   const yearOf=n=>n?(n.seasonYear||(n.startDate&&n.startDate.year)||null):null;
+  const monthOf=n=>n&&n.startDate&&n.startDate.month||null;
   const isTV=n=>n&&n.type==="ANIME"&&(n.format==="TV"||n.format==="TV_SHORT");
   const edge=(node,rel)=>{const es=(node.relations&&node.relations.edges)||[];const e=es.find(x=>x.relationType===rel&&isTV(x.node));return e?e.node:null};
   const nodeOf=async nid=>{const j=await alQuery(Q,{id:nid});return j&&j.data&&j.data.Media};
@@ -2051,9 +2058,9 @@ async function alSeasonChain(id){
   let root=start,g=0,seen={};seen[start.id]=1;
   while(g++<12){const p=edge(root,"PREQUEL");if(!p||seen[p.id])break;seen[p.id]=1;const pn=await nodeOf(p.id);if(!pn)break;root=pn;}
   const name=n=>(n.title&&(n.title.english||n.title.romaji))||"";
-  const chain=[{id:root.id,year:yearOf(root),title:name(root)}];
+  const chain=[{id:root.id,year:yearOf(root),month:monthOf(root),title:name(root)}];
   let cur=root,g2=0,vis={};vis[root.id]=1;
-  while(g2++<12){const s=edge(cur,"SEQUEL");if(!s||vis[s.id])break;vis[s.id]=1;const sn=await nodeOf(s.id);if(!sn)break;chain.push({id:sn.id,year:yearOf(sn),title:name(sn)});cur=sn;}
+  while(g2++<12){const s=edge(cur,"SEQUEL");if(!s||vis[s.id])break;vis[s.id]=1;const sn=await nodeOf(s.id);if(!sn)break;chain.push({id:sn.id,year:yearOf(sn),month:monthOf(sn),title:name(sn)});cur=sn;}
   return chain;
 }
 let postersRunning=false;
