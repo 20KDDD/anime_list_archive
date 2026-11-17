@@ -230,12 +230,15 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
 .shead .lbl{margin-right:auto}
 .shead input{width:72px}
 .slist{display:flex;flex-direction:column;gap:6px}
-.srow{display:grid;grid-template-columns:80px auto 160px 84px minmax(0,1fr) auto;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.srow{display:grid;grid-template-columns:80px auto 150px 150px minmax(0,1fr) auto;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
 .srow .sn{font-weight:700;font-size:13.5px}
 .srow select,.srow input[type=text],.srow input[type=number]{padding:6px 8px;font-size:13.5px}.srow .sdel{padding:5px 8px;font-size:12px}
 .srow .syear{width:100%}
+.srow .syearwrap{display:flex;gap:5px;min-width:0}
+.srow .syearwrap .syear{flex:1;min-width:0}
+.srow .smonth{flex:0 0 58px;padding:6px 4px;font-size:12.5px}
 .srow.new{border-color:var(--accent)}
-@media (max-width:520px){.srow{grid-template-columns:auto auto 1fr auto}.srow input[type=text]{grid-column:1/-1}.srow select{grid-column:1/3}.srow .syear{grid-column:3/5}}
+@media (max-width:520px){.srow{grid-template-columns:auto auto 1fr auto}.srow input[type=text]{grid-column:1/-1}.srow>select{grid-column:1/3}.srow .syearwrap{grid-column:3/5}}
 .shint{font-size:13px;color:var(--accent);min-height:0}
 .sguard{font-size:12.5px;margin:2px 0 0;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .sguard.warn{color:var(--st-on_hold,#f2b84b)}
@@ -358,6 +361,16 @@ button.tcard{font:inherit;color:inherit;text-align:left;cursor:pointer;position:
 .aw-badge.rogue{color:#FF7A59;border-color:color-mix(in srgb,#FF7A59 45%,transparent);background:color-mix(in srgb,#FF7A59 13%,transparent)}
 .aw-badge.yours{color:var(--gold);border-color:color-mix(in srgb,var(--gold) 45%,transparent);background:color-mix(in srgb,var(--gold) 13%,transparent)}
 .aw-stfoot{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.aw-pickbtn{border-color:color-mix(in srgb,var(--gold) 45%,var(--line));color:var(--gold);font-weight:700}
+.aw-stage.stacked{border-color:color-mix(in srgb,#FF7A2F 55%,var(--line));box-shadow:0 0 0 1px color-mix(in srgb,#FF7A2F 30%,transparent)}
+.aw-stacktag{font-size:10.5px;font-weight:800;color:#FF9A5A;background:color-mix(in srgb,#FF7A2F 15%,transparent);border:1px solid color-mix(in srgb,#FF7A2F 45%,transparent);border-radius:999px;padding:2px 8px;white-space:nowrap}
+.aw-stackbtn{margin-left:auto;background:none;border:1px solid var(--line);color:var(--muted);font:inherit;font-weight:700;font-size:11.5px;border-radius:999px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.aw-stackbtn:hover{border-color:#FF7A2F;color:#FF9A5A}
+.aw-stackbtn.on{background:color-mix(in srgb,#FF7A2F 16%,transparent);border-color:color-mix(in srgb,#FF7A2F 50%,transparent);color:#FF9A5A}
+.aw-styr{flex-wrap:wrap}
+.aw-slot.stacked{border-color:color-mix(in srgb,#FF7A2F 45%,transparent)}
+.aw-slot .aw-t{position:relative}
+.aw-fire{position:absolute;right:-12px;top:-4px;font-size:11px}
 .aw-clear{color:var(--muted)}
 .shelflbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:800;margin:2px 2px 9px}
 .aw-shelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:9px}
@@ -827,11 +840,9 @@ function renderTaste(){
     longestA&&seasonsOf(longestA).length>1?card("longa","Longest anime",esc(longestA.title),`${seasonsOf(longestA).length} seasons · ${animeDone.filter(x=>seasonsOf(x).length>=3).length} anime with 3+`,animeSeasoned.length?animeSeasoned:[longestA],"Anime by season count"):card("longa","Longest anime","—","Add anime season counts"),
     longestC&&seasonsOf(longestC).length>1?card("longc","Longest cartoon",esc(longestC.title),`${seasonsOf(longestC).length} seasons · ${cartoonDone.filter(x=>seasonsOf(x).length>=3).length} cartoons with 3+`,cartoonSeasoned.length?cartoonSeasoned:[longestC],"Cartoons by season count"):card("longc","Longest cartoon","—","Add cartoon season counts"),
     card("cva","Cartoon vs anime",`${cartoonDone.length} vs ${animeDone.length}`,`cartoon avg ${f1(cartoonAvg)} · anime avg ${f1(animeAvg)}`,[...cartoonDone,...animeDone].sort(bySc),"Your cartoons & anime"),
-    card("one","One-season wonders",oneWonders.length,oneWonders.length?`single-season series you rated 9+ · ${names(oneWonders,2)}`:"No single-season 9s yet",oneWonders,"One-season wonders (rated 9+)"),
     oldestA?card("olda","Oldest anime classic",esc(oldestA.title),`${oldestA.year} · ${withYearAnime.filter(x=>x.year<2000).length} from before 2000`,withYearAnime,"Oldest anime you've watched"):card("olda","Oldest anime classic","—","Add anime with release years"),
     oldestC?card("oldc","Oldest cartoon",esc(oldestC.title),`${oldestC.year} · ${withYearCartoon.filter(x=>x.year<2000).length} from before 2000`,withYearCartoon,"Oldest cartoons you've watched"):card("oldc","Oldest cartoon","—","Add cartoons with release years"),
     card("rec","Keeping up",recent.length,`titles released ${nowY-3}–${nowY}`,recent,`Released ${nowY-3}–${nowY}`),
-    card("unf","Unfinished business",unf.length,unf.length?`${unf.filter(x=>x.status==="unfinished").length} unfinished · ${unf.filter(x=>x.status==="dropped").length} dropped · ${unf.filter(x=>x.status==="on_hold").length} on hold`:"Nothing left hanging",unf,"Unfinished, dropped and on hold"),
     card("crit","Critic style",critic,`mean ${f1(mean)} · ${hi}% rated 8+ · ${lo}% 6 or below`,harsh,"You rated these 6 or below")
   ].join("");
   const top=gl.slice(0,8),maxC=Math.max(1,...top.map(x=>x.all.length));
@@ -915,11 +926,10 @@ function aoBase(k){return k?String(k).split("#")[0]:null}
 function aotyYearsFor(id){const m=getAoty();const ys=[];Object.keys(m).forEach(y=>{if(aoBase((m[y]["Anime of the Year"]||{}).w)===String(id))ys.push(+y)});return ys.sort((a,b)=>a-b);}
 function aotySilverYearsFor(id){const m=getAoty();const ys=[];Object.keys(m).forEach(y=>{if(aoBase((m[y]["Anime of the Year"]||{}).r)===String(id))ys.push(+y)});return ys.sort((a,b)=>a-b);}
 const AW_SHORT={"Film of the Year":"Best Film"};
-function awardChipsFor(id){const m=getAoty();const out=[];Object.keys(m).forEach(y=>{const yo=m[y]||{};Object.keys(yo).forEach(cat=>{if(cat==="Anime of the Year")return;const v=yo[cat]||{};if(aoBase(v.w)===String(id))out.push({cat,year:+y,slot:"w"});if(aoBase(v.r)===String(id))out.push({cat,year:+y,slot:"r"})})});out.sort((a,b)=>b.year-a.year||a.cat.localeCompare(b.cat));return out;}
+function awardChipsFor(id){const m=getAoty();const out=[];Object.keys(m).forEach(y=>{const yo=m[y]||{};Object.keys(yo).forEach(cat=>{if(cat==="Anime of the Year")return;const v=yo[cat]||{};if(aoBase(v.w)===String(id))out.push({cat,year:+y})})});out.sort((a,b)=>b.year-a.year||a.cat.localeCompare(b.cat));return out;}
 function cardHTML(it){
   const st=it.status||"plan";
   const aoYears=it._example?[]:aotyYearsFor(it.id);
-  const aoSilver=it._example?[]:aotySilverYearsFor(it.id);
   const awChips=it._example?[]:awardChipsFor(it.id);
   const ss=seasonsOf(it),sw=ss.filter(s=>s.watched).length;
   const kindShort=(KIND_LABEL[it.kind]||"").split(" ")[0];
@@ -931,13 +941,13 @@ function cardHTML(it){
       <div class="pfallback" style="background:${posterGrad(it.id||it.title)}"></div>
       ${it.poster?`<img class="cposter" src="${esc(it.poster)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.closest('.card').classList.add('noimg')">`:``}
       <span class="medal${it.score?"":" none"}">${it.score||"–"}</span>
-      ${aoYears.length?`<span class="aotybadge" title="Your Anime of the Year">🏆 ${aoYears.join(", ")}</span>`:(aoSilver.length?`<span class="aotybadge silver" title="Your AOTY runner-up">🥈 ${aoSilver.join(", ")}</span>`:"")}
+      ${aoYears.length?`<span class="aotybadge" title="Your Anime of the Year">🏆 ${aoYears.join(", ")}</span>`:""}
       ${it._example?`<span class="example-tag">Example</span>`:""}
       ${it.needsReview?`<span class="rvwbadge">Needs review</span>`:""}
     </div>
     <div class="cardfoot">
       <div class="ptitle">${esc(it.title)}</div>
-      ${awChips.length?`<div class="awchips">${awChips.map(a=>`<span class="awchip${a.slot==="r"?" silver":""}">${a.slot==="r"?"🥈 ":""}${esc((AW_SHORT[a.cat]||a.cat)+" ’"+String(a.year).slice(-2))}</span>`).join("")}</div>`:""}
+      ${awChips.length?`<div class="awchips">${awChips.map(a=>`<span class="awchip">${esc((AW_SHORT[a.cat]||a.cat)+" ’"+String(a.year).slice(-2))}</span>`).join("")}</div>`:""}
       <div class="cfrow">
         <span class="stchip">${esc(ST_LABEL[st]||st)}</span>
         <span class="cmeta">${metaLine||"&nbsp;"}</span>
@@ -953,11 +963,7 @@ const PAGE_SIZE=500;let shownCount=PAGE_SIZE,lastViewKey="";
    (each ceremony honors the prior year's titles). Edit CR_AWARDS to add/fix a winner — one line each. */
 const CR_CATS=[
   {k:"Anime of the Year",f:null},
-  {k:"Film of the Year",f:u=>u.movie},
-  {k:"Best Action",f:u=>u.genres.includes("Action")},
-  {k:"Best Comedy",f:u=>u.genres.includes("Comedy")},
-  {k:"Best Drama",f:u=>u.genres.includes("Drama")},
-  {k:"Best Romance",f:u=>u.genres.includes("Romance")}
+  {k:"Film of the Year",f:u=>u.movie}
 ];
 const CR_AWARDS={
   2016:{"Anime of the Year":"Yuri!!! on Ice","Best Action":"Mob Psycho 100","Best Comedy":"Haven't You Heard? I'm Sakamoto","Best Drama":"Erased"},
@@ -982,7 +988,7 @@ function setAwardPick(y,cat,slot,key){const m=getAoty();m[y]=m[y]||{};m[y][cat]=
   if(!m[y][cat].w&&!m[y][cat].r)delete m[y][cat];
   if(!Object.keys(m[y]).length)delete m[y];
   lsSet("celarchive.aoty",JSON.stringify(m));}
-let aotyOpenY=null,aotyCat="Anime of the Year",aotySlot="w";
+let aotyOpenY=null,aotyCat="Anime of the Year",aotyPicking=false;
 function awColor(s){let h=0;s=String(s||"");for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))%360;return `linear-gradient(135deg,hsl(${h},42%,30%),hsl(${(h+42)%360},42%,17%))`;}
 function awNorm(s){return String(s||"").toLowerCase().replace(/[^a-z0-9]+/g,"");}
 /* Map an air date (year,month) to the Crunchyroll AWARDS year (its ceremony edition's bucket).
@@ -991,6 +997,8 @@ function awNorm(s){return String(s||"").toLowerCase().replace(/[^a-z0-9]+/g,"");
    which debuted end of Sept 2023) competed against 2024 anime (e.g. Solo Leveling). We need the
    air MONTH to tell those apart; without a month a late-2023 show stays in 2023 until AniList fills it. */
 function editionYearFor(year,month){if(year===2023&&month&&month>=9)return 2024;return year;}
+function getStacked(){try{return JSON.parse(lsGet("celarchive.stacked")||"{}")||{}}catch(e){return {}}}
+function toggleStacked(y){const m=getStacked();if(m[y])delete m[y];else m[y]=true;lsSet("celarchive.stacked",JSON.stringify(m));}
 function awardUnits(pool){
   const units=[];
   pool.forEach(x=>{
@@ -1032,51 +1040,49 @@ function renderAoty(){
   if(!avail.find(c=>c.k===aotyCat))aotyCat=(avail[0]&&avail[0].k)||"Anime of the Year";
   const catDef=CR_CATS.find(c=>c.k===aotyCat)||CR_CATS[0];
   const cands=(catDef.f?myU.filter(catDef.f):myU).slice().sort(bySc);
-  const picks=(crown[openY]||{})[aotyCat]||{};
-  const wKey=picks.w, rKey=picks.r;
-  const mine=wKey&&cands.find(u=>u.key===wKey), runner=rKey&&cands.find(u=>u.key===rKey);
+  const wKey=((crown[openY]||{})[aotyCat]||{}).w;
+  const mine=wKey&&cands.find(u=>u.key===wKey);
   const crWin=cr[aotyCat]||null;
-  const chips=avail.map(cat=>{const pk=(crown[openY]||{})[cat.k]||{};return `<button type="button" class="aw-chip${cat.k===aotyCat?" on":""}" data-awchip="${esc(cat.k)}">${pk.w?"🏆 ":""}${pk.r?"🥈 ":""}${esc(cat.k)}</button>`}).join("");
-  const toggle=cands.length?`<div class="aw-slotsel"><button type="button" class="aw-slotbtn${aotySlot==="w"?" on":""}" data-awslotsel="w">🏆 Winner</button><button type="button" class="aw-slotbtn${aotySlot==="r"?" on":""}" data-awslotsel="r">🥈 Runner-up</button></div>`:"";
+  const chips=avail.map(cat=>{const pk=(crown[openY]||{})[cat.k]||{};return `<button type="button" class="aw-chip${cat.k===aotyCat?" on":""}" data-awchip="${esc(cat.k)}">${pk.w?"🏆 ":""}${esc(cat.k)}</button>`}).join("");
   const tile=u=>{
-    const isW=wKey===u.key, isR=rKey===u.key;
+    const isW=wKey===u.key;
     const pic=u.poster?`background-image:url('${esc(u.poster)}');background-size:cover;background-position:center`:awColor(u.label).replace(/^/,"background:");
     const ini=esc(String(u.label).slice(0,24));
-    const mark=isW?`<span class="aw-crn">🏆</span>`:(isR?`<span class="aw-crn silver">🥈</span>`:"");
-    return `<button type="button" class="aw-nom${isW?" win":""}${isR?" runner":""}" data-awy="${openY}" data-awcat="${esc(aotyCat)}" data-awslot="${aotySlot}" data-awkey="${esc(u.key)}"><span class="aw-pic" style="${pic}">${mark}${u.score?`<span class="aw-sc">${u.score}</span>`:""}${u.poster?"":`<span class="aw-ini">${ini}</span>`}</span><span class="aw-nm">${esc(u.label)}</span></button>`;
+    const mark=isW?`<span class="aw-crn">🏆</span>`:"";
+    return `<button type="button" class="aw-nom${isW?" win":""}" data-awy="${openY}" data-awcat="${esc(aotyCat)}" data-awkey="${esc(u.key)}"><span class="aw-pic" style="${pic}">${mark}${u.score?`<span class="aw-sc">${u.score}</span>`:""}${u.poster?"":`<span class="aw-ini">${ini}</span>`}</span><span class="aw-nm">${esc(u.label)}</span></button>`;
   };
-  const noms=cands.length?`<div class="aw-noms">${cands.map(tile).join("")}</div>`
-    :`<div class="aw-empty">No ${esc(aotyCat.replace(/^Best /,"").toLowerCase())} titles logged for ${openY}.${crWin?" Add one to challenge Crunchyroll’s pick.":""}</div>`;
   let verdict;
   if(openY>=2016&&crWin){
     const agreed=mine&&(()=>{const nb=awNorm(mine.baseTitle),nc=awNorm(crWin);return nb&&(nb.includes(nc)||nc.includes(nb))})();
-    const badge=!mine?`<span class="aw-badge wait">pick a winner…</span>`:(agreed?`<span class="aw-badge agree">🤝 Agreed</span>`:`<span class="aw-badge rogue">🔥 Went rogue</span>`);
+    const badge=!mine?`<span class="aw-badge wait">no pick yet</span>`:(agreed?`<span class="aw-badge agree">🤝 Agreed</span>`:`<span class="aw-badge rogue">🔥 Went rogue</span>`);
     verdict=`<div class="aw-verdict"><span class="aw-vcr"><b>Crunchyroll</b> ${esc(crWin)}</span>${badge}</div>`;
   } else {
-    const badge=mine?`<span class="aw-badge yours">🏆 Your call</span>`:`<span class="aw-badge wait">pick a winner…</span>`;
+    const badge=mine?`<span class="aw-badge yours">🏆 Your call</span>`:`<span class="aw-badge wait">no pick yet</span>`;
     verdict=`<div class="aw-verdict"><span class="aw-vcr none"><b>Crunchyroll</b> ${openY<2016?"wasn’t around yet":"—"}</span>${badge}</div>`;
   }
-  const runnerLine=runner?`<div class="aw-runner">🥈 Runner-up: <b>${esc(runner.label)}</b>${runner.score?` · ${runner.score}`:""}</div>`:"";
+  const isStacked=!!getStacked()[openY];
   const note=openY<2016?"Before the Crunchyroll era · your retro canon":(openY===2024?"Crunchyroll 9th Awards · eligibility Sept 2023–Dec 2024":`Crunchyroll Anime Awards · early ${openY+1}`);
-  const lead=mine?`And the winner is… <b>${esc(mine.label)}</b> 🏆`:`And the winner is… <b>tap a nominee</b>.`;
-  const stage=`<div class="aw-stage">
-    <div class="aw-styr"><span class="aoty-yr">${openY}</span><span class="aw-stnote">${note}</span></div>
+  const lead=mine?`Your winner: <b>${esc(mine.label)}</b> 🏆`:`No winner crowned yet.`;
+  const pickArea=aotyPicking
+    ?(cands.length?`<div class="aw-noms">${cands.map(tile).join("")}</div><div class="aw-stfoot"><button type="button" class="btn sm aw-auto" data-awauto>⚡ Auto-crown my top-rated</button><button type="button" class="btn sm aw-clear" data-awpickdone>Done</button></div>`
+      :`<div class="aw-empty">No ${esc(aotyCat.replace(/^Best /,"").toLowerCase())} titles logged for ${openY}.${crWin?" Add one to challenge Crunchyroll’s pick.":""}</div>`)
+    :`<div class="aw-stfoot">${cands.length?`<button type="button" class="btn sm aw-pickbtn" data-awpick>${mine?"✎ Change winner":"🏆 Choose winner"}</button>`:`<span class="aw-empty" style="padding:8px 2px">No eligible titles logged for ${openY} yet.</span>`}${mine?`<button type="button" class="btn sm aw-clear" data-awy="${openY}" data-awcat="${esc(aotyCat)}" data-awkey="">Remove</button>`:""}</div>`;
+  const stage=`<div class="aw-stage${isStacked?" stacked":""}">
+    <div class="aw-styr"><span class="aoty-yr">${openY}</span>${isStacked?`<span class="aw-stacktag">🔥 Stacked year</span>`:""}<span class="aw-stnote">${note}</span><button type="button" class="aw-stackbtn${isStacked?" on":""}" data-awstack title="A year packed with great anime">${isStacked?"🔥 Stacked ✓":"🔥 Mark stacked"}</button></div>
     <div class="aw-chips">${chips}</div>
-    ${toggle}
     <div class="aw-lead">${lead}</div>
-    ${noms}
     ${verdict}
-    ${runnerLine}
-    <div class="aw-stfoot">${cands.length?`<button type="button" class="btn sm aw-auto" data-awauto>⚡ Auto-crown my top-rated</button>`:""}${mine?`<button type="button" class="btn sm aw-clear" data-awy="${openY}" data-awcat="${esc(aotyCat)}" data-awslot="w" data-awkey="">Remove winner</button>`:""}${runner?`<button type="button" class="btn sm aw-clear" data-awy="${openY}" data-awcat="${esc(aotyCat)}" data-awslot="r" data-awkey="">Remove runner-up</button>`:""}</div>
+    ${pickArea}
   </div>`;
+  const stk=getStacked();
   const shelf=years.map(y=>{
     const w=((crown[y]||{})["Anime of the Year"]||{}).w;
     const u=w&&(byYear[y]||[]).find(x=>x.key===w);
     const label=u?esc(u.label):(y<2016?"pre-CR · yours":"open it →");
-    return `<button type="button" class="aw-slot${w?" done":" empty"}${y===openY?" cur":""}" data-awshelf="${y}"><span class="aw-t">🏆</span><span class="aw-yy">${y}</span><span class="aw-wn">${label}</span></button>`;
+    return `<button type="button" class="aw-slot${w?" done":" empty"}${y===openY?" cur":""}${stk[y]?" stacked":""}" data-awshelf="${y}"><span class="aw-t">🏆${stk[y]?`<span class="aw-fire">🔥</span>`:""}</span><span class="aw-yy">${y}</span><span class="aw-wn">${label}</span></button>`;
   }).join("");
   el.innerHTML=`<div class="thead"><h2>Your Awards Night</h2></div>
-    <p class="help" style="margin:0 0 10px">Host your own anime awards for every year you’ve logged. Pick 🏆 Winner or 🥈 Runner-up, then tap a nominee. For 2016–2025 you’re up against Crunchyroll’s real winners; older years are yours alone.</p>
+    <p class="help" style="margin:0 0 10px">Host your own anime awards for every year you’ve logged — tap <b>Choose winner</b> to pick. Mark a year 🔥 <b>Stacked</b> when it was loaded with greatness. For 2016–2025 you’re up against Crunchyroll’s real winners; older years are yours alone.</p>
     <div class="aw-score"><span class="aw-chipstat"><b>${troph}</b> ${troph===1?"year":"years"} crowned</span><span class="aw-chipstat">vs CR <span class="g">🤝 ${agree}</span> <span class="r">🔥 ${rogue}</span></span></div>
     ${stage}
     <div class="shelflbl">Your trophy shelf</div>
@@ -1100,15 +1106,19 @@ function render(){
 /* ---------- events: Anime of the Year ---------- */
 $("#aoty").addEventListener("click",e=>{
   const k=e.target.closest("[data-awkey]");
-  if(k){setAwardPick(k.getAttribute("data-awy"),k.getAttribute("data-awcat"),k.getAttribute("data-awslot")||"w",k.getAttribute("data-awkey"));render();return;}
-  const ss=e.target.closest("[data-awslotsel]");
-  if(ss){aotySlot=ss.getAttribute("data-awslotsel");renderAoty();return;}
+  if(k){setAwardPick(k.getAttribute("data-awy"),k.getAttribute("data-awcat"),"w",k.getAttribute("data-awkey"));if(k.getAttribute("data-awkey"))aotyPicking=false;render();return;}
+  const stk=e.target.closest("[data-awstack]");
+  if(stk){toggleStacked(aotyOpenY);renderAoty();return;}
+  const pk=e.target.closest("[data-awpick]");
+  if(pk){aotyPicking=true;renderAoty();return;}
+  const pd=e.target.closest("[data-awpickdone]");
+  if(pd){aotyPicking=false;renderAoty();return;}
   const au=e.target.closest("[data-awauto]");
-  if(au){const c=awCandsFor(aotyOpenY,aotyCat);if(c[0])setAwardPick(aotyOpenY,aotyCat,"w",c[0].key);render();return;}
+  if(au){const c=awCandsFor(aotyOpenY,aotyCat);if(c[0])setAwardPick(aotyOpenY,aotyCat,"w",c[0].key);aotyPicking=false;render();return;}
   const ch=e.target.closest("[data-awchip]");
-  if(ch){aotyCat=ch.getAttribute("data-awchip");renderAoty();return;}
+  if(ch){aotyCat=ch.getAttribute("data-awchip");aotyPicking=false;renderAoty();return;}
   const sh=e.target.closest("[data-awshelf]");
-  if(sh){aotyOpenY=+sh.getAttribute("data-awshelf");aotyCat="Anime of the Year";renderAoty();}
+  if(sh){aotyOpenY=+sh.getAttribute("data-awshelf");aotyCat="Anime of the Year";aotyPicking=false;renderAoty();}
 });
 /* ---------- events: library ---------- */
 $("#rail").addEventListener("click",e=>{const b=e.target.closest("[data-axis]");if(!b)return;const a=b.dataset.axis,v=b.dataset.val;
@@ -1187,7 +1197,7 @@ function openEdit(it){
   let alChain=(d.alSeasons&&d.alSeasons.length?d.alSeasons:null)||SEASON_CACHE[alIdFromUrl(d.alUrl)]||null;
   let alCount=alChain?alChain.length:(d.alSeasonCount||null);
   let guardOverride=false;
-  const fillSeasonYears=()=>{ if(!alChain)return; seasons.forEach((s,i)=>{ if(!s.yearManual&&alChain[i]&&alChain[i].year)s.year=alChain[i].year; if(alChain[i]&&alChain[i].month)s.month=alChain[i].month; }); };
+  const fillSeasonYears=()=>{ if(!alChain)return; seasons.forEach((s,i)=>{ if(!s.yearManual&&alChain[i]&&alChain[i].year)s.year=alChain[i].year; if(!s.monthManual&&alChain[i]&&alChain[i].month)s.month=alChain[i].month; }); };
   fillSeasonYears();
   const opt=(arr,val)=>arr.map(o=>`<option value="${esc(o.k??o)}"${(o.k??o)===val?" selected":""}>${esc(o.label??o)}</option>`).join("");
   const effOpts=v=>`<option value=""${v==null?" selected":""}>Effect on rating</option>`+[[3,"+3 raised it a lot"],[2,"+2 raised it"],[1,"+1 raised it"],[0,"±0 no change"],[-1,"−1 lowered it"],[-2,"−2 lowered it"],[-3,"−3 lowered it a lot"]].map(([k,l])=>`<option value="${k}"${v===k?" selected":""}>${l}</option>`).join("");
@@ -1318,11 +1328,13 @@ function openEdit(it){
   };
   const drawS=()=>{
     seasons.forEach((x,i)=>{x.n=i+1});
+    const MOS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const moOpts=sel=>`<option value="">Mo</option>`+MOS.map((n,k)=>`<option value="${k+1}"${+sel===k+1?" selected":""}>${n}</option>`).join("");
     $("#sList").innerHTML=seasons.map((x,i)=>`<div class="srow${x._new?" new":""}" data-si="${i}">
       <span class="sn">Season ${x.n}</span>
       <label class="check"><input type="checkbox" data-sw="${i}"${x.watched?" checked":""}> Watched</label>
       <select data-se="${i}" aria-label="How season ${x.n} changed your overall rating">${effOpts(x.effect)}</select>
-      <input type="number" class="syear" data-syr="${i}" value="${x.year!=null?esc(x.year):""}" placeholder="Year" min="1950" max="2100" inputmode="numeric" aria-label="Season ${x.n} release year">
+      <span class="syearwrap"><input type="number" class="syear" data-syr="${i}" value="${x.year!=null?esc(x.year):""}" placeholder="Year" min="1950" max="2100" inputmode="numeric" aria-label="Season ${x.n} release year"><select class="smonth" data-smo="${i}" aria-label="Season ${x.n} release month">${moOpts(x.month)}</select></span>
       <input type="text" data-sn="${i}" value="${esc(x.note||"")}" placeholder="Thoughts on season ${x.n}" aria-label="Season ${x.n} thoughts">
       <button type="button" class="btn danger sm sdel" data-sdel="${i}" aria-label="Delete season ${x.n}" title="Delete this season">Delete</button>
     </div>`).join("");
@@ -1352,6 +1364,7 @@ function openEdit(it){
       if(!all&&$("#eStatus").value==="completed"){$("#eStatus").value="watching";$("#sHint").textContent="Not every season is watched, so status is now Watching."}
       if(all&&$("#eStatus").value==="watching"){$("#eStatus").value="completed";$("#sHint").textContent="All seasons watched, so status is now Completed."}}
     if(t.dataset.se!=null){seasons[+t.dataset.se].effect=t.value===""?null:+t.value;seasons[+t.dataset.se]._manual=true}
+    if(t.dataset.smo!=null){const s=seasons[+t.dataset.smo];s.month=t.value===""?null:+t.value;s.monthManual=true}
   });
   $("#sList").addEventListener("input",e=>{const t=e.target;
     if(t.dataset.sn!=null)seasons[+t.dataset.sn].note=t.value.trim()||null;
@@ -1390,7 +1403,7 @@ function openEdit(it){
     const wasWatched=new Set(seasonsOf(d).filter(x=>x.watched).map(x=>x.n));
     const fin=seasons.map((x,i)=>({x,i,w:status==="completed"?true:!!x.watched})).filter(o=>o.w&&!wasWatched.has(o.i+1)&&!o.x._manual&&o.x.effect==null);
     if(!isNew&&origScore&&score&&fin.length){fin[fin.length-1].x.effect=score-origScore}
-    out.seasons=type==="Movie"?[]:seasons.map((x,i)=>{const y={n:i+1,watched:status==="completed"?true:!!x.watched};if(x.effect!=null)y.effect=x.effect;if(x.note)y.note=x.note;if(x.addedAt)y.addedAt=x.addedAt;if(x.year!=null)y.year=x.year;if(x.yearManual)y.yearManual=true;if(x.month!=null)y.month=x.month;return y});
+    out.seasons=type==="Movie"?[]:seasons.map((x,i)=>{const y={n:i+1,watched:status==="completed"?true:!!x.watched};if(x.effect!=null)y.effect=x.effect;if(x.note)y.note=x.note;if(x.addedAt)y.addedAt=x.addedAt;if(x.year!=null)y.year=x.year;if(x.yearManual)y.yearManual=true;if(x.month!=null)y.month=x.month;if(x.monthManual)y.monthManual=true;return y});
     if(alChain)out.alSeasons=alChain;if(alCount)out.alSeasonCount=alCount;
     if(origScore&&score!==origScore){out.scoreDate=now}
     else if(score&&!origScore){out.scoreDate=now}
