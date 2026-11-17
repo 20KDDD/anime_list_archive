@@ -351,8 +351,8 @@ button.tcard{font:inherit;color:inherit;text-align:left;cursor:pointer;position:
 .aw-runner{font-size:12px;color:var(--silver);margin-top:9px}
 .aw-runner b{color:var(--ink)}
 .aw-empty{color:var(--muted);font-size:12.5px;padding:16px 6px;text-align:center}
-.aw-verdict{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:13px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
-.aw-vcr{font-size:12.5px;color:#D7CBF5;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aw-verdict{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-top:13px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.aw-vcr{font-size:12.5px;color:#D7CBF5;min-width:0;overflow-wrap:anywhere;line-height:1.4}
 .aw-vcr b{color:var(--muted);font-weight:800;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;margin-right:6px}
 .aw-vcr.none{color:var(--muted)}
 .aw-badge{flex:none;font-weight:800;font-size:12px;border-radius:999px;padding:6px 12px;border:1px solid}
@@ -926,7 +926,7 @@ function aoBase(k){return k?String(k).split("#")[0]:null}
 function aotyYearsFor(id){const m=getAoty();const ys=[];Object.keys(m).forEach(y=>{if(aoBase((m[y]["Anime of the Year"]||{}).w)===String(id))ys.push(+y)});return ys.sort((a,b)=>a-b);}
 function aotySilverYearsFor(id){const m=getAoty();const ys=[];Object.keys(m).forEach(y=>{if(aoBase((m[y]["Anime of the Year"]||{}).r)===String(id))ys.push(+y)});return ys.sort((a,b)=>a-b);}
 const AW_SHORT={"Film of the Year":"Best Film"};
-function awardChipsFor(id){const m=getAoty();const out=[];Object.keys(m).forEach(y=>{const yo=m[y]||{};Object.keys(yo).forEach(cat=>{if(cat==="Anime of the Year")return;const v=yo[cat]||{};if(aoBase(v.w)===String(id))out.push({cat,year:+y})})});out.sort((a,b)=>b.year-a.year||a.cat.localeCompare(b.cat));return out;}
+function awardChipsFor(id){const m=getAoty();const valid={};CR_CATS.forEach(c=>{if(c.k!=="Anime of the Year")valid[c.k]=1});const out=[];Object.keys(m).forEach(y=>{const yo=m[y]||{};Object.keys(yo).forEach(cat=>{if(!valid[cat])return;const v=yo[cat]||{};if(aoBase(v.w)===String(id))out.push({cat,year:+y})})});out.sort((a,b)=>b.year-a.year||a.cat.localeCompare(b.cat));return out;}
 function cardHTML(it){
   const st=it.status||"plan";
   const aoYears=it._example?[]:aotyYearsFor(it.id);
