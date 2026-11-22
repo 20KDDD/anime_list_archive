@@ -104,6 +104,14 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;padding-
 .railItem[aria-pressed="true"] .rn{color:var(--accent-ink)}
 .railItem .rdot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
 .libmain{flex:1;min-width:0}
+.subbubbles{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 14px}
+.subbubbles[hidden]{display:none}
+.subbubbles .sblead{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:800;margin-right:2px}
+.bubble{display:inline-flex;align-items:center;gap:7px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink);font-family:inherit;font-size:13px;font-weight:700;padding:8px 15px;border-radius:999px;cursor:pointer}
+.bubble:hover{border-color:var(--muted)}
+.bubble .bn{font-size:11px;color:var(--muted);font-family:var(--mono)}
+.bubble[aria-pressed="true"]{background:var(--gold,#F5C542);color:#2A1E02;border-color:var(--gold,#F5C542)}
+.bubble[aria-pressed="true"] .bn{color:#4a3700}
 @media (max-width:760px){
   .libwrap{display:block}
   .rail{position:static;flex:none;flex-direction:row;align-items:center;overflow-x:auto;gap:6px;margin-bottom:14px;scrollbar-width:none;padding:10px}
@@ -473,6 +481,7 @@ button.tcard{font:inherit;color:inherit;text-align:left;cursor:pointer;position:
   <div class="libwrap">
     <nav class="rail" id="rail" aria-label="Browse library"></nav>
     <div class="libmain">
+      <div class="subbubbles" id="subBubbles" hidden aria-label="Cartoon subcategories"></div>
       <div class="filters">
         <div class="field search"><label for="fq">Search</label><input type="search" id="fq" placeholder="Title, genre, or rating (10, 9 8…)"></div>
         <div class="field"><label for="fgenre">Genre</label><select id="fgenre"></select></div>
@@ -986,13 +995,21 @@ function renderRail(){
       it("fav","fav","Favorites",favN,state.status==="fav")+
       (reviewN?it("review","review","Needs review",reviewN,state.status==="review"):""))+
     sec("By type",kinds.map(k=>it("kind",k.k,k.label.split(" ")[0],cK(k.k),state.kind===k.k)).join(""))+
-    (state.kind==="cartoon"&&CARTOON_SUBS.some(s=>cSub(s.k)>0)?
-      sec("Cartoon type",CARTOON_SUBS.filter(s=>cSub(s.k)>0).map(s=>it("sub",s.k,s.label,cSub(s.k),state.sub===s.k)).join("")):"")+
     sec("By format",
       it("format","tv","TV & series",tvN,state.format==="tv")+
       it("format","film","Films",films,state.format==="film"))+
     sec("By status",STATUSES.map(s=>it("status",s.k,s.label,cS(s.k),state.status===s.k,`var(--st-${s.k})`)).join(""))+
     (hiddenN?sec("",`<button class="railItem" data-axis="hidden" data-val="hidden" aria-pressed="${state.status==="hidden"}"><span class="rlabel">Hidden</span></button>`):"");
+  /* cartoon subcategory bubbles — below the bar, only when Cartoon is selected */
+  const sb=$("#subBubbles");
+  if(sb){
+    const subs=CARTOON_SUBS.filter(s=>cSub(s.k)>0);
+    if(state.kind==="cartoon"&&subs.length){
+      sb.hidden=false;
+      sb.innerHTML=`<span class="sblead">Cartoon type ·</span>`+
+        subs.map(s=>`<button class="bubble" data-axis="sub" data-val="${s.k}" aria-pressed="${state.sub===s.k}"><span>${esc(s.label)}</span><span class="bn">${cSub(s.k)}</span></button>`).join("");
+    } else { sb.hidden=true; sb.innerHTML=""; }
+  }
 }
 function renderSelects(){
   const src=items();
@@ -1215,6 +1232,8 @@ $("#rail").addEventListener("click",e=>{const b=e.target.closest("[data-axis]");
   else if(a==="sub")state.sub=state.sub===v?"":v;
   else if(a==="format")state.format=state.format===v?"":v;
   render();});
+$("#subBubbles").addEventListener("click",e=>{const b=e.target.closest("[data-axis='sub']");if(!b)return;const v=b.dataset.val;
+  state.sub=state.sub===v?"":v;render();});
 /* stats & taste collapsible */
 (function(){const t=$("#statsToggle"),box=$("#collapsibleStats");if(!t||!box)return;
   const set=open=>{box.hidden=!open;t.setAttribute("aria-expanded",String(open));t.innerHTML=(open?"▾":"▸")+" Stats &amp; taste";};
