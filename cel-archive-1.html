@@ -531,17 +531,18 @@ const KINDS=[
   {k:"anime",label:"Anime"},
   {k:"donghua",label:"Donghua (dongman)"},
   {k:"cartoon",label:"Cartoon"},
-  {k:"disney",label:"Disney Movie"},
-  {k:"dreamworks",label:"Dreamworks"},
-  {k:"superhero",label:"Superhero Cartoon"},
   {k:"aeni",label:"Aeni (Korean)"},
   {k:"other",label:"Other animation"}];
-/* Western-animation kinds share the TVmaze (series) / OMDb (movie) data sources,
-   and all roll up into "cartoons" in the stats. */
-const WESTERN_KINDS=["cartoon","disney","dreamworks","superhero"];
-function isCartoonKind(k){return WESTERN_KINDS.includes(k)}
-/* kind filter: "cartoon" matches every Western kind, anything else is exact */
-function kindMatch(k,sel){return sel==="cartoon"?isCartoonKind(k):k===sel}
+/* Cartoon studios/styles — subcategories under the Cartoon kind, not top-level kinds. */
+const CARTOON_SUBS=[
+  {k:"disney",label:"Disney"},
+  {k:"pixar",label:"Pixar"},
+  {k:"dreamworks",label:"DreamWorks"},
+  {k:"superhero",label:"Superhero"}];
+const SUB_LABEL=Object.fromEntries(CARTOON_SUBS.map(s=>[s.k,s.label]));
+const LEGACY_SUB_KINDS=["disney","pixar","dreamworks","superhero"]; /* old top-level kinds → migrate to cartoon+sub */
+function isCartoonKind(k){return k==="cartoon"}
+function kindMatch(k,sel){return k===sel}
 const KIND_LABEL=Object.fromEntries(KINDS.map(s=>[s.k,s.label]));
 const TYPES=["TV","Movie","OVA","ONA","Special","Short","Web series"];
 const GENRES=["Action","Adventure","Comedy","Drama","Fantasy","Romance","Sci-Fi","Slice of Life","Mystery","Horror","Thriller","Psychological","Supernatural","Sports","Mecha","Music","Isekai","Historical","Martial Arts","Military","School","Space","Detective","Vampire","Parody","Family","Kids","Harem","Ecchi","Iyashikei","Mahou Shoujo","Idol","Yuri","Yaoi (BL)","Gore","Cultivation","Wuxia","Xianxia"];
@@ -598,6 +599,8 @@ const store={
         arr.forEach(x=>{
           if(x&&"score"in x){const sc=safeScore(x.score);if(sc!==x.score){x.score=sc;fixed++}}
           if(x&&Array.isArray(x.scoreHistory))x.scoreHistory.forEach(h=>{if(h&&"score"in h){const sc=safeScore(h.score);if(sc!==h.score){h.score=sc;fixed++}}});
+          /* migrate legacy top-level studio kinds → cartoon + subcategory */
+          if(x&&LEGACY_SUB_KINDS.includes(x.kind)){if(!x.sub)x.sub=x.kind;x.kind="cartoon";fixed++}
           this.items.set(x.id,x);
         });
         if(fixed)lsSet(LS_KEY,JSON.stringify([...this.items.values()]));
@@ -650,7 +653,7 @@ function errMsg(e){
 function setSync(cls,txt){const s=$("#sync");s.className="sync "+cls;s.textContent=txt}
 
 /* ---------- state + filters ---------- */
-const state={status:"all",q:"",kind:"",format:"",genre:"",demo:"",rating:"",sort:lsGet("celarchive.sort")||"updated"};
+const state={status:"all",q:"",kind:"",sub:"",format:"",genre:"",demo:"",rating:"",sort:lsGet("celarchive.sort")||"updated"};
 $("#fsort").value=state.sort;
 
 function items(){return [...store.items.values()]}
@@ -692,6 +695,7 @@ function viewItems(){
     else if(state.status!=="all"&&it.status!==state.status)return false;
     }
     if(state.kind&&it.kind!==state.kind)return false;
+    if(state.kind==="cartoon"&&state.sub&&it.sub!==state.sub)return false;
     if(state.format==="film"&&!isMovie(it))return false;
     if(state.format==="tv"&&isMovie(it))return false;
     if(state.genre&&!(it.genres||[]).includes(state.genre))return false;
@@ -966,6 +970,7 @@ function renderRail(){
   if(state.status==="hidden"&&!hiddenN)state.status="all";
   const cS=k=>src.filter(x=>x.status===k).length;
   const cK=k=>src.filter(x=>x.kind===k).length;
+  const cSub=s=>src.filter(x=>x.kind==="cartoon"&&x.sub===s).length;
   const favN=src.filter(x=>x.favorite).length;
   const reviewN=src.filter(x=>x.needsReview).length;
   const films=src.filter(isMovie).length, tvN=src.length-films;
@@ -980,6 +985,8 @@ function renderRail(){
       it("fav","fav","Favorites",favN,state.status==="fav")+
       (reviewN?it("review","review","Needs review",reviewN,state.status==="review"):""))+
     sec("By type",kinds.map(k=>it("kind",k.k,k.label.split(" ")[0],cK(k.k),state.kind===k.k)).join(""))+
+    (state.kind==="cartoon"&&CARTOON_SUBS.some(s=>cSub(s.k)>0)?
+      sec("Cartoon type",CARTOON_SUBS.filter(s=>cSub(s.k)>0).map(s=>it("sub",s.k,s.label,cSub(s.k),state.sub===s.k)).join("")):"")+
     sec("By format",
       it("format","tv","TV & series",tvN,state.format==="tv")+
       it("format","film","Films",films,state.format==="film"))+
@@ -1007,7 +1014,7 @@ function cardHTML(it){
   const aoYears=it._example?[]:aotyYearsFor(it.id);
   const awChips=it._example?[]:awardChipsFor(it.id);
   const ss=seasonsOf(it),sw=ss.filter(s=>s.watched).length;
-  const kindShort=(KIND_LABEL[it.kind]||"").split(" ")[0];
+  const kindShort=(it.kind==="cartoon"&&it.sub&&SUB_LABEL[it.sub])?SUB_LABEL[it.sub]:(KIND_LABEL[it.kind]||"").split(" ")[0];
   const meta=[kindShort,it.type,it.year].filter(Boolean).map(esc).join(" · ");
   const sTxt=isMovie(it)?"":(ss.length?(st==="completed"?`${ss.length}S`:`${sw}/${ss.length}S`):"");
   const metaLine=[meta,sTxt].filter(Boolean).join(" · ");
@@ -1170,7 +1177,7 @@ function render(){
   renderBand();renderTaste();renderAoty();renderRail();renderSelects();
   const list=viewItems();
   $("#bannerSlot").innerHTML=isExampleMode()?`<div class="banner"><p><b>Your library is empty.</b> The three cards below are examples so you can see how entries look. Add a title, or paste your Google Doc list into Bulk import. Everything saves in this browser, so download a backup from More now and then.</p><button class="btn primary sm" id="bannerBulk">Bulk import</button></div>`:(state.status==="hidden"?`<div class="banner"><p><b>Hidden titles.</b> These stay out of the rest of your library. Open one and uncheck <b>“Hide from library”</b> in its editor to bring it back.</p></div>`:"");
-  const vk=[state.status,state.q,state.kind,state.format,state.genre,state.demo,state.rating,state.sort].join("|");
+  const vk=[state.status,state.q,state.kind,state.sub,state.format,state.genre,state.demo,state.rating,state.sort].join("|");
   if(vk!==lastViewKey){shownCount=PAGE_SIZE;lastViewKey=vk}
   $("#grid").innerHTML=list.slice(0,shownCount).map(cardHTML).join("");
   const left=list.length-shownCount;
@@ -1198,12 +1205,13 @@ $("#aoty").addEventListener("click",e=>{
 });
 /* ---------- events: library ---------- */
 $("#rail").addEventListener("click",e=>{const b=e.target.closest("[data-axis]");if(!b)return;const a=b.dataset.axis,v=b.dataset.val;
-  if(a==="reset"){state.status="all";state.kind="";state.format="";}
+  if(a==="reset"){state.status="all";state.kind="";state.sub="";state.format="";}
   else if(a==="status")state.status=v;
   else if(a==="fav")state.status=state.status==="fav"?"all":"fav";
   else if(a==="review")state.status=state.status==="review"?"all":"review";
   else if(a==="hidden"){ if(state.status==="hidden"){state.status="all";hiddenUnlocked=false;} else { openHidePass(); return; } }
-  else if(a==="kind")state.kind=state.kind===v?"":v;
+  else if(a==="kind"){state.kind=state.kind===v?"":v;state.sub="";}
+  else if(a==="sub")state.sub=state.sub===v?"":v;
   else if(a==="format")state.format=state.format===v?"":v;
   render();});
 /* stats & taste collapsible */
@@ -1298,6 +1306,7 @@ function openEdit(it){
         <div class="field c6"><label for="eTitle">Title</label><input type="text" id="eTitle" value="${esc(d.title)}" required${isNew?" autofocus":""}><span class="duphint" id="eDupHint"></span></div>
         <div class="field c6"><label for="eAlt">Other title <span style="text-transform:none;letter-spacing:0;font-weight:400">(Japanese, Chinese, English…)</span></label><input type="text" id="eAlt" value="${esc(d.altTitle||"")}"></div>
         <div class="field c2"><label for="eKind">Kind</label><select id="eKind">${opt(KINDS,d.kind)}</select></div>
+        <div class="field c2" id="eSubWrap"${d.kind==="cartoon"?"":" hidden"}><label for="eSub">Cartoon type</label><select id="eSub"><option value="">General</option>${CARTOON_SUBS.map(s=>`<option value="${s.k}"${d.sub===s.k?" selected":""}>${s.label}</option>`).join("")}</select></div>
         <div class="field c2"><label for="eType">Format</label><select id="eType">${opt(TYPES,d.type)}</select></div>
         <div class="field c2"><label for="eYear">Release year</label><input type="number" id="eYear" min="1900" max="2100" inputmode="numeric" value="${esc(d.year||"")}"></div>
         <div class="field c2"><label for="eStatus" title="Unfinished: finished a season, then stopped. Dropped: stopped partway through a season.">Status</label><select id="eStatus">${opt(STATUSES,d.status)}</select></div>
@@ -1361,7 +1370,7 @@ function openEdit(it){
     sheet.querySelectorAll("#scorePick button").forEach(x=>x.setAttribute("aria-pressed",String(+x.dataset.s===score)));hint()};
   /* Pull the community score from the source that matches the kind (AniList for anime, TVmaze for cartoons).
      Re-runs when the Kind dropdown changes, so switching cartoon↔anime re-pulls from the right database. */
-  const srcFor=(k,t)=>WESTERN_KINDS.includes(k)?(t==="Movie"?"om":"tv"):"al";
+  const srcFor=(k,t)=>k==="cartoon"?(t==="Movie"?"om":"tv"):"al";
   const SRCNAME={al:"AniList",tv:"TVmaze",om:"IMDb"};
   let commReq=0;
   const pullComm=async(forceSrc)=>{
@@ -1401,7 +1410,8 @@ function openEdit(it){
   };
   if(alScore!=null)commLine(); else pullComm();
   const reSrc=()=>{alScore=null;pullComm(srcFor($("#eKind").value,$("#eType").value));};
-  $("#eKind").addEventListener("change",reSrc);
+  const syncSub=()=>{const w=$("#eSubWrap");if(w)w.hidden=$("#eKind").value!=="cartoon";};syncSub();
+  $("#eKind").addEventListener("change",()=>{syncSub();reSrc();});
   $("#eType").addEventListener("change",reSrc);
   const drawP=()=>{$("#pImgBox").innerHTML=poster?`<img class="pimg" src="${esc(poster)}" alt="" referrerpolicy="no-referrer">`:`<div class="pimg">No poster</div>`;$("#ePRemove").hidden=!poster};drawP();
   $("#ePRemove").onclick=()=>{poster=null;alUrl=null;drawP();$("#ePMsg").textContent="Poster removed. Save to keep the change."};
@@ -1551,7 +1561,7 @@ function openEdit(it){
     const title=$("#eTitle").value.trim();if(!title){$("#eTitle").focus();toast("Give the title a name first.");return}
     const status=$("#eStatus").value,type=$("#eType").value;
     const now=Date.now();
-    const out={...d,poster:poster||null,alUrl:poster?(alUrl||null):null,posterTried:poster?false:!!d.posterTried,title,altTitle:$("#eAlt").value.trim()||null,kind:$("#eKind").value,demo:$("#eDemo").value||null,type,year:toInt($("#eYear").value),
+    const out={...d,poster:poster||null,alUrl:poster?(alUrl||null):null,posterTried:poster?false:!!d.posterTried,title,altTitle:$("#eAlt").value.trim()||null,kind:$("#eKind").value,sub:($("#eKind").value==="cartoon"?($("#eSub").value||null):null),demo:$("#eDemo").value||null,type,year:toInt($("#eYear").value),
       status,watchedYear:toInt($("#eWatched").value),startDate:$("#eStart").value||null,finishDate:$("#eFinish").value||null,score,genres,
       rewatches:toInt($("#eRe").value),favorite:$("#eFav").checked,hidden:$("#eHidden").checked,notes:$("#eNotes").value.trim()||null,alScore:(alScore!=null?alScore:(d.alScore!=null?d.alScore:null)),alScoreTried:(alScore!=null?true:!!d.alScoreTried),updatedAt:now};
     delete out.epWatched;delete out.epTotal;
