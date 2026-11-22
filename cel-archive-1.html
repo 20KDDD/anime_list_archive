@@ -536,8 +536,12 @@ const KINDS=[
   {k:"superhero",label:"Superhero Cartoon"},
   {k:"aeni",label:"Aeni (Korean)"},
   {k:"other",label:"Other animation"}];
-/* Western-animation kinds share the TVmaze (series) / OMDb (movie) data sources */
+/* Western-animation kinds share the TVmaze (series) / OMDb (movie) data sources,
+   and all roll up into "cartoons" in the stats. */
 const WESTERN_KINDS=["cartoon","disney","dreamworks","superhero"];
+function isCartoonKind(k){return WESTERN_KINDS.includes(k)}
+/* kind filter: "cartoon" matches every Western kind, anything else is exact */
+function kindMatch(k,sel){return sel==="cartoon"?isCartoonKind(k):k===sel}
 const KIND_LABEL=Object.fromEntries(KINDS.map(s=>[s.k,s.label]));
 const TYPES=["TV","Movie","OVA","ONA","Special","Short","Web series"];
 const GENRES=["Action","Adventure","Comedy","Drama","Fantasy","Romance","Sci-Fi","Slice of Life","Mystery","Horror","Thriller","Psychological","Supernatural","Sports","Mecha","Music","Isekai","Historical","Martial Arts","Military","School","Space","Detective","Vampire","Parody","Family","Kids","Harem","Ecchi","Iyashikei","Mahou Shoujo","Idol","Yuri","Yaoi (BL)","Gore","Cultivation","Wuxia","Xianxia"];
@@ -783,7 +787,7 @@ function renderBand(){
   bar.innerHTML=`<span class="modelbl">Counting</span><div class="modeseg"><button data-mode="franchise" aria-pressed="${mode!=="mal"}">Series</button><button data-mode="mal" aria-pressed="${mode==="mal"}">MAL style</button></div><span class="modelbl">Type</span>${kseg}<span class="modehint">${mode==="mal"?"Each season, OVA and movie counted as its own entry, MAL-style.":"Your original tracking — one card per series, seasons nested inside."}${bk0!=="all"?` · showing ${bk0} only`:""}</span>`;
   let src=isExampleMode()?EXAMPLES:items();
   const bk=bandKind();
-  if(bk!=="all")src=src.filter(x=>x.kind===bk);
+  if(bk!=="all")src=src.filter(x=>kindMatch(x.kind,bk));
   if(mode==="mal"){renderBandMal(src);return}
   const SEEN=["completed","unfinished","dropped","watching","on_hold"];
   const done=src.filter(x=>x.status==="completed");
@@ -791,14 +795,14 @@ function renderBand(){
   const by=(l,st)=>l.filter(x=>x.status===st).length;
   const kd=(l,k)=>l.filter(x=>x.kind===k);
   const prog=src.filter(x=>x.status==="watching"||x.status==="on_hold").length;
-  const other=src.filter(x=>SEEN.includes(x.status)&&!["anime","donghua","cartoon"].includes(x.kind));
+  const other=src.filter(x=>SEEN.includes(x.status)&&!["anime","donghua"].includes(x.kind)&&!isCartoonKind(x.kind));
   const scored=src.filter(x=>x.score);
   const mean=scored.length?(scored.reduce((a,b)=>a+b.score,0)/scored.length):null;
   const seasonsW=src.reduce((a,b)=>a+seasonsOf(b).filter(s=>s.watched).length,0);
   const counts=Array.from({length:10},(_,i)=>scored.filter(x=>Math.round(x.score)===i+1).length);
   const max=Math.max(1,...counts);
   const tile=(k,v,sub,cls)=>`<div class="stat${cls?" "+cls:""}"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${sub}</span></div>`;
-  const kindTile=(label,k,extra)=>{const s=kd(seen,k),c=by(s,"completed");return tile(label,c,`completed · ${s.length} seen${extra||""}`)};
+  const kindTile=(label,k,extra)=>{const s=seen.filter(x=>kindMatch(x.kind,k)),c=by(s,"completed");return tile(label,c,`completed · ${s.length} seen${extra||""}`)};
   $("#band").innerHTML=
     tile("Completed",done.length,`finished every season · ${seasonsW} seasons watched`,"lead")+
     tile("Seen · all",seen.length,[`${by(seen,"unfinished")} unfinished`,`${by(seen,"dropped")} dropped`,prog?`${prog} in progress`:""].filter(Boolean).join(" · "),"lead")+
@@ -844,7 +848,7 @@ function renderTaste(){
   const oneWonders=done.filter(x=>x.type!=="Movie"&&seasonsOf(x).length<=1&&x.score>=9).sort(bySc);
   const multi=done.filter(x=>seasonsOf(x).length>=3).sort((a,b)=>seasonsOf(b).length-seasonsOf(a).length||bySc(a,b));
   const longest=[...done].sort((a,b)=>seasonsOf(b).length-seasonsOf(a).length)[0];
-  const animeDone=done.filter(x=>x.kind==="anime"),cartoonDone=done.filter(x=>x.kind==="cartoon");
+  const animeDone=done.filter(x=>x.kind==="anime"),cartoonDone=done.filter(x=>isCartoonKind(x.kind));
   const longestA=[...animeDone].sort((a,b)=>seasonsOf(b).length-seasonsOf(a).length)[0];
   const longestC=[...cartoonDone].sort((a,b)=>seasonsOf(b).length-seasonsOf(a).length)[0];
   const animeSeasoned=animeDone.filter(x=>seasonsOf(x).length>=2).sort((a,b)=>seasonsOf(b).length-seasonsOf(a).length);
@@ -852,7 +856,7 @@ function renderTaste(){
   const animeAvg=avgOf(animeDone.filter(x=>x.score)),cartoonAvg=avgOf(cartoonDone.filter(x=>x.score));
   const withYear=done.filter(x=>x.year).sort((a,b)=>a.year-b.year||bySc(a,b));
   const oldest=withYear[0],classics=withYear.filter(x=>x.year<2000);
-  const withYearAnime=withYear.filter(x=>x.kind==="anime"),withYearCartoon=withYear.filter(x=>x.kind==="cartoon");
+  const withYearAnime=withYear.filter(x=>x.kind==="anime"),withYearCartoon=withYear.filter(x=>isCartoonKind(x.kind));
   const oldestA=withYearAnime[0],oldestC=withYearCartoon[0];
   const nowY=new Date().getFullYear();
   const recent=withYear.filter(x=>x.year>=nowY-3).sort((a,b)=>b.year-a.year||bySc(a,b));
@@ -2020,7 +2024,7 @@ function buildWorkbook(ExcelJS,list,opts){
   const scored=list.filter(x=>x.score);
   const mean=scored.length?scored.reduce((s,x)=>s+x.score,0)/scored.length:null;
   const seas=list.reduce((s,x)=>s+(Array.isArray(x.seasons)?x.seasons.filter(y=>y.watched).length:0),0);
-  const kc=k=>list.filter(x=>x.status==="completed"&&x.kind===k).length;
+  const kc=k=>list.filter(x=>x.status==="completed"&&kindMatch(x.kind,k)).length;
   const done=list.filter(x=>x.status==="completed").length;
   const today=new Date().toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"});
   const owner=(opts.owner||"").trim();
