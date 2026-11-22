@@ -1329,16 +1329,17 @@ function openEdit(it){
       <button class="btn primary" id="eSave">${isNew?"Add to library":"Save"}</button>
     </div>`);
   let poster=d.poster||null,alUrl=d.alUrl||null,alScore=(d.alScore!=null?d.alScore:null);
+  let commName=tvmazeIdFromUrl(d.alUrl)?"TVmaze":(alIdFromUrl(d.alUrl)?"AniList":(d.kind==="cartoon"?"TVmaze":"AniList"));
   const commLine=()=>{const el=$("#eComm");if(!el)return;
     if(alScore==null){el.hidden=true;el.innerHTML="";return;}
     el.hidden=false;
-    if(score==null){el.className="ecomm neutral";el.innerHTML=`<span class="cn">${alScore.toFixed(1)}<small>AniList</small></span><span class="ct">Community score. Give it your score to compare.</span>`;return;}
+    if(score==null){el.className="ecomm neutral";el.innerHTML=`<span class="cn">${alScore.toFixed(1)}<small>${commName}</small></span><span class="ct">Community score. Give it your score to compare.</span>`;return;}
     const dd=score-alScore, even=Math.abs(dd)<0.25;
     const cls=even?"even":(dd>0?"up":"down");
     const pill=even?"≈ even":(dd>0?`🔼 +${dd.toFixed(1)}`:`🔽 ${dd.toFixed(1)}`);
     const txt=even?`Right where the crowd landed.`:(dd>0?`You rated it <b>above</b> the community.`:`You rated it <b>below</b> the community.`);
     el.className="ecomm "+cls;
-    el.innerHTML=`<span class="cn">${alScore.toFixed(1)}<small>AniList</small></span><span class="ct">${txt}</span><span class="cp">${pill}</span>`;
+    el.innerHTML=`<span class="cn">${alScore.toFixed(1)}<small>${commName}</small></span><span class="ct">${txt}</span><span class="cp">${pill}</span>`;
   };
   const hint=()=>{
     $("#scoreHint").textContent=score?`${score} · ${SCORE_LABEL[score]}${origScore&&score!==origScore?` (was ${origScore})`:""} — tap again to clear`:"Not scored yet";
@@ -1346,23 +1347,28 @@ function openEdit(it){
   };hint();
   $("#scorePick").onclick=e=>{const b=e.target.closest("[data-s]");if(!b)return;const s=+b.dataset.s;score=score===s?null:s;
     sheet.querySelectorAll("#scorePick button").forEach(x=>x.setAttribute("aria-pressed",String(+x.dataset.s===score)));hint()};
-  /* Pull the AniList community score on the spot if we don't have it yet, so it shows immediately */
+  /* Pull the community score on the spot (AniList for anime, TVmaze for cartoons) if we don't have it yet */
   (async()=>{
     if(alScore!=null){commLine();return}
-    let id=alIdFromUrl(d.alUrl);
+    const alid=alIdFromUrl(d.alUrl), tvid=tvmazeIdFromUrl(d.alUrl);
     const el=$("#eComm");
-    if(!id&&!(d.title||$("#eTitle").value)) return;
-    if(el){el.hidden=false;el.className="ecomm neutral";el.innerHTML=`<span class="ct">Checking AniList for the community score…</span>`;}
+    const titleQ=cleanForSearch($("#eTitle").value||d.title||"");
+    if(!alid&&!tvid&&!titleQ) return;
+    const useTv=!!tvid||(!alid&&d.kind==="cartoon");
+    commName=useTv?"TVmaze":"AniList";
+    if(el){el.hidden=false;el.className="ecomm neutral";el.innerHTML=`<span class="ct">Checking ${commName} for the community score…</span>`;}
     try{
-      let as=null;
-      if(id){const j=await alQuery(`query($id:Int){Media(id:$id){averageScore}}`,{id});as=j&&j.data&&j.data.Media&&j.data.Media.averageScore;}
-      else{const q=cleanForSearch($("#eTitle").value||d.title);if(q){const list=await alSearchList(q);const m=list&&list[0];if(m){as=m.averageScore;if(!alUrl&&m.siteUrl)alUrl=m.siteUrl;}}}
-      if(as!=null){alScore=Math.round(as)/10;commLine();
-        try{const cur=store.items.get(d.id);if(cur){cur.alScore=alScore;cur.alScoreTried=true;if(alUrl&&!cur.alUrl)cur.alUrl=alUrl;store.items.set(cur.id,cur);store.persistLocal();}}catch(e){}
-      } else {if(el&&/Checking AniList/.test(el.textContent)){el.hidden=true;el.innerHTML="";}
+      let as10=null;
+      if(tvid){const sh=await tvmazeGet(tvid);const rr=sh&&sh.rating&&sh.rating.average;if(rr!=null)as10=rr;if(sh&&sh.url&&!alUrl)alUrl=sh.url;}
+      else if(alid){const j=await alQuery(`query($id:Int){Media(id:$id){averageScore}}`,{id:alid});const av=j&&j.data&&j.data.Media&&j.data.Media.averageScore;if(av!=null)as10=av/10;}
+      else if(useTv){const list=await tvmazeSearchList(titleQ);const s=list&&list[0];if(s){const rr=s.rating&&s.rating.average;if(rr!=null)as10=rr;if(!alUrl&&s.url)alUrl=s.url;}}
+      else {const list=await alSearchList(titleQ);const m=list&&list[0];if(m){if(m.averageScore!=null)as10=m.averageScore/10;if(!alUrl&&m.siteUrl)alUrl=m.siteUrl;}}
+      if(as10!=null){alScore=Math.round(as10*10)/10;commLine();
+        try{const cur=store.items.get(d.id);if(cur){cur.alScore=alScore;cur.alScoreTried=true;if(alUrl&&!cur.alUrl)cur.alUrl=alUrl;store.items.set(cur.id,cur);store.persistLocal();store.emit();}}catch(e){}
+      } else {if(el&&/Checking /.test(el.textContent)){el.hidden=true;el.innerHTML="";}
         try{const cur=store.items.get(d.id);if(cur){cur.alScoreTried=true;store.items.set(cur.id,cur);store.persistLocal();}}catch(e){}
       }
-    }catch(e){if(el&&/Checking AniList/.test(el.textContent)){el.hidden=true;el.innerHTML="";}}
+    }catch(e){if(el&&/Checking /.test(el.textContent)){el.hidden=true;el.innerHTML="";}}
   })();
   const drawP=()=>{$("#pImgBox").innerHTML=poster?`<img class="pimg" src="${esc(poster)}" alt="" referrerpolicy="no-referrer">`:`<div class="pimg">No poster</div>`;$("#ePRemove").hidden=!poster};drawP();
   $("#ePRemove").onclick=()=>{poster=null;alUrl=null;drawP();$("#ePMsg").textContent="Poster removed. Save to keep the change."};
@@ -1386,7 +1392,8 @@ function openEdit(it){
     $("#ePMsg").textContent=`Filled in ${got}. Now just set the score, seasons watched and year watched.`;
   };
   const applyTvmaze=s=>{
-    alScore=null;commLine();
+    alScore=(s.rating&&s.rating.average!=null)?s.rating.average:null;commLine();
+    if(s&&s.id){ tvmazeSeasons(s.id).then(seas=>{ if(!seas||!seas.length||!$("#sList"))return; alChain=seas;alCount=seas.length;SEASON_CACHE["tv"+s.id]=seas;fillSeasonYears();drawS(); }).catch(()=>{}); }
     if(s.name)$("#eTitle").value=s.name;
     const yr=s.premiered?+String(s.premiered).slice(0,4):null;
     if(yr)$("#eYear").value=yr;
@@ -1417,11 +1424,11 @@ function openEdit(it){
     if(alCount&&seasons.length>=alCount&&!guardOverride){
       add.classList.add("blocked");add.setAttribute("aria-disabled","true");
       g.className="sguard warn";
-      g.innerHTML=`⚠︎ AniList lists ${alCount} season${alCount===1?"":"s"} for this title, so a Season ${alCount+1} isn't out yet. <button type="button" class="ovr" id="sOvr">Add anyway</button>`;
+      g.innerHTML=`⚠︎ ${commName} lists ${alCount} season${alCount===1?"":"s"} for this title, so a Season ${alCount+1} isn't out yet. <button type="button" class="ovr" id="sOvr">Add anyway</button>`;
       const ov=$("#sOvr");if(ov)ov.onclick=()=>{guardOverride=true;addSeason();};
     } else {
       add.classList.remove("blocked");add.removeAttribute("aria-disabled");
-      if(alChain){g.className="sguard meta";g.innerHTML=`Release years auto-filled from AniList (${alCount} season${alCount===1?"":"s"} known) — edit any to override.`;}
+      if(alChain){g.className="sguard meta";g.innerHTML=`Release years auto-filled from ${commName} (${alCount} season${alCount===1?"":"s"} known) — edit any to override.`;}
       else {g.className="sguard";g.innerHTML="";}
     }
   };
@@ -1441,10 +1448,14 @@ function openEdit(it){
     drawGuard();
   };drawS();
   if(!alChain&&!isMovie(d)&&d.alUrl){
-    const aid=alIdFromUrl(d.alUrl);
-    if(aid){ const g0=$("#sGuard");if(g0){g0.className="sguard meta";g0.innerHTML="Checking AniList for season info…";}
+    const aid=alIdFromUrl(d.alUrl), tid=tvmazeIdFromUrl(d.alUrl);
+    const g0=$("#sGuard");
+    if(aid){ if(g0){g0.className="sguard meta";g0.innerHTML="Checking AniList for season info…";}
       alSeasonChain(aid).then(ch=>{ if(!ch||!ch.length||!$("#sList"))return; alChain=ch;alCount=ch.length;SEASON_CACHE[aid]=ch;fillSeasonYears();drawS(); })
         .catch(()=>{ const g=$("#sGuard");if(g&&/Checking AniList/.test(g.textContent)){g.className="sguard";g.innerHTML="";} }); }
+    else if(tid){ if(g0){g0.className="sguard meta";g0.innerHTML="Checking TVmaze for season info…";}
+      tvmazeSeasons(tid).then(seas=>{ if(!seas||!seas.length||!$("#sList"))return; alChain=seas;alCount=seas.length;SEASON_CACHE["tv"+tid]=seas;fillSeasonYears();drawS(); })
+        .catch(()=>{ const g=$("#sGuard");if(g&&/Checking TVmaze/.test(g.textContent)){g.className="sguard";g.innerHTML="";} }); }
   }
   $("#sList").addEventListener("click",e=>{
     const b=e.target.closest("[data-sdel]");
@@ -2140,6 +2151,14 @@ async function tvmazeSearchList(q){
   const arr=await r.json();
   return (arr||[]).map(x=>x&&x.show).filter(s=>s&&s.image&&(s.image.original||s.image.medium)).slice(0,8);
 }
+function tvmazeIdFromUrl(u){const m=String(u||"").match(/tvmaze\.com\/shows\/(\d+)/);return m?+m[1]:null}
+async function tvmazeGet(id){const r=await fetch(`https://api.tvmaze.com/shows/${id}`);if(!r.ok)throw new Error("tvmaze "+r.status);return r.json();}
+/* TVmaze seasons → the app's season-chain shape [{year,month}], ordered by season number */
+async function tvmazeSeasons(id){
+  const r=await fetch(`https://api.tvmaze.com/shows/${id}/seasons`);if(!r.ok)throw new Error("tvmaze "+r.status);
+  const arr=await r.json();
+  return (arr||[]).filter(s=>s).sort((a,b)=>(a.number||0)-(b.number||0)).map(s=>{const d=s.premiereDate||"";return {year:d?+d.slice(0,4)||null:null,month:d?+d.slice(5,7)||null:null};});
+}
 /* map AniList fields to this app's own vocabulary */
 function alFormatToType(f){return ({TV:"TV",TV_SHORT:"Short",MOVIE:"Movie",SPECIAL:"Special",OVA:"OVA",ONA:"ONA",MUSIC:"Short"})[f]||null}
 function alCountryToKind(c){return ({JP:"anime",CN:"donghua",KR:"aeni"})[c]||null}
@@ -2207,19 +2226,31 @@ async function refreshCommScores(manual){
   if(commRunning){if(manual)toast("Already refreshing community scores…");return}
   commRunning=true;
   try{
-    const todo=items().filter(x=>x&&x.id&&x.alUrl&&alIdFromUrl(x.alUrl)&&x.alScore==null&&(manual||!x.alScoreTried)&&!x._example).slice(0,manual?700:150);
-    if(!todo.length){if(manual)toast("Every linked title already has a community score.");return}
+    const pool=items().filter(x=>x&&x.id&&x.alUrl&&x.alScore==null&&(manual||!x.alScoreTried)&&!x._example);
+    const alTodo=pool.filter(x=>alIdFromUrl(x.alUrl)).slice(0,manual?700:150);
+    const tvTodo=pool.filter(x=>!alIdFromUrl(x.alUrl)&&tvmazeIdFromUrl(x.alUrl)).slice(0,manual?400:60);
+    if(!alTodo.length&&!tvTodo.length){if(manual)toast("Every linked title already has a community score.");return}
+    const total=alTodo.length+tvTodo.length;
     let changed=false,got=0,done=0;
-    for(let i=0;i<todo.length;i+=25){
-      const chunk=todo.slice(i,i+25);
-      if(manual)toast(`Pulling AniList scores… ${done} of ${todo.length}`);
+    const mark=(it,as)=>{const cur=store.items.get(it.id);if(!cur)return;cur.alScore=(as!=null?as:null);cur.alScoreTried=true;store.items.set(cur.id,cur);changed=true;if(as!=null)got++;};
+    // AniList — batched by id (averageScore is 0–100)
+    for(let i=0;i<alTodo.length;i+=25){
+      const chunk=alTodo.slice(i,i+25);
+      if(manual)toast(`Pulling community scores… ${done} of ${total}`);
       const defs=[],parts=[],vars={};
       chunk.forEach((it,k)=>{const id=alIdFromUrl(it.alUrl);defs.push(`$i${k}:Int`);vars["i"+k]=id;parts.push(`m${k}:Media(id:$i${k}){id averageScore}`)});
       let j;try{j=await alQuery(`query(${defs.join(",")}){${parts.join(" ")}}`,vars)}catch(e){if(manual)toast("Couldn't reach AniList. Try again in a bit.");break}
-      chunk.forEach((it,k)=>{const m=j&&j.data&&j.data["m"+k];const cur=store.items.get(it.id);if(!cur)return;
-        const as=(m&&m.averageScore!=null)?Math.round(m.averageScore)/10:null;cur.alScore=as;cur.alScoreTried=true;store.items.set(cur.id,cur);changed=true;if(as!=null)got++;});
+      chunk.forEach((it,k)=>{const m=j&&j.data&&j.data["m"+k];mark(it,(m&&m.averageScore!=null)?Math.round(m.averageScore)/10:null)});
       done+=chunk.length;
-      if(i+25<todo.length)await sleep(manual?1200:1800);
+      if(i+25<alTodo.length)await sleep(manual?1100:1800);
+    }
+    // TVmaze — one call per show (rating.average is already 1–10)
+    for(let i=0;i<tvTodo.length;i++){
+      const it=tvTodo[i];
+      if(manual&&i%5===0)toast(`Pulling community scores… ${done} of ${total}`);
+      try{const sh=await tvmazeGet(tvmazeIdFromUrl(it.alUrl));const rr=sh&&sh.rating&&sh.rating.average;mark(it,rr!=null?Math.round(rr*10)/10:null);}catch(e){}
+      done++;
+      await sleep(manual?260:500);
     }
     if(changed){store.flush();store.emit();}
     if(manual)toast(`Added community scores to ${got} title${got===1?"":"s"}.`);
