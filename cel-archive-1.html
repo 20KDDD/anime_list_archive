@@ -536,7 +536,6 @@ const KINDS=[
 /* Cartoon studios/styles — subcategories under the Cartoon kind, not top-level kinds. */
 const CARTOON_SUBS=[
   {k:"disney",label:"Disney"},
-  {k:"pixar",label:"Pixar"},
   {k:"dreamworks",label:"DreamWorks"},
   {k:"superhero",label:"Superhero"}];
 const SUB_LABEL=Object.fromEntries(CARTOON_SUBS.map(s=>[s.k,s.label]));
@@ -601,6 +600,8 @@ const store={
           if(x&&Array.isArray(x.scoreHistory))x.scoreHistory.forEach(h=>{if(h&&"score"in h){const sc=safeScore(h.score);if(sc!==h.score){h.score=sc;fixed++}}});
           /* migrate legacy top-level studio kinds → cartoon + subcategory */
           if(x&&LEGACY_SUB_KINDS.includes(x.kind)){if(!x.sub)x.sub=x.kind;x.kind="cartoon";fixed++}
+          /* Pixar folded into Disney */
+          if(x&&x.sub==="pixar"){x.sub="disney";fixed++}
           this.items.set(x.id,x);
         });
         if(fixed)lsSet(LS_KEY,JSON.stringify([...this.items.values()]));
