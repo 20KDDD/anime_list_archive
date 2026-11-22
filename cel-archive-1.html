@@ -145,6 +145,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
 .commdelta.up{color:var(--st-watching);border-color:color-mix(in srgb,var(--st-watching) 45%,transparent)}
 .commdelta.down{color:var(--st-dropped);border-color:color-mix(in srgb,var(--st-dropped) 45%,transparent)}
 .commdelta.even{color:var(--muted)}
+.commdelta.comm{color:var(--muted);border-color:var(--line);font-weight:700}
 .ecomm{display:flex;align-items:center;gap:10px;margin-top:9px;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:9px 11px}
 .ecomm[hidden]{display:none}
 .ecomm.up{border-color:color-mix(in srgb,var(--st-watching) 45%,transparent)}
@@ -1005,7 +1006,7 @@ function cardHTML(it){
       <div class="pfallback" style="background:${posterGrad(it.id||it.title)}"></div>
       ${it.poster?`<img class="cposter" src="${esc(it.poster)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.closest('.card').classList.add('noimg')">`:``}
       <span class="medal${it.score?"":" none"}">${it.score||"–"}</span>
-      ${(it.score&&it.alScore!=null&&!it._example)?(()=>{const dd=it.score-it.alScore,even=Math.abs(dd)<0.25,cls=even?"even":(dd>0?"up":"down"),ar=even?"≈":(dd>0?"▲":"▼");return `<span class="commdelta ${cls}" title="Community ${it.alScore.toFixed(1)} · you ${it.score}">${ar} ${even?it.alScore.toFixed(1):(dd>0?"+":"")+dd.toFixed(1)}</span>`;})():""}
+      ${(!it._example&&it.alScore!=null)?(it.score?(()=>{const dd=it.score-it.alScore,even=Math.abs(dd)<0.25,cls=even?"even":(dd>0?"up":"down"),ar=even?"≈":(dd>0?"▲":"▼");return `<span class="commdelta ${cls}" title="Community ${it.alScore.toFixed(1)} · you ${it.score}">${ar} ${even?"0":(dd>0?"+":"")+dd.toFixed(1)}</span>`;})():`<span class="commdelta comm" title="Community score · you haven't rated this yet">☆ ${it.alScore.toFixed(1)}</span>`):""}
       ${aoYears.length?`<span class="aotybadge" title="Your Anime of the Year">🏆 ${aoYears.join(", ")}</span>`:""}
       ${it._example?`<span class="example-tag">Example</span>`:""}
       ${it.needsReview?`<span class="rvwbadge">Needs review</span>`:""}
@@ -1347,29 +1348,38 @@ function openEdit(it){
   };hint();
   $("#scorePick").onclick=e=>{const b=e.target.closest("[data-s]");if(!b)return;const s=+b.dataset.s;score=score===s?null:s;
     sheet.querySelectorAll("#scorePick button").forEach(x=>x.setAttribute("aria-pressed",String(+x.dataset.s===score)));hint()};
-  /* Pull the community score on the spot (AniList for anime, TVmaze for cartoons) if we don't have it yet */
-  (async()=>{
-    if(alScore!=null){commLine();return}
-    const alid=alIdFromUrl(d.alUrl), tvid=tvmazeIdFromUrl(d.alUrl);
+  /* Pull the community score from the source that matches the kind (AniList for anime, TVmaze for cartoons).
+     Re-runs when the Kind dropdown changes, so switching cartoon↔anime re-pulls from the right database. */
+  const kindSrc=k=>k==="cartoon"?"tv":"al";
+  let commReq=0;
+  const pullComm=async(forceSrc)=>{
+    const myReq=++commReq;
     const el=$("#eComm");
     const titleQ=cleanForSearch($("#eTitle").value||d.title||"");
-    if(!alid&&!tvid&&!titleQ) return;
-    const useTv=!!tvid||(!alid&&d.kind==="cartoon");
-    commName=useTv?"TVmaze":"AniList";
+    const alid=alIdFromUrl(alUrl), tvid=tvmazeIdFromUrl(alUrl);
+    const src=forceSrc||(tvid?"tv":(alid?"al":kindSrc($("#eKind").value)));
+    commName=src==="tv"?"TVmaze":"AniList";
+    if(!titleQ&&!(src==="tv"?tvid:alid)){alScore=null;if(el){el.hidden=true;el.innerHTML="";}return;}
     if(el){el.hidden=false;el.className="ecomm neutral";el.innerHTML=`<span class="ct">Checking ${commName} for the community score…</span>`;}
     try{
-      let as10=null;
-      if(tvid){const sh=await tvmazeGet(tvid);const rr=sh&&sh.rating&&sh.rating.average;if(rr!=null)as10=rr;if(sh&&sh.url&&!alUrl)alUrl=sh.url;}
-      else if(alid){const j=await alQuery(`query($id:Int){Media(id:$id){averageScore}}`,{id:alid});const av=j&&j.data&&j.data.Media&&j.data.Media.averageScore;if(av!=null)as10=av/10;}
-      else if(useTv){const list=await tvmazeSearchList(titleQ);const s=list&&list[0];if(s){const rr=s.rating&&s.rating.average;if(rr!=null)as10=rr;if(!alUrl&&s.url)alUrl=s.url;}}
-      else {const list=await alSearchList(titleQ);const m=list&&list[0];if(m){if(m.averageScore!=null)as10=m.averageScore/10;if(!alUrl&&m.siteUrl)alUrl=m.siteUrl;}}
-      if(as10!=null){alScore=Math.round(as10*10)/10;commLine();
-        try{const cur=store.items.get(d.id);if(cur){cur.alScore=alScore;cur.alScoreTried=true;if(alUrl&&!cur.alUrl)cur.alUrl=alUrl;store.items.set(cur.id,cur);store.persistLocal();store.emit();}}catch(e){}
-      } else {if(el&&/Checking /.test(el.textContent)){el.hidden=true;el.innerHTML="";}
+      let as10=null,foundUrl=null;
+      if(src==="tv"){
+        if(tvid){const sh=await tvmazeGet(tvid);const rr=sh&&sh.rating&&sh.rating.average;if(rr!=null)as10=rr;if(sh&&sh.url)foundUrl=sh.url;}
+        else{const list=await tvmazeSearchList(titleQ);const s=list&&list[0];if(s){const rr=s.rating&&s.rating.average;if(rr!=null)as10=rr;if(s.url)foundUrl=s.url;}}
+      } else {
+        if(alid){const j=await alQuery(`query($id:Int){Media(id:$id){averageScore siteUrl}}`,{id:alid});const md=j&&j.data&&j.data.Media;if(md){if(md.averageScore!=null)as10=md.averageScore/10;if(md.siteUrl)foundUrl=md.siteUrl;}}
+        else{const list=await alSearchList(titleQ);const m=list&&list[0];if(m){if(m.averageScore!=null)as10=m.averageScore/10;if(m.siteUrl)foundUrl=m.siteUrl;}}
+      }
+      if(myReq!==commReq)return; /* a newer switch superseded this one */
+      if(as10!=null){alScore=Math.round(as10*10)/10;if(foundUrl)alUrl=foundUrl;commLine();
+        try{const cur=store.items.get(d.id);if(cur){cur.alScore=alScore;cur.alScoreTried=true;if(alUrl)cur.alUrl=alUrl;store.items.set(cur.id,cur);store.persistLocal();store.emit();}}catch(e){}
+      } else {alScore=null;commLine();if(el&&/Checking /.test(el.textContent)){el.hidden=true;el.innerHTML="";}
         try{const cur=store.items.get(d.id);if(cur){cur.alScoreTried=true;store.items.set(cur.id,cur);store.persistLocal();}}catch(e){}
       }
-    }catch(e){if(el&&/Checking /.test(el.textContent)){el.hidden=true;el.innerHTML="";}}
-  })();
+    }catch(e){if(myReq===commReq&&el&&/Checking /.test(el.textContent)){el.hidden=true;el.innerHTML="";}}
+  };
+  if(alScore!=null)commLine(); else pullComm();
+  $("#eKind").addEventListener("change",()=>{alScore=null;pullComm(kindSrc($("#eKind").value));});
   const drawP=()=>{$("#pImgBox").innerHTML=poster?`<img class="pimg" src="${esc(poster)}" alt="" referrerpolicy="no-referrer">`:`<div class="pimg">No poster</div>`;$("#ePRemove").hidden=!poster};drawP();
   $("#ePRemove").onclick=()=>{poster=null;alUrl=null;drawP();$("#ePMsg").textContent="Poster removed. Save to keep the change."};
   const applyAniList=m=>{
