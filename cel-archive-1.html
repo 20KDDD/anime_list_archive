@@ -453,6 +453,7 @@ button.tcard{font:inherit;color:inherit;text-align:left;cursor:pointer;position:
           <button id="mExportCsv">Download spreadsheet (.csv)</button>
           <button id="mImportJson">Load backup file…</button>
           <button id="mPosters">Find missing posters</button>
+          <button id="mComm">Refresh community scores</button>
           <hr>
           <button id="mDeleteAll" style="color:var(--st-dropped)">Delete entire library…</button>
         </div>
@@ -1233,6 +1234,7 @@ $("#mExportJson").onclick=()=>{menuPop.hidden=true;exportFile("json")};
 $("#mExportCsv").onclick=()=>{menuPop.hidden=true;exportFile("csv")};
 $("#mImportJson").onclick=()=>{menuPop.hidden=true;$("#fileJson").click()};
 $("#mPosters").onclick=()=>{menuPop.hidden=true;findPosters(items(),true)};
+$("#mComm").onclick=()=>{menuPop.hidden=true;refreshCommScores(true)};
 $("#mDeleteAll").onclick=()=>{menuPop.hidden=true;openDeleteAll()};
 
 /* ---------- sheets ---------- */
@@ -1344,6 +1346,24 @@ function openEdit(it){
   };hint();
   $("#scorePick").onclick=e=>{const b=e.target.closest("[data-s]");if(!b)return;const s=+b.dataset.s;score=score===s?null:s;
     sheet.querySelectorAll("#scorePick button").forEach(x=>x.setAttribute("aria-pressed",String(+x.dataset.s===score)));hint()};
+  /* Pull the AniList community score on the spot if we don't have it yet, so it shows immediately */
+  (async()=>{
+    if(alScore!=null){commLine();return}
+    let id=alIdFromUrl(d.alUrl);
+    const el=$("#eComm");
+    if(!id&&!(d.title||$("#eTitle").value)) return;
+    if(el){el.hidden=false;el.className="ecomm neutral";el.innerHTML=`<span class="ct">Checking AniList for the community score…</span>`;}
+    try{
+      let as=null;
+      if(id){const j=await alQuery(`query($id:Int){Media(id:$id){averageScore}}`,{id});as=j&&j.data&&j.data.Media&&j.data.Media.averageScore;}
+      else{const q=cleanForSearch($("#eTitle").value||d.title);if(q){const list=await alSearchList(q);const m=list&&list[0];if(m){as=m.averageScore;if(!alUrl&&m.siteUrl)alUrl=m.siteUrl;}}}
+      if(as!=null){alScore=Math.round(as)/10;commLine();
+        try{const cur=store.items.get(d.id);if(cur){cur.alScore=alScore;cur.alScoreTried=true;if(alUrl&&!cur.alUrl)cur.alUrl=alUrl;store.items.set(cur.id,cur);store.persistLocal();}}catch(e){}
+      } else {if(el&&/Checking AniList/.test(el.textContent)){el.hidden=true;el.innerHTML="";}
+        try{const cur=store.items.get(d.id);if(cur){cur.alScoreTried=true;store.items.set(cur.id,cur);store.persistLocal();}}catch(e){}
+      }
+    }catch(e){if(el&&/Checking AniList/.test(el.textContent)){el.hidden=true;el.innerHTML="";}}
+  })();
   const drawP=()=>{$("#pImgBox").innerHTML=poster?`<img class="pimg" src="${esc(poster)}" alt="" referrerpolicy="no-referrer">`:`<div class="pimg">No poster</div>`;$("#ePRemove").hidden=!poster};drawP();
   $("#ePRemove").onclick=()=>{poster=null;alUrl=null;drawP();$("#ePMsg").textContent="Poster removed. Save to keep the change."};
   const applyAniList=m=>{
@@ -2183,22 +2203,26 @@ async function findPosters(src,manual){
 }
 /* ---------- background: pull AniList community scores for titles already linked ---------- */
 let commRunning=false;
-async function refreshCommScores(){
-  if(commRunning)return;commRunning=true;
+async function refreshCommScores(manual){
+  if(commRunning){if(manual)toast("Already refreshing community scores…");return}
+  commRunning=true;
   try{
-    const todo=items().filter(x=>x&&x.id&&x.alUrl&&x.alScore==null&&!x.alScoreTried&&!x._example).slice(0,150);
-    if(!todo.length)return;
-    let changed=false;
+    const todo=items().filter(x=>x&&x.id&&x.alUrl&&alIdFromUrl(x.alUrl)&&x.alScore==null&&(manual||!x.alScoreTried)&&!x._example).slice(0,manual?700:150);
+    if(!todo.length){if(manual)toast("Every linked title already has a community score.");return}
+    let changed=false,got=0,done=0;
     for(let i=0;i<todo.length;i+=25){
       const chunk=todo.slice(i,i+25);
+      if(manual)toast(`Pulling AniList scores… ${done} of ${todo.length}`);
       const defs=[],parts=[],vars={};
       chunk.forEach((it,k)=>{const id=alIdFromUrl(it.alUrl);defs.push(`$i${k}:Int`);vars["i"+k]=id;parts.push(`m${k}:Media(id:$i${k}){id averageScore}`)});
-      let j;try{j=await alQuery(`query(${defs.join(",")}){${parts.join(" ")}}`,vars)}catch(e){break}
+      let j;try{j=await alQuery(`query(${defs.join(",")}){${parts.join(" ")}}`,vars)}catch(e){if(manual)toast("Couldn't reach AniList. Try again in a bit.");break}
       chunk.forEach((it,k)=>{const m=j&&j.data&&j.data["m"+k];const cur=store.items.get(it.id);if(!cur)return;
-        cur.alScore=(m&&m.averageScore!=null)?Math.round(m.averageScore)/10:null;cur.alScoreTried=true;store.items.set(cur.id,cur);changed=true;});
-      if(i+25<todo.length)await sleep(1800);
+        const as=(m&&m.averageScore!=null)?Math.round(m.averageScore)/10:null;cur.alScore=as;cur.alScoreTried=true;store.items.set(cur.id,cur);changed=true;if(as!=null)got++;});
+      done+=chunk.length;
+      if(i+25<todo.length)await sleep(manual?1200:1800);
     }
     if(changed){store.flush();store.emit();}
+    if(manual)toast(`Added community scores to ${got} title${got===1?"":"s"}.`);
   }finally{commRunning=false;}
 }
 
