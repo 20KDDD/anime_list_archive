@@ -455,6 +455,7 @@ button.tcard{font:inherit;color:inherit;text-align:left;cursor:pointer;position:
           <button id="mImportJson">Load backup file…</button>
           <button id="mPosters">Find missing posters</button>
           <button id="mComm">Refresh community scores</button>
+          <button id="mOmdb">Movie ratings key…</button>
           <hr>
           <button id="mDeleteAll" style="color:var(--st-dropped)">Delete entire library…</button>
         </div>
@@ -1236,6 +1237,7 @@ $("#mExportCsv").onclick=()=>{menuPop.hidden=true;exportFile("csv")};
 $("#mImportJson").onclick=()=>{menuPop.hidden=true;$("#fileJson").click()};
 $("#mPosters").onclick=()=>{menuPop.hidden=true;findPosters(items(),true)};
 $("#mComm").onclick=()=>{menuPop.hidden=true;refreshCommScores(true)};
+$("#mOmdb").onclick=()=>{menuPop.hidden=true;const cur=omdbKey();const k=prompt("Paste your free OMDb API key to pull IMDb community scores for animated movies.\n\nGet one at omdbapi.com/apikey.aspx (FREE tier). It is stored only in this browser, never in your code.",cur);if(k===null)return;lsSet("celarchive.omdbKey",k.trim());toast(k.trim()?"Movie-ratings key saved on this device.":"Movie-ratings key cleared.")};
 $("#mDeleteAll").onclick=()=>{menuPop.hidden=true;openDeleteAll()};
 
 /* ---------- sheets ---------- */
@@ -1350,36 +1352,47 @@ function openEdit(it){
     sheet.querySelectorAll("#scorePick button").forEach(x=>x.setAttribute("aria-pressed",String(+x.dataset.s===score)));hint()};
   /* Pull the community score from the source that matches the kind (AniList for anime, TVmaze for cartoons).
      Re-runs when the Kind dropdown changes, so switching cartoon↔anime re-pulls from the right database. */
-  const kindSrc=k=>k==="cartoon"?"tv":"al";
+  const srcFor=(k,t)=>(k==="cartoon"&&t==="Movie")?"om":(k==="cartoon"?"tv":"al");
+  const SRCNAME={al:"AniList",tv:"TVmaze",om:"IMDb"};
   let commReq=0;
   const pullComm=async(forceSrc)=>{
     const myReq=++commReq;
     const el=$("#eComm");
     const titleQ=cleanForSearch($("#eTitle").value||d.title||"");
-    const alid=alIdFromUrl(alUrl), tvid=tvmazeIdFromUrl(alUrl);
-    const src=forceSrc||(tvid?"tv":(alid?"al":kindSrc($("#eKind").value)));
-    commName=src==="tv"?"TVmaze":"AniList";
-    if(!titleQ&&!(src==="tv"?tvid:alid)){alScore=null;if(el){el.hidden=true;el.innerHTML="";}return;}
+    const alid=alIdFromUrl(alUrl), tvid=tvmazeIdFromUrl(alUrl), imid=imdbIdFromUrl(alUrl);
+    const src=forceSrc||(imid?"om":(tvid?"tv":(alid?"al":srcFor($("#eKind").value,$("#eType").value))));
+    commName=SRCNAME[src]||"AniList";
+    const haveId=src==="tv"?tvid:(src==="om"?imid:alid);
+    if(!titleQ&&!haveId){alScore=null;if(el){el.hidden=true;el.innerHTML="";}return;}
+    if(src==="om"&&!omdbKey()){if(el){el.hidden=false;el.className="ecomm neutral";el.innerHTML=`<span class="ct">Add a free movie-ratings key in <b>More → Movie ratings key</b> to pull IMDb scores for animated movies.</span>`;}return;}
     if(el){el.hidden=false;el.className="ecomm neutral";el.innerHTML=`<span class="ct">Checking ${commName} for the community score…</span>`;}
     try{
-      let as10=null,foundUrl=null;
+      let as10=null,foundUrl=null,foundPoster=null;
       if(src==="tv"){
         if(tvid){const sh=await tvmazeGet(tvid);const rr=sh&&sh.rating&&sh.rating.average;if(rr!=null)as10=rr;if(sh&&sh.url)foundUrl=sh.url;}
         else{const list=await tvmazeSearchList(titleQ);const s=list&&list[0];if(s){const rr=s.rating&&s.rating.average;if(rr!=null)as10=rr;if(s.url)foundUrl=s.url;}}
+      } else if(src==="om"){
+        let j=null;
+        if(imid){j=await omdbGet(imid);}
+        else{const list=await omdbSearchList(titleQ,"movie");const hit=list&&list[0];if(hit&&hit.imdbID)j=await omdbGet(hit.imdbID);}
+        if(j){const rr=(j.imdbRating&&j.imdbRating!=="N/A")?parseFloat(j.imdbRating):null;if(rr!=null&&!isNaN(rr))as10=rr;if(j.imdbID)foundUrl="https://www.imdb.com/title/"+j.imdbID+"/";if(j.Poster&&j.Poster!=="N/A")foundPoster=j.Poster;}
       } else {
         if(alid){const j=await alQuery(`query($id:Int){Media(id:$id){averageScore siteUrl}}`,{id:alid});const md=j&&j.data&&j.data.Media;if(md){if(md.averageScore!=null)as10=md.averageScore/10;if(md.siteUrl)foundUrl=md.siteUrl;}}
         else{const list=await alSearchList(titleQ);const m=list&&list[0];if(m){if(m.averageScore!=null)as10=m.averageScore/10;if(m.siteUrl)foundUrl=m.siteUrl;}}
       }
       if(myReq!==commReq)return; /* a newer switch superseded this one */
+      if(foundPoster&&!poster){poster=foundPoster;drawP&&drawP();}
       if(as10!=null){alScore=Math.round(as10*10)/10;if(foundUrl)alUrl=foundUrl;commLine();
-        try{const cur=store.items.get(d.id);if(cur){cur.alScore=alScore;cur.alScoreTried=true;if(alUrl)cur.alUrl=alUrl;store.items.set(cur.id,cur);store.persistLocal();store.emit();}}catch(e){}
+        try{const cur=store.items.get(d.id);if(cur){cur.alScore=alScore;cur.alScoreTried=true;if(alUrl)cur.alUrl=alUrl;if(foundPoster&&!cur.poster)cur.poster=foundPoster;store.items.set(cur.id,cur);store.persistLocal();store.emit();}}catch(e){}
       } else {alScore=null;commLine();if(el&&/Checking /.test(el.textContent)){el.hidden=true;el.innerHTML="";}
         try{const cur=store.items.get(d.id);if(cur){cur.alScoreTried=true;store.items.set(cur.id,cur);store.persistLocal();}}catch(e){}
       }
     }catch(e){if(myReq===commReq&&el&&/Checking /.test(el.textContent)){el.hidden=true;el.innerHTML="";}}
   };
   if(alScore!=null)commLine(); else pullComm();
-  $("#eKind").addEventListener("change",()=>{alScore=null;pullComm(kindSrc($("#eKind").value));});
+  const reSrc=()=>{alScore=null;pullComm(srcFor($("#eKind").value,$("#eType").value));};
+  $("#eKind").addEventListener("change",reSrc);
+  $("#eType").addEventListener("change",reSrc);
   const drawP=()=>{$("#pImgBox").innerHTML=poster?`<img class="pimg" src="${esc(poster)}" alt="" referrerpolicy="no-referrer">`:`<div class="pimg">No poster</div>`;$("#ePRemove").hidden=!poster};drawP();
   $("#ePRemove").onclick=()=>{poster=null;alUrl=null;drawP();$("#ePMsg").textContent="Poster removed. Save to keep the change."};
   const applyAniList=m=>{
@@ -1413,21 +1426,33 @@ function openEdit(it){
     const got=["title",yr?"year":null,"kind",added?"genres":null].filter(Boolean).join(", ");
     $("#ePMsg").textContent=`Filled in ${got}. Set the format if it's a movie, then your score, seasons watched and year watched.`;
   };
+  const applyOmdb=raw=>{
+    if(raw.Title)$("#eTitle").value=raw.Title;
+    const yr=raw.Year?parseInt(String(raw.Year).slice(0,4)):null;if(yr)$("#eYear").value=yr;
+    $("#eKind").value="cartoon";
+    if(raw.Type==="movie")$("#eType").value="Movie";
+    alUrl="https://www.imdb.com/title/"+raw.imdbID+"/";alScore=null;
+    $("#eType").dispatchEvent(new Event("change")); /* fires reSrc → pullComm detects the IMDb id and fetches rating + poster */
+    $("#ePMsg").textContent="Filled in title, year and kind. Pulling the IMDb community rating…";
+  };
   $("#ePFind").onclick=async()=>{
     const q=cleanForSearch($("#eTitle").value||d.title);if(!q){$("#ePMsg").textContent="Type a title first.";return}
-    $("#ePMsg").textContent="Searching AniList + TVmaze…";$("#ePResults").innerHTML="";
-    const [al,tv]=await Promise.allSettled([alSearchList(q),tvmazeSearchList(q)]);
+    const hasKey=!!omdbKey();
+    $("#ePMsg").textContent=`Searching AniList + TVmaze${hasKey?" + IMDb":""}…`;$("#ePResults").innerHTML="";
+    const tasks=[alSearchList(q),tvmazeSearchList(q)];if(hasKey)tasks.push(omdbSearchList(q));
+    const res=await Promise.allSettled(tasks);const al=res[0],tv=res[1],om=res[2];
     const hits=[];
     if(al.status==="fulfilled")al.value.forEach(m=>{if(m&&m.coverImage&&m.coverImage.large)hits.push({poster:m.coverImage.large,title:m.title.english||m.title.romaji,sub:[m.format,m.seasonYear].filter(Boolean).join(" · "),badge:"AniList",src:"al",raw:m})});
     if(tv.status==="fulfilled")tv.value.forEach(s=>hits.push({poster:s.image.original||s.image.medium,title:s.name,sub:[s.type,s.premiered?String(s.premiered).slice(0,4):""].filter(Boolean).join(" · "),badge:"TVmaze",src:"tv",raw:s}));
+    if(om&&om.status==="fulfilled")om.value.forEach(s=>{if(s&&s.Poster&&s.Poster!=="N/A")hits.push({poster:s.Poster,title:s.Title,sub:[s.Type,s.Year].filter(Boolean).join(" · "),badge:"IMDb",src:"om",raw:s})});
     if(!hits.length){
-      const bothFailed=al.status!=="fulfilled"&&tv.status!=="fulfilled";
-      $("#ePMsg").textContent=bothFailed?"Couldn't reach AniList or TVmaze. Check your connection and try again.":"No matches found. Try the exact title, or a shorter version of it.";
+      const allFailed=al.status!=="fulfilled"&&tv.status!=="fulfilled"&&(!om||om.status!=="fulfilled");
+      $("#ePMsg").textContent=allFailed?"Couldn't reach the databases. Check your connection and try again.":"No matches found. Try the exact title, or a shorter version of it.";
       return;
     }
     $("#ePMsg").textContent="Tap the right one — it fills in the details too:";
     $("#ePResults").innerHTML=hits.map((h,i)=>`<button type="button" data-pi="${i}"><img src="${esc(h.poster)}" alt="" referrerpolicy="no-referrer"><span>${esc(h.title)}</span><small>${esc([h.badge,h.sub].filter(Boolean).join(" · "))}</small></button>`).join("");
-    $("#ePResults").onclick=e=>{const b=e.target.closest("[data-pi]");if(!b)return;const h=hits[+b.dataset.pi];poster=h.poster;alUrl=(h.src==="al"?h.raw.siteUrl:h.raw.url)||null;drawP();if(h.src==="al")applyAniList(h.raw);else applyTvmaze(h.raw);$("#ePResults").innerHTML="";};
+    $("#ePResults").onclick=e=>{const b=e.target.closest("[data-pi]");if(!b)return;const h=hits[+b.dataset.pi];poster=h.poster;alUrl=(h.src==="al"?h.raw.siteUrl:(h.src==="om"?("https://www.imdb.com/title/"+h.raw.imdbID+"/"):h.raw.url))||null;drawP();if(h.src==="al")applyAniList(h.raw);else if(h.src==="om")applyOmdb(h.raw);else applyTvmaze(h.raw);$("#ePResults").innerHTML="";};
   };
   const drawGuard=()=>{
     const g=$("#sGuard"),add=$("#eSAdd");if(!g||!add)return;
@@ -2162,6 +2187,12 @@ async function tvmazeSearchList(q){
   return (arr||[]).map(x=>x&&x.show).filter(s=>s&&s.image&&(s.image.original||s.image.medium)).slice(0,8);
 }
 function tvmazeIdFromUrl(u){const m=String(u||"").match(/tvmaze\.com\/shows\/(\d+)/);return m?+m[1]:null}
+/* OMDb — for animated MOVIES (and anything AniList/TVmaze can't match). Needs a free key (More → Movie ratings key),
+   stored only in this browser. imdbRating is already 0–10. */
+function omdbKey(){return (lsGet("celarchive.omdbKey")||"").trim()}
+function imdbIdFromUrl(u){const m=String(u||"").match(/(tt\d{5,})/);return m?m[1]:null}
+async function omdbGet(id){const k=omdbKey();if(!k)return null;const r=await fetch(`https://www.omdbapi.com/?apikey=${encodeURIComponent(k)}&i=${encodeURIComponent(id)}`);if(!r.ok)throw new Error("omdb "+r.status);const j=await r.json();return (j&&j.Response!=="False")?j:null;}
+async function omdbSearchList(q,type){const k=omdbKey();if(!k)return [];const r=await fetch(`https://www.omdbapi.com/?apikey=${encodeURIComponent(k)}&s=${encodeURIComponent(q)}${type?`&type=${type}`:""}`);if(!r.ok)throw new Error("omdb "+r.status);const j=await r.json();return (j&&j.Search)||[];}
 async function tvmazeGet(id){const r=await fetch(`https://api.tvmaze.com/shows/${id}`);if(!r.ok)throw new Error("tvmaze "+r.status);return r.json();}
 /* TVmaze seasons → the app's season-chain shape [{year,month}], ordered by season number */
 async function tvmazeSeasons(id){
@@ -2239,8 +2270,9 @@ async function refreshCommScores(manual){
     const pool=items().filter(x=>x&&x.id&&x.alUrl&&x.alScore==null&&(manual||!x.alScoreTried)&&!x._example);
     const alTodo=pool.filter(x=>alIdFromUrl(x.alUrl)).slice(0,manual?700:150);
     const tvTodo=pool.filter(x=>!alIdFromUrl(x.alUrl)&&tvmazeIdFromUrl(x.alUrl)).slice(0,manual?400:60);
-    if(!alTodo.length&&!tvTodo.length){if(manual)toast("Every linked title already has a community score.");return}
-    const total=alTodo.length+tvTodo.length;
+    const omTodo=omdbKey()?pool.filter(x=>!alIdFromUrl(x.alUrl)&&!tvmazeIdFromUrl(x.alUrl)&&imdbIdFromUrl(x.alUrl)).slice(0,manual?400:40):[];
+    if(!alTodo.length&&!tvTodo.length&&!omTodo.length){if(manual)toast("Every linked title already has a community score.");return}
+    const total=alTodo.length+tvTodo.length+omTodo.length;
     let changed=false,got=0,done=0;
     const mark=(it,as)=>{const cur=store.items.get(it.id);if(!cur)return;cur.alScore=(as!=null?as:null);cur.alScoreTried=true;store.items.set(cur.id,cur);changed=true;if(as!=null)got++;};
     // AniList — batched by id (averageScore is 0–100)
@@ -2259,6 +2291,14 @@ async function refreshCommScores(manual){
       const it=tvTodo[i];
       if(manual&&i%5===0)toast(`Pulling community scores… ${done} of ${total}`);
       try{const sh=await tvmazeGet(tvmazeIdFromUrl(it.alUrl));const rr=sh&&sh.rating&&sh.rating.average;mark(it,rr!=null?Math.round(rr*10)/10:null);}catch(e){}
+      done++;
+      await sleep(manual?260:500);
+    }
+    // OMDb — one call per title (imdbRating is already 0–10)
+    for(let i=0;i<omTodo.length;i++){
+      const it=omTodo[i];
+      if(manual&&i%5===0)toast(`Pulling community scores… ${done} of ${total}`);
+      try{const j=await omdbGet(imdbIdFromUrl(it.alUrl));const rr=(j&&j.imdbRating&&j.imdbRating!=="N/A")?parseFloat(j.imdbRating):null;mark(it,(rr!=null&&!isNaN(rr))?Math.round(rr*10)/10:null);}catch(e){}
       done++;
       await sleep(manual?260:500);
     }
