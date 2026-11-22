@@ -1384,7 +1384,8 @@ function openEdit(it){
         let j=null;
         if(imid){j=await omdbGet(imid);}
         else{const list=await omdbSearchList(titleQ,"movie");const hit=list&&list[0];if(hit&&hit.imdbID)j=await omdbGet(hit.imdbID);}
-        if(j){const rr=(j.imdbRating&&j.imdbRating!=="N/A")?parseFloat(j.imdbRating):null;if(rr!=null&&!isNaN(rr))as10=rr;if(j.imdbID)foundUrl="https://www.imdb.com/title/"+j.imdbID+"/";if(j.Poster&&j.Poster!=="N/A")foundPoster=j.Poster;}
+        if(j){const rr=(j.imdbRating&&j.imdbRating!=="N/A")?parseFloat(j.imdbRating):null;if(rr!=null&&!isNaN(rr))as10=rr;if(j.imdbID)foundUrl="https://www.imdb.com/title/"+j.imdbID+"/";if(j.Poster&&j.Poster!=="N/A")foundPoster=j.Poster;
+          if(j.Genre&&j.Genre!=="N/A"&&myReq===commReq){let added=0;alGenresToApp(j.Genre.split(",").map(s=>s.trim()).filter(g=>g&&!/^(animation|family|short)$/i.test(g))).forEach(g=>{if(!genres.includes(g)){genres.push(g);added++}});if(added&&typeof drawG==="function")drawG();}}
       } else {
         if(alid){const j=await alQuery(`query($id:Int){Media(id:$id){averageScore siteUrl}}`,{id:alid});const md=j&&j.data&&j.data.Media;if(md){if(md.averageScore!=null)as10=md.averageScore/10;if(md.siteUrl)foundUrl=md.siteUrl;}}
         else{const list=await alSearchList(titleQ);const m=list&&list[0];if(m){if(m.averageScore!=null)as10=m.averageScore/10;if(m.siteUrl)foundUrl=m.siteUrl;}}
