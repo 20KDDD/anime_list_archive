@@ -675,6 +675,7 @@ function viewItems(){
 /* ---------- render ---------- */
 /* ---------- counting mode: franchise (original) vs MAL style ---------- */
 function countMode(){return lsGet("celarchive.countMode")==="mal"?"mal":"franchise"}
+function bandKind(){return lsGet("celarchive.bandKind")||"all"}
 function malStatusOf(fr){return ({completed:"completed",watching:"watching",plan:"plan",on_hold:"on_hold",unfinished:"on_hold",dropped:"dropped"})[fr]||"plan"}
 /* turn franchise titles into MAL-style entries: each season/OVA/movie is its own entry */
 function malEntries(src){
@@ -736,11 +737,15 @@ function renderBand(){
   if(!bar){
     bar=document.createElement("div");bar.className="modebar";bar.id="modeBar";
     const band=$("#band");band.parentNode.insertBefore(bar,band);
-    bar.addEventListener("click",e=>{const b=e.target.closest("[data-mode]");if(!b)return;lsSet("celarchive.countMode",b.dataset.mode);renderBand()});
+    bar.addEventListener("click",e=>{const m=e.target.closest("[data-mode]");if(m){lsSet("celarchive.countMode",m.dataset.mode);renderBand();return}const k=e.target.closest("[data-bandkind]");if(k){lsSet("celarchive.bandKind",k.dataset.bandkind);renderBand()}});
   }
-  const mode=countMode();
-  bar.innerHTML=`<span class="modelbl">Counting</span><div class="modeseg"><button data-mode="franchise" aria-pressed="${mode!=="mal"}">Series</button><button data-mode="mal" aria-pressed="${mode==="mal"}">MAL style</button></div><span class="modehint">${mode==="mal"?"Each season, OVA and movie counted as its own entry, MAL-style.":"Your original tracking — one card per series, seasons nested inside."}</span>`;
-  const src=isExampleMode()?EXAMPLES:items();
+  const mode=countMode(), bk0=bandKind();
+  const KSEG=[["all","All"],["anime","Anime"],["cartoon","Cartoon"]];
+  const kseg=`<div class="modeseg">${KSEG.map(([k,l])=>`<button data-bandkind="${k}" aria-pressed="${bk0===k}">${l}</button>`).join("")}</div>`;
+  bar.innerHTML=`<span class="modelbl">Counting</span><div class="modeseg"><button data-mode="franchise" aria-pressed="${mode!=="mal"}">Series</button><button data-mode="mal" aria-pressed="${mode==="mal"}">MAL style</button></div><span class="modelbl">Type</span>${kseg}<span class="modehint">${mode==="mal"?"Each season, OVA and movie counted as its own entry, MAL-style.":"Your original tracking — one card per series, seasons nested inside."}${bk0!=="all"?` · showing ${bk0} only`:""}</span>`;
+  let src=isExampleMode()?EXAMPLES:items();
+  const bk=bandKind();
+  if(bk!=="all")src=src.filter(x=>x.kind===bk);
   if(mode==="mal"){renderBandMal(src);return}
   const SEEN=["completed","unfinished","dropped","watching","on_hold"];
   const done=src.filter(x=>x.status==="completed");
