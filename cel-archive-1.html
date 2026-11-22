@@ -531,8 +531,13 @@ const KINDS=[
   {k:"anime",label:"Anime"},
   {k:"donghua",label:"Donghua (dongman)"},
   {k:"cartoon",label:"Cartoon"},
+  {k:"disney",label:"Disney Movie"},
+  {k:"dreamworks",label:"Dreamworks"},
+  {k:"superhero",label:"Superhero Cartoon"},
   {k:"aeni",label:"Aeni (Korean)"},
   {k:"other",label:"Other animation"}];
+/* Western-animation kinds share the TVmaze (series) / OMDb (movie) data sources */
+const WESTERN_KINDS=["cartoon","disney","dreamworks","superhero"];
 const KIND_LABEL=Object.fromEntries(KINDS.map(s=>[s.k,s.label]));
 const TYPES=["TV","Movie","OVA","ONA","Special","Short","Web series"];
 const GENRES=["Action","Adventure","Comedy","Drama","Fantasy","Romance","Sci-Fi","Slice of Life","Mystery","Horror","Thriller","Psychological","Supernatural","Sports","Mecha","Music","Isekai","Historical","Martial Arts","Military","School","Space","Detective","Vampire","Parody","Family","Kids","Harem","Ecchi","Iyashikei","Mahou Shoujo","Idol","Yuri","Yaoi (BL)","Gore","Cultivation","Wuxia","Xianxia"];
@@ -1352,7 +1357,7 @@ function openEdit(it){
     sheet.querySelectorAll("#scorePick button").forEach(x=>x.setAttribute("aria-pressed",String(+x.dataset.s===score)));hint()};
   /* Pull the community score from the source that matches the kind (AniList for anime, TVmaze for cartoons).
      Re-runs when the Kind dropdown changes, so switching cartoon↔anime re-pulls from the right database. */
-  const srcFor=(k,t)=>(k==="cartoon"&&t==="Movie")?"om":(k==="cartoon"?"tv":"al");
+  const srcFor=(k,t)=>WESTERN_KINDS.includes(k)?(t==="Movie"?"om":"tv"):"al";
   const SRCNAME={al:"AniList",tv:"TVmaze",om:"IMDb"};
   let commReq=0;
   const pullComm=async(forceSrc)=>{
