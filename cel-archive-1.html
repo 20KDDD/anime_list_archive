@@ -85,8 +85,27 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;padding-
 .tab .dot{width:8px;height:8px;border-radius:50%}
 .tab[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .tab.review{border-style:dashed}
-.filters{display:grid;grid-template-columns:minmax(0,2fr) repeat(3,minmax(0,1fr));gap:8px;margin-bottom:16px}
-@media (max-width:700px){.filters{grid-template-columns:1fr 1fr}.filters .search{grid-column:1/-1}}
+.fbar{position:relative;display:flex;gap:8px;align-items:center;margin-bottom:16px}
+.fbar input{flex:1;min-width:0}
+.filtbtn{position:relative;flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--line);color:var(--ink);font:inherit;font-weight:700;font-size:13.5px;padding:9px 14px;border-radius:10px;cursor:pointer;white-space:nowrap}
+.filtbtn:hover{border-color:var(--muted)}
+.filtbtn.open{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.filtbtn .fbadge{min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--gold,#F5C542);color:#2a1e02;font-size:11px;font-weight:800;display:none;align-items:center;justify-content:center}
+.filtbtn.has .fbadge{display:inline-flex}
+.fclear{flex:0 0 auto;background:transparent;border:none;color:var(--muted);font:inherit;font-size:12.5px;text-decoration:underline;cursor:pointer;display:none}
+.fclear.show{display:inline}
+.filtersheet{display:grid;grid-template-columns:minmax(0,2fr) repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}
+.filtersheet.floating{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:40;display:none;grid-template-columns:1fr 1fr;gap:11px 10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 40px rgba(0,0,0,.5);padding:13px;max-height:66vh;overflow:auto;margin-top:0}
+.filtersheet.floating.open{display:grid}
+.filtscrim{position:fixed;inset:0;z-index:28;display:none}
+.filtscrim.on{display:block}
+@media (max-width:760px){
+  .filters{grid-column:auto}
+  .filtersheet:not(.floating){grid-template-columns:1fr 1fr}
+  /* rail + search/filters bar follow on scroll */
+  .rail{position:sticky;top:0;z-index:30;background:var(--bg)}
+  .fbar{position:sticky;top:var(--railH,56px);z-index:29;background:var(--bg);padding:8px 0}
+}
 /* stats & taste collapsible */
 .statsToggle{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 14px;font-weight:600;font-size:13.5px;color:var(--ink);margin-bottom:14px;font-family:inherit}
 .statsToggle:hover{border-color:var(--muted)}
@@ -114,7 +133,7 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;padding-
 .bubble[aria-pressed="true"] .bn{color:#4a3700}
 @media (max-width:760px){
   .libwrap{display:block}
-  .rail{position:static;flex:none;flex-direction:row;align-items:center;overflow-x:auto;gap:6px;margin-bottom:14px;scrollbar-width:none;padding:10px}
+  .rail{position:sticky;top:0;z-index:30;background:var(--bg);flex:none;flex-direction:row;align-items:center;overflow-x:auto;gap:6px;margin-bottom:0;scrollbar-width:none;padding:10px 10px 8px}
   .rail::-webkit-scrollbar{display:none}
   .railSec{display:flex;align-items:center;gap:6px;flex:0 0 auto}
   .railSec+.railSec{margin-top:0;border-left:1px solid var(--line);padding-left:8px}
@@ -490,11 +509,14 @@ button.tcard{font:inherit;color:inherit;text-align:left;cursor:pointer;position:
     <nav class="rail" id="rail" aria-label="Browse library"></nav>
     <div class="libmain">
       <div class="subbubbles" id="subBubbles" hidden aria-label="Cartoon subcategories"></div>
-      <div class="filters">
-        <div class="field search"><label for="fq">Search</label><input type="search" id="fq" placeholder="Title, genre, or rating (10, 9 8…)"></div>
+        <div class="fbar">
+          <input type="search" id="fq" placeholder="Search by title or genre" aria-label="Search titles">
+          <button type="button" class="filtbtn" id="filtBtn" aria-expanded="false" aria-controls="filterSheet">Filters <span class="fbadge" id="filtBadge">0</span></button>
+          <button type="button" class="fclear" id="filtClear">Clear</button>
+          <div class="filtersheet floating" id="filterSheet">
         <div class="field"><label for="fgenre">Genre</label><select id="fgenre"></select></div>
         <div class="field"><label for="fdemo">Demographic</label><select id="fdemo"></select></div>
-        <div class="field"><label for="frating">Rating</label><select id="frating">
+        <div class="field"><label for="frating">My score</label><select id="frating">
           <option value="">All ratings</option>
           <option value="10">10</option>
           <option value="9">9</option>
@@ -508,6 +530,21 @@ button.tcard{font:inherit;color:inherit;text-align:left;cursor:pointer;position:
           <option value="1">1</option>
           <option value="none">Unrated</option>
         </select></div>
+        <div class="field"><label for="ffan">Fan score</label><select id="ffan">
+          <option value="">All fan scores</option>
+          <option value="10">10</option>
+          <option value="9">9</option>
+          <option value="8">8</option>
+          <option value="7">7</option>
+          <option value="6">6</option>
+          <option value="5">5</option>
+          <option value="4">4</option>
+          <option value="3">3</option>
+          <option value="2">2</option>
+          <option value="1">1</option>
+          <option value="none">No fan score</option>
+        </select></div>
+        <div class="field"><label for="fyear">Release year</label><select id="fyear"><option value="">All years</option></select></div>
         <div class="field"><label for="fsort">Sort</label><select id="fsort">
           <option value="updated">Recently updated</option>
           <option value="title">Title A–Z</option>
@@ -517,7 +554,8 @@ button.tcard{font:inherit;color:inherit;text-align:left;cursor:pointer;position:
           <option value="year_asc">Release year, oldest</option>
           <option value="watched">Year watched, newest</option>
         </select></div>
-      </div>
+          </div>
+        </div>
       <div id="bannerSlot"></div>
       <div id="grid" class="grid"></div>
       <div id="emptySlot"></div>
@@ -671,7 +709,7 @@ function errMsg(e){
 function setSync(cls,txt){const s=$("#sync");s.className="sync "+cls;s.textContent=txt}
 
 /* ---------- state + filters ---------- */
-const state={status:"all",q:"",kind:"",sub:"",format:"",genre:"",demo:"",rating:"",sort:lsGet("celarchive.sort")||"updated"};
+const state={status:"all",q:"",kind:"",sub:"",format:"",genre:"",demo:"",rating:"",fan:"",year:"",sort:lsGet("celarchive.sort")||"updated"};
 $("#fsort").value=state.sort;
 
 function items(){return [...store.items.values()]}
@@ -702,7 +740,6 @@ function parseRatingQuery(q){
 function viewItems(){
   let list=isExampleMode()?EXAMPLES.map(x=>({...x,_example:true})):items();
   const q=state.q.trim().toLowerCase();
-  const ratingQ=q?parseRatingQuery(q):null;
   if(state.status==="hidden"&&!hiddenUnlocked)return [];
   list=list.filter(it=>{
     if(state.status==="hidden"){ if(!it.hidden)return false; }
@@ -719,10 +756,9 @@ function viewItems(){
     if(state.genre&&!(it.genres||[]).includes(state.genre))return false;
     if(state.demo&&it.demo!==state.demo)return false;
     if(state.rating){ if(state.rating==="none"){ if(it.score!=null)return false } else if(it.score==null||Math.round(it.score)!==+state.rating)return false }
-    if(q){
-      if(ratingQ){ if(it.score==null||!ratingQ[Math.round(it.score)])return false; }
-      else { const hay=[DEMO_LABEL[it.demo],it.title,it.altTitle,it.notes,(it.genres||[]).join(" "),it.year,KIND_LABEL[it.kind]].join(" ").toLowerCase();if(!hay.includes(q))return false }
-    }
+    if(state.fan){ if(state.fan==="none"){ if(it.alScore!=null)return false } else if(it.alScore==null||Math.round(it.alScore)!==+state.fan)return false }
+    if(state.year){ if(state.year==="none"){ if(it.year!=null)return false } else if(String(it.year)!==state.year)return false }
+    if(q){ const hay=[DEMO_LABEL[it.demo],it.title,it.altTitle,it.notes,(it.genres||[]).join(" "),it.year,KIND_LABEL[it.kind]].join(" ").toLowerCase();if(!hay.includes(q))return false }
     return true;
   });
   const by={
@@ -1023,11 +1059,19 @@ function renderSelects(){
   const src=items();
   const dsel=$("#fdemo");dsel.innerHTML=`<option value="">All</option>`+DEMOS.map(x=>`<option value="${x.k}">${x.label}</option>`).join("");dsel.value=state.demo;
   $("#frating").value=state.rating;
+  const ff=$("#ffan");if(ff)ff.value=state.fan;
   const g=$("#fgenre");
   const used=new Set();src.forEach(x=>(x.genres||[]).forEach(z=>used.add(z)));
   const list=[...new Set([...GENRES.filter(x=>used.has(x)),...[...used].sort()])];
   g.innerHTML=`<option value="">All genres</option>`+(list.length?list:GENRES).map(x=>`<option>${esc(x)}</option>`).join("");
   g.value=state.genre;
+  const yy=$("#fyear");
+  if(yy){
+    const years=[...new Set(src.map(x=>x.year).filter(v=>v!=null))].sort((a,b)=>b-a);
+    const hasNoYear=src.some(x=>x.year==null);
+    yy.innerHTML=`<option value="">All years</option>`+years.map(y=>`<option value="${y}">${y}</option>`).join("")+(hasNoYear?`<option value="none">No year set</option>`:"");
+    yy.value=state.year;
+  }
 }
 function posterGrad(seed){let s=String(seed||""),h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;const a=200+(h%150),b=a+34;return `linear-gradient(150deg,hsl(${a} 45% 30%),hsl(${b} 55% 44%))`}
 function aoBase(k){return k?String(k).split("#")[0]:null}
@@ -1203,13 +1247,15 @@ function render(){
   renderBand();renderTaste();renderAoty();renderRail();renderSelects();
   const list=viewItems();
   $("#bannerSlot").innerHTML=isExampleMode()?`<div class="banner"><p><b>Your library is empty.</b> The three cards below are examples so you can see how entries look. Add a title, or paste your Google Doc list into Bulk import. Everything saves in this browser, so download a backup from More now and then.</p><button class="btn primary sm" id="bannerBulk">Bulk import</button></div>`:(state.status==="hidden"?`<div class="banner"><p><b>Hidden titles.</b> These stay out of the rest of your library. Open one and uncheck <b>“Hide from library”</b> in its editor to bring it back.</p></div>`:"");
-  const vk=[state.status,state.q,state.kind,state.sub,state.format,state.genre,state.demo,state.rating,state.sort].join("|");
+  const vk=[state.status,state.q,state.kind,state.sub,state.format,state.genre,state.demo,state.rating,state.fan,state.year,state.sort].join("|");
   if(vk!==lastViewKey){shownCount=PAGE_SIZE;lastViewKey=vk}
   $("#grid").innerHTML=list.slice(0,shownCount).map(cardHTML).join("");
   const left=list.length-shownCount;
   $("#moreSlot").innerHTML=left>0?`<div class="more"><button type="button" class="btn" id="btnMore">Load ${Math.min(PAGE_SIZE,left)} more</button><span class="help">Showing ${shownCount} of ${list.length}</span></div>`:"";
   $("#emptySlot").innerHTML=list.length?"":`<div class="empty">${state.status==="fav"&&!state.q&&!state.kind&&!state.genre&&!state.demo?"No favorites yet. Tap the ♡ on any card to add one.":"Nothing matches these filters."}</div>`;
   const bb=$("#bannerBulk");if(bb)bb.onclick=openBulk;
+  if(window.updateFilterChrome)window.updateFilterChrome();
+  if(window.setRailH)window.setRailH();
 }
 
 /* ---------- events: Anime of the Year ---------- */
@@ -1252,7 +1298,28 @@ let qTimer;$("#fq").addEventListener("input",e=>{clearTimeout(qTimer);qTimer=set
 $("#fgenre").addEventListener("change",e=>{state.genre=e.target.value;render()});
 $("#fdemo").addEventListener("change",e=>{state.demo=e.target.value;render()});
 $("#frating").addEventListener("change",e=>{state.rating=e.target.value;render()});
+$("#ffan").addEventListener("change",e=>{state.fan=e.target.value;render()});
+$("#fyear").addEventListener("change",e=>{state.year=e.target.value;render()});
 $("#fsort").addEventListener("change",e=>{state.sort=e.target.value;lsSet("celarchive.sort",state.sort);render()});
+/* ---- sticky filter sheet: toggle, badge, clear, outside-close ---- */
+(function(){
+  const btn=$("#filtBtn"),sheet=$("#filterSheet"),badge=$("#filtBadge"),clear=$("#filtClear");
+  if(!btn||!sheet)return;
+  const scrim=document.createElement("div");scrim.className="filtscrim";document.body.appendChild(scrim);
+  const openSheet=o=>{sheet.classList.toggle("open",o);btn.classList.toggle("open",o);btn.setAttribute("aria-expanded",String(o));scrim.classList.toggle("on",o);};
+  const activeCount=()=>["genre","demo","rating","fan","year"].filter(k=>state[k]).length;
+  window.updateFilterChrome=()=>{const n=activeCount();badge.textContent=n;btn.classList.toggle("has",n>0);clear.classList.toggle("show",n>0);};
+  btn.onclick=()=>openSheet(!sheet.classList.contains("open"));
+  scrim.onclick=()=>openSheet(false);
+  /* picking any dropdown closes the sheet and refreshes the badge */
+  sheet.addEventListener("change",()=>{updateFilterChrome();openSheet(false);});
+  clear.onclick=()=>{state.genre="";state.demo="";state.rating="";state.fan="";state.year="";updateFilterChrome();openSheet(false);render();};
+  updateFilterChrome();
+  /* keep the filters bar pinned just under the rail on phones */
+  window.setRailH=()=>{const r=$("#rail");if(r)document.documentElement.style.setProperty("--railH",Math.round(r.getBoundingClientRect().height)+"px");};
+  window.setRailH();window.addEventListener("resize",window.setRailH);
+  window.addEventListener("orientationchange",()=>setTimeout(window.setRailH,150));
+})();
 $("#grid").addEventListener("click",async e=>{
   const fv=e.target.closest("[data-fav]");
   if(fv){e.stopPropagation();const it=store.items.get(fv.dataset.fav);if(!it)return;
