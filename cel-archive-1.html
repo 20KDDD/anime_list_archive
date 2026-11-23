@@ -87,7 +87,7 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;padding-
 .tab.review{border-style:dashed}
 .fbar{position:relative;display:flex;gap:8px;align-items:center;margin-bottom:16px}
 .fbar input{flex:1;min-width:0}
-.filtbtn{position:relative;flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--line);color:var(--ink);font:inherit;font-weight:700;font-size:13.5px;padding:9px 14px;border-radius:10px;cursor:pointer;white-space:nowrap}
+.filtbtn{position:relative;flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--line);color:var(--ink);font:inherit;font-weight:700;font-size:13.5px;padding:9px 14px;border-radius:10px;cursor:pointer;white-space:nowrap;transition:background .18s ease,border-color .18s ease,color .18s ease}
 .filtbtn:hover{border-color:var(--muted)}
 .filtbtn.open{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .filtbtn .fbadge{min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--gold,#F5C542);color:#2a1e02;font-size:11px;font-weight:800;display:none;align-items:center;justify-content:center}
@@ -95,16 +95,18 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;padding-
 .fclear{flex:0 0 auto;background:transparent;border:none;color:var(--muted);font:inherit;font-size:12.5px;text-decoration:underline;cursor:pointer;display:none}
 .fclear.show{display:inline}
 .filtersheet{display:grid;grid-template-columns:minmax(0,2fr) repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}
-.filtersheet.floating{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:40;display:none;grid-template-columns:1fr 1fr;gap:11px 10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 40px rgba(0,0,0,.5);padding:13px;max-height:66vh;overflow:auto;margin-top:0}
-.filtersheet.floating.open{display:grid}
-.filtscrim{position:fixed;inset:0;z-index:28;display:none}
-.filtscrim.on{display:block}
+.filtersheet.floating{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:40;display:grid;grid-template-columns:1fr 1fr;gap:11px 10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 40px rgba(0,0,0,.5);padding:13px;max-height:66vh;overflow:auto;margin-top:0;
+  opacity:0;visibility:hidden;transform:translateY(-8px) scale(.985);transform-origin:top right;pointer-events:none;
+  transition:opacity .2s ease,transform .22s cubic-bezier(.22,1,.36,1),visibility .22s}
+.filtersheet.floating.open{opacity:1;visibility:visible;transform:none;pointer-events:auto}
+.filtscrim{position:fixed;inset:0;z-index:28;display:block;opacity:0;visibility:hidden;transition:opacity .2s ease,visibility .2s}
+.filtscrim.on{opacity:1;visibility:visible}
 @media (max-width:760px){
   .filters{grid-column:auto}
   .filtersheet:not(.floating){grid-template-columns:1fr 1fr}
   /* rail + search/filters bar follow on scroll */
   .rail{position:sticky;top:0;z-index:30;background:var(--bg)}
-  .fbar{position:sticky;top:var(--railH,56px);z-index:29;background:var(--bg);padding:8px 0}
+  .fbar{position:sticky;top:var(--railH,56px);z-index:29;background:transparent;padding:0}
 }
 /* stats & taste collapsible */
 .statsToggle{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 14px;font-weight:600;font-size:13.5px;color:var(--ink);margin-bottom:14px;font-family:inherit}
@@ -133,7 +135,7 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;padding-
 .bubble[aria-pressed="true"] .bn{color:#4a3700}
 @media (max-width:760px){
   .libwrap{display:block}
-  .rail{position:sticky;top:0;z-index:30;background:var(--bg);flex:none;flex-direction:row;align-items:center;overflow-x:auto;gap:6px;margin-bottom:0;scrollbar-width:none;padding:10px 10px 8px}
+  .rail{position:sticky;top:0;z-index:30;background:var(--surface);border:1px solid var(--line);border-radius:14px;flex:none;flex-direction:row;align-items:center;overflow-x:auto;gap:6px;margin-bottom:14px;scrollbar-width:none;padding:10px;scroll-behavior:smooth}
   .rail::-webkit-scrollbar{display:none}
   .railSec{display:flex;align-items:center;gap:6px;flex:0 0 auto}
   .railSec+.railSec{margin-top:0;border-left:1px solid var(--line);padding-left:8px}
