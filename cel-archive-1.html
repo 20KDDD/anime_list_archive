@@ -68,7 +68,9 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;padding-
 .stat .s{font-size:12px;color:var(--muted)}
 .hist{background:var(--surface);padding:12px 16px 10px;display:flex;flex-direction:column;gap:6px;min-width:0}
 .hist .bars{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;align-items:end;height:74px}
-.hist .bar{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;gap:2px}
+.hist .bar{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;gap:2px;background:none;border:none;padding:0;font:inherit}
+.hist .bar.click{cursor:pointer}
+.hist .bar.click:hover b{opacity:1;filter:brightness(1.12)}
 .hist .bar span{font-family:var(--mono);font-size:10px;color:var(--muted);line-height:1}
 .hist .bar b{display:block;width:100%;border-radius:3px 3px 1px 1px;background:var(--accent);min-height:2px;opacity:.85}
 .hist .bar b.zero{background:var(--line);opacity:1}
@@ -876,8 +878,10 @@ function renderBand(){
   const distArr=distMode==="fan"?fanScored:scored;
   const distVal=distMode==="fan"?(x=>x.alScore):(x=>x.score);
   const distMean=distMode==="fan"?fanMean:mean;
-  const counts=Array.from({length:10},(_,i)=>distArr.filter(x=>Math.round(distVal(x))===i+1).length);
+  const bucketItems=Array.from({length:10},(_,i)=>distArr.filter(x=>Math.round(distVal(x))===i+1).sort((a,b)=>(b.score||0)-(a.score||0)||String(a.title).localeCompare(String(b.title))));
+  const counts=bucketItems.map(a=>a.length);
   const max=Math.max(1,...counts);
+  BAND_SETS={};bucketItems.forEach((list,i)=>{if(list.length)BAND_SETS[i+1]={title:(distMode==="fan"?"Community rated ":"You rated ")+(i+1)+" ("+list.length+")",items:list};});
   const tile=(k,v,sub,cls)=>`<div class="stat${cls?" "+cls:""}"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${sub}</span></div>`;
   const kindTile=(label,k,extra)=>{const s=seen.filter(x=>kindMatch(x.kind,k)),c=by(s,"completed");return tile(label,c,`completed · ${s.length} seen${extra||""}`)};
   $("#band").innerHTML=
@@ -889,12 +893,13 @@ function renderBand(){
     tile("Other animation",other.filter(x=>x.status==="completed").length,`completed · ${other.length} seen`)+
     `<div class="hist" aria-label="Score distribution">
       <div class="histhead"><span class="k lbl">${distMode==="fan"?"Fan score distribution":"Your score distribution"}</span><span class="histright">${distMean!=null?`<span class="histmean">mean ${distMean.toFixed(2)}</span>`:""}${fanScored.length?`<span class="disttog"><button type="button" data-dist="mine" class="${distMode==="mine"?"on":""}">You</button><button type="button" data-dist="fan" class="${distMode==="fan"?"on":""}">Fans</button></span>`:""}</span></div>
-      <div class="bars">${counts.map(c=>`<div class="bar" title="${c} title(s)"><span>${c||""}</span><b class="${c?"":"zero"}${distMode==="fan"?" fan":""}" style="height:${c?Math.max(4,c/max*58):2}px"></b></div>`).join("")}</div>
+      <div class="bars">${counts.map((c,i)=>`<button type="button" class="bar${c?" click":""}"${c?` data-bucket="${i+1}"`:""} title="${c} title(s)" aria-label="${c} title(s) rated ${i+1}"><span>${c||""}</span><b class="${c?"":"zero"}${distMode==="fan"?" fan":""}" style="height:${c?Math.max(4,c/max*58):2}px"></b></button>`).join("")}</div>
       <div class="axis">${counts.map((_,i)=>`<span>${i+1}</span>`).join("")}</div>
       ${distMode==="fan"?`<p class="help" style="margin:6px 2px 0;grid-column:1/-1">How many of your ${fanScored.length} community-scored shows sit at each fan rating 1–10.</p>`:""}
     </div>`;
 }
 let TASTE_SETS={};
+let BAND_SETS={};
 function renderTaste(){
   const el=$("#taste");
   const src=isExampleMode()?EXAMPLES:items();
@@ -995,8 +1000,9 @@ function renderTaste(){
     <div class="gbars"><span class="k"><span>Genres in your ${recentlyAdded.length} most recently added titles</span><span>titles · share of recent additions</span></span>${recentGenreBars||`<p class="help" style="margin:4px 0">Add genres to recent titles to build this chart.</p>`}</div>`}`;
   $("#tasteTog").onclick=()=>{lsSet("celarchive.tasteHidden",hidden?"0":"1");renderTaste()};
 }
-function openSet(key){
-  const set=TASTE_SETS[key];if(!set)return;
+function openSet(key){const set=TASTE_SETS[key];if(set)openSetObj(set);}
+function openSetObj(set){
+  if(!set||!set.items||!set.items.length)return;
   openSheet(`<header><h2>${esc(set.title)}</h2><span class="mono" style="color:var(--muted);font-size:13px">${set.items.length} title${set.items.length===1?"":"s"}</span><button class="x" data-close aria-label="Close">×</button></header>
     <div class="body"><div class="dlist">${set.items.map(it=>`<button type="button" class="drow" data-id="${esc(it.id)}">
       ${it.poster?`<img src="${esc(it.poster)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'dph'}))">`:`<span class="dph"></span>`}
@@ -1308,7 +1314,8 @@ $("#rail").addEventListener("click",e=>{const b=e.target.closest("[data-axis]");
   render();});
 $("#subBubbles").addEventListener("click",e=>{const b=e.target.closest("[data-axis='sub']");if(!b)return;const v=b.dataset.val;
   state.sub=state.sub===v?"":v;render();});
-$("#band").addEventListener("click",e=>{const d=e.target.closest("[data-dist]");if(d){lsSet("celarchive.distMode",d.dataset.dist);renderBand();}});
+$("#band").addEventListener("click",e=>{const d=e.target.closest("[data-dist]");if(d){lsSet("celarchive.distMode",d.dataset.dist);renderBand();return;}
+  const bk=e.target.closest("[data-bucket]");if(bk){const s=BAND_SETS[bk.dataset.bucket];if(s)openSetObj(s);}});
 /* stats & taste collapsible */
 (function(){const t=$("#statsToggle"),box=$("#collapsibleStats");if(!t||!box)return;
   const set=open=>{box.hidden=!open;t.setAttribute("aria-expanded",String(open));t.innerHTML=(open?"▾":"▸")+" Stats &amp; taste";};
