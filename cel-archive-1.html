@@ -439,6 +439,14 @@ button.tcard{font:inherit;color:inherit;text-align:left;cursor:pointer;position:
 .menu .pop button{border:none;background:transparent;text-align:left;padding:9px 10px;border-radius:8px;font-size:14px}
 .menu .pop button:hover{background:var(--surface-2)}
 .menu .pop hr{border:none;border-top:1px solid var(--line);margin:4px 0}
+@media (max-width:760px){
+  /* keep the More menu fully on-screen on phones instead of spilling off the bottom */
+  .menu{position:static}
+  .menu .pop{position:fixed;left:12px;right:12px;top:auto;bottom:calc(12px + env(safe-area-inset-bottom));min-width:0;width:auto;
+    max-height:min(70vh,calc(100vh - 24px));overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px}
+  .menu .pop button{padding:13px 12px;font-size:15px}
+  .menu .pop::after{content:"";display:block;height:env(safe-area-inset-bottom)}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
