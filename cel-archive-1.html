@@ -972,9 +972,23 @@ function renderTaste(){
   recentGenres.forEach(x=>{sets["rg:"+x.k]={title:x.k+" · recently added",items:x.items}});
   const recentGenreBars=recentGenres.map(x=>`<button type="button" class="grow" data-set="${esc("rg:"+x.k)}" aria-label="Show recent titles tagged ${esc(x.k)}"><span class="gname">${esc(x.k)}</span><span class="gtrack"><b style="width:${x.n/recentGenreMax*100}%"></b></span><span class="gn">${x.n}</span><span class="ga">${Math.round(x.n/Math.max(1,recentlyAdded.length)*100)}%</span></button>`).join("");
   const bar=(key,name,n,mx,avg)=>`<button type="button" class="grow" data-set="${esc(key)}" aria-label="Show ${esc(name)} titles"><span class="gname">${esc(name)}</span><span class="gtrack"><b style="width:${n/mx*100}%"></b></span><span class="gn">${n}</span><span class="ga">${f1(avg)}</span></button>`;
+  /* ---- rating distributions: community score vs your score (whole-number buckets 1–10) ---- */
+  const fanRated=done.filter(x=>x.alScore!=null);
+  const yourRated2=done.filter(x=>x.score);
+  const bucketize=(arr,valFn)=>{const m={};for(let b=1;b<=10;b++)m[b]=[];arr.forEach(x=>{const b=Math.round(valFn(x));if(b>=1&&b<=10)m[b].push(x)});return m;};
+  const fanB=bucketize(fanRated,x=>x.alScore), yourB=bucketize(yourRated2,x=>x.score);
+  const fanMax=Math.max(1,...Object.keys(fanB).map(b=>fanB[b].length));
+  const yourMax=Math.max(1,...Object.keys(yourB).map(b=>yourB[b].length));
+  const avgOfField=(arr,field)=>{const v=arr.filter(x=>x[field]!=null);return v.length?v.reduce((t,x)=>t+x[field],0)/v.length:null};
+  const distBars=(prefix,buckets,mx,crossLabel,crossFn)=>{let rows="";for(let b=10;b>=1;b--){const list=buckets[b];if(!list.length)continue;const key=prefix+":"+b;sets[key]={title:(prefix==="fan"?"Community rated ":"You rated ")+b+(prefix==="fan"?" ("+list.length+")":""),items:[...list].sort(bySc)};rows+=`<button type="button" class="grow" data-set="${esc(key)}" aria-label="Show titles ${prefix==="fan"?"the community":"you"} rated ${b}"><span class="gname">${b}</span><span class="gtrack"><b style="width:${Math.max(3,list.length/mx*100)}%"></b></span><span class="gn">${list.length}</span><span class="ga">${f1(crossFn(list))}</span></button>`;}return rows;};
+  const fanBars=distBars("fan",fanB,fanMax,"your avg",list=>avgOfField(list,"score"));
+  const yourBars=distBars("you",yourB,yourMax,"community avg",list=>avgOfField(list,"alScore"));
+  const fanAvgAll=avgOfField(fanRated,"alScore"), yourAvgFan=avgOfField(fanRated,"score");
   TASTE_SETS=sets;
   el.innerHTML=`<div class="thead"><h2>Your taste</h2><button type="button" class="linkbtn" data-terms="demographics">What do these terms mean?</button><button type="button" id="tasteTog" aria-expanded="${!hidden}">${hidden?"Show":"Hide"}</button></div>
     ${hidden?"":`<p class="help" style="margin:0">Tap any block or bar to see the shows behind it.</p>${raterHTML}<div class="tcards">${cards}</div>
+    ${fanBars?`<div class="gbars"><span class="k"><span>Shows by community score${fanAvgAll!=null?` · their avg ${f1(fanAvgAll)}, yours ${f1(yourAvgFan)}`:""}</span><span>count · your avg</span></span>${fanBars}<p class="help" style="margin:6px 2px 0">How many of your ${fanRated.length} community-scored shows sit at each fan rating (1–10). The right number is your average score for them.</p></div>`:""}
+    ${yourBars?`<div class="gbars"><span class="k"><span>Shows by your score</span><span>count · community avg</span></span>${yourBars}<p class="help" style="margin:6px 2px 0">Your own score spread. The right number is the community's average for the shows you gave that score.</p></div>`:""}
     ${top.length?`<div class="gbars"><span class="k"><span>Genres you watch most</span><span>titles · avg</span></span>${top.map(x=>bar("bg:"+x.k,x.k,x.all.length,maxC,avgOf(x.sc))).join("")}</div>`:""}
     ${dl.length?`<div class="gbars"><span class="k"><span>Demographics you watch</span><span>titles · avg</span></span>${dl.map(x=>bar("bd:"+x.k,DEMO_LABEL[x.k],x.all.length,dl[0].all.length,avgOf(x.sc))).join("")}</div>`:""}
     <div class="gbars"><span class="k"><span>Genres in your ${recentlyAdded.length} most recently added titles</span><span>titles · share of recent additions</span></span>${recentGenreBars||`<p class="help" style="margin:4px 0">Add genres to recent titles to build this chart.</p>`}</div>`}`;
