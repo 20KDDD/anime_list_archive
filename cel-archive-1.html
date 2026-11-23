@@ -549,6 +549,7 @@ button.tcard{font:inherit;color:inherit;text-align:left;cursor:pointer;position:
         <div class="field"><label for="fyear">Release year</label><select id="fyear"><option value="">All years</option></select></div>
         <div class="field"><label for="fsort">Sort</label><select id="fsort">
           <option value="updated">Recently updated</option>
+          <option value="updated_asc">Least recently updated (untouched first)</option>
           <option value="title">Title A–Z</option>
           <option value="score">Score, high to low</option>
           <option value="score_asc">Score, low to high</option>
@@ -765,6 +766,7 @@ function viewItems(){
   });
   const by={
     updated:(a,b)=>(b.updatedAt||0)-(a.updatedAt||0),
+    updated_asc:(a,b)=>(a.updatedAt||0)-(b.updatedAt||0)||String(a.title).localeCompare(b.title),
     title:(a,b)=>String(a.title).localeCompare(String(b.title),undefined,{sensitivity:"base"}),
     score:(a,b)=>(b.score||0)-(a.score||0)||String(a.title).localeCompare(b.title),
     score_asc:(a,b)=>((a.score||Infinity)-(b.score||Infinity))||String(a.title).localeCompare(b.title),
@@ -1307,12 +1309,12 @@ $("#fsort").addEventListener("change",e=>{state.sort=e.target.value;lsSet("celar
 (function(){
   const btn=$("#filtBtn"),sheet=$("#filterSheet"),badge=$("#filtBadge"),clear=$("#filtClear");
   if(!btn||!sheet)return;
-  const scrim=document.createElement("div");scrim.className="filtscrim";document.body.appendChild(scrim);
-  const openSheet=o=>{sheet.classList.toggle("open",o);btn.classList.toggle("open",o);btn.setAttribute("aria-expanded",String(o));scrim.classList.toggle("on",o);};
+  const openSheet=o=>{sheet.classList.toggle("open",o);btn.classList.toggle("open",o);btn.setAttribute("aria-expanded",String(o));};
   const activeCount=()=>["genre","demo","rating","fan","year"].filter(k=>state[k]).length;
   window.updateFilterChrome=()=>{const n=activeCount();badge.textContent=n;btn.classList.toggle("has",n>0);clear.classList.toggle("show",n>0);};
-  btn.onclick=()=>openSheet(!sheet.classList.contains("open"));
-  scrim.onclick=()=>openSheet(false);
+  btn.onclick=e=>{e.stopPropagation();openSheet(!sheet.classList.contains("open"));};
+  /* close when tapping anywhere outside the search/filters bar */
+  document.addEventListener("click",e=>{if(sheet.classList.contains("open")&&!e.target.closest(".fbar"))openSheet(false);});
   /* picking any dropdown closes the sheet and refreshes the badge */
   sheet.addEventListener("change",()=>{updateFilterChrome();openSheet(false);});
   clear.onclick=()=>{state.genre="";state.demo="";state.rating="";state.fan="";state.year="";updateFilterChrome();openSheet(false);render();};
