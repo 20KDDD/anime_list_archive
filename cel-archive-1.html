@@ -72,6 +72,10 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;padding-
 .hist .bar span{font-family:var(--mono);font-size:10px;color:var(--muted);line-height:1}
 .hist .bar b{display:block;width:100%;border-radius:3px 3px 1px 1px;background:var(--accent);min-height:2px;opacity:.85}
 .hist .bar b.zero{background:var(--line);opacity:1}
+.hist .bar b.fan{background:var(--st-completed,#5C9BFF)}
+.disttog{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.disttog button{background:transparent;border:none;color:var(--muted);font:inherit;font-size:11px;font-weight:700;padding:4px 11px;cursor:pointer}
+.disttog button.on{background:var(--accent);color:var(--accent-ink)}
 .hist .axis{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;font-family:var(--mono);font-size:10.5px;color:var(--muted);text-align:center;border-top:1px solid var(--line);padding-top:3px}
 .band .hist{grid-column:1/-1}
 .stat.lead .v{color:var(--accent)}
@@ -862,7 +866,13 @@ function renderBand(){
   const scored=src.filter(x=>x.score);
   const mean=scored.length?(scored.reduce((a,b)=>a+b.score,0)/scored.length):null;
   const seasonsW=src.reduce((a,b)=>a+seasonsOf(b).filter(s=>s.watched).length,0);
-  const counts=Array.from({length:10},(_,i)=>scored.filter(x=>Math.round(x.score)===i+1).length);
+  const fanScored=src.filter(x=>x.alScore!=null);
+  const fanMean=fanScored.length?(fanScored.reduce((a,b)=>a+b.alScore,0)/fanScored.length):null;
+  const distMode=(lsGet("celarchive.distMode")==="fan"&&fanScored.length)?"fan":"mine";
+  const distArr=distMode==="fan"?fanScored:scored;
+  const distVal=distMode==="fan"?(x=>x.alScore):(x=>x.score);
+  const distMean=distMode==="fan"?fanMean:mean;
+  const counts=Array.from({length:10},(_,i)=>distArr.filter(x=>Math.round(distVal(x))===i+1).length);
   const max=Math.max(1,...counts);
   const tile=(k,v,sub,cls)=>`<div class="stat${cls?" "+cls:""}"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${sub}</span></div>`;
   const kindTile=(label,k,extra)=>{const s=seen.filter(x=>kindMatch(x.kind,k)),c=by(s,"completed");return tile(label,c,`completed · ${s.length} seen${extra||""}`)};
@@ -874,9 +884,10 @@ function renderBand(){
     kindTile("Cartoons","cartoon")+
     tile("Other animation",other.filter(x=>x.status==="completed").length,`completed · ${other.length} seen`)+
     `<div class="hist" aria-label="Score distribution">
-      <span class="k lbl" style="display:flex;justify-content:space-between;gap:8px"><span>Score distribution</span><span>${mean?"mean "+mean.toFixed(2):""}</span></span>
-      <div class="bars">${counts.map(c=>`<div class="bar" title="${c} title(s)"><span>${c||""}</span><b class="${c?"":"zero"}" style="height:${c?Math.max(4,c/max*58):2}px"></b></div>`).join("")}</div>
+      <span class="k lbl" style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span>${distMode==="fan"?"Fan score distribution":"Your score distribution"}</span><span style="display:flex;align-items:center;gap:8px">${distMean!=null?"mean "+distMean.toFixed(2):""}${fanScored.length?`<span class="disttog"><button type="button" data-dist="mine" class="${distMode==="mine"?"on":""}">You</button><button type="button" data-dist="fan" class="${distMode==="fan"?"on":""}">Fans</button></span>`:""}</span></span>
+      <div class="bars">${counts.map(c=>`<div class="bar" title="${c} title(s)"><span>${c||""}</span><b class="${c?"":"zero"}${distMode==="fan"?" fan":""}" style="height:${c?Math.max(4,c/max*58):2}px"></b></div>`).join("")}</div>
       <div class="axis">${counts.map((_,i)=>`<span>${i+1}</span>`).join("")}</div>
+      ${distMode==="fan"?`<p class="help" style="margin:6px 2px 0;grid-column:1/-1">How many of your ${fanScored.length} community-scored shows sit at each fan rating 1–10.</p>`:""}
     </div>`;
 }
 let TASTE_SETS={};
@@ -972,23 +983,9 @@ function renderTaste(){
   recentGenres.forEach(x=>{sets["rg:"+x.k]={title:x.k+" · recently added",items:x.items}});
   const recentGenreBars=recentGenres.map(x=>`<button type="button" class="grow" data-set="${esc("rg:"+x.k)}" aria-label="Show recent titles tagged ${esc(x.k)}"><span class="gname">${esc(x.k)}</span><span class="gtrack"><b style="width:${x.n/recentGenreMax*100}%"></b></span><span class="gn">${x.n}</span><span class="ga">${Math.round(x.n/Math.max(1,recentlyAdded.length)*100)}%</span></button>`).join("");
   const bar=(key,name,n,mx,avg)=>`<button type="button" class="grow" data-set="${esc(key)}" aria-label="Show ${esc(name)} titles"><span class="gname">${esc(name)}</span><span class="gtrack"><b style="width:${n/mx*100}%"></b></span><span class="gn">${n}</span><span class="ga">${f1(avg)}</span></button>`;
-  /* ---- rating distributions: community score vs your score (whole-number buckets 1–10) ---- */
-  const fanRated=done.filter(x=>x.alScore!=null);
-  const yourRated2=done.filter(x=>x.score);
-  const bucketize=(arr,valFn)=>{const m={};for(let b=1;b<=10;b++)m[b]=[];arr.forEach(x=>{const b=Math.round(valFn(x));if(b>=1&&b<=10)m[b].push(x)});return m;};
-  const fanB=bucketize(fanRated,x=>x.alScore), yourB=bucketize(yourRated2,x=>x.score);
-  const fanMax=Math.max(1,...Object.keys(fanB).map(b=>fanB[b].length));
-  const yourMax=Math.max(1,...Object.keys(yourB).map(b=>yourB[b].length));
-  const avgOfField=(arr,field)=>{const v=arr.filter(x=>x[field]!=null);return v.length?v.reduce((t,x)=>t+x[field],0)/v.length:null};
-  const distBars=(prefix,buckets,mx,crossLabel,crossFn)=>{let rows="";for(let b=10;b>=1;b--){const list=buckets[b];if(!list.length)continue;const key=prefix+":"+b;sets[key]={title:(prefix==="fan"?"Community rated ":"You rated ")+b+(prefix==="fan"?" ("+list.length+")":""),items:[...list].sort(bySc)};rows+=`<button type="button" class="grow" data-set="${esc(key)}" aria-label="Show titles ${prefix==="fan"?"the community":"you"} rated ${b}"><span class="gname">${b}</span><span class="gtrack"><b style="width:${Math.max(3,list.length/mx*100)}%"></b></span><span class="gn">${list.length}</span><span class="ga">${f1(crossFn(list))}</span></button>`;}return rows;};
-  const fanBars=distBars("fan",fanB,fanMax,"your avg",list=>avgOfField(list,"score"));
-  const yourBars=distBars("you",yourB,yourMax,"community avg",list=>avgOfField(list,"alScore"));
-  const fanAvgAll=avgOfField(fanRated,"alScore"), yourAvgFan=avgOfField(fanRated,"score");
   TASTE_SETS=sets;
   el.innerHTML=`<div class="thead"><h2>Your taste</h2><button type="button" class="linkbtn" data-terms="demographics">What do these terms mean?</button><button type="button" id="tasteTog" aria-expanded="${!hidden}">${hidden?"Show":"Hide"}</button></div>
     ${hidden?"":`<p class="help" style="margin:0">Tap any block or bar to see the shows behind it.</p>${raterHTML}<div class="tcards">${cards}</div>
-    ${fanBars?`<div class="gbars"><span class="k"><span>Shows by community score${fanAvgAll!=null?` · their avg ${f1(fanAvgAll)}, yours ${f1(yourAvgFan)}`:""}</span><span>count · your avg</span></span>${fanBars}<p class="help" style="margin:6px 2px 0">How many of your ${fanRated.length} community-scored shows sit at each fan rating (1–10). The right number is your average score for them.</p></div>`:""}
-    ${yourBars?`<div class="gbars"><span class="k"><span>Shows by your score</span><span>count · community avg</span></span>${yourBars}<p class="help" style="margin:6px 2px 0">Your own score spread. The right number is the community's average for the shows you gave that score.</p></div>`:""}
     ${top.length?`<div class="gbars"><span class="k"><span>Genres you watch most</span><span>titles · avg</span></span>${top.map(x=>bar("bg:"+x.k,x.k,x.all.length,maxC,avgOf(x.sc))).join("")}</div>`:""}
     ${dl.length?`<div class="gbars"><span class="k"><span>Demographics you watch</span><span>titles · avg</span></span>${dl.map(x=>bar("bd:"+x.k,DEMO_LABEL[x.k],x.all.length,dl[0].all.length,avgOf(x.sc))).join("")}</div>`:""}
     <div class="gbars"><span class="k"><span>Genres in your ${recentlyAdded.length} most recently added titles</span><span>titles · share of recent additions</span></span>${recentGenreBars||`<p class="help" style="margin:4px 0">Add genres to recent titles to build this chart.</p>`}</div>`}`;
@@ -1307,6 +1304,7 @@ $("#rail").addEventListener("click",e=>{const b=e.target.closest("[data-axis]");
   render();});
 $("#subBubbles").addEventListener("click",e=>{const b=e.target.closest("[data-axis='sub']");if(!b)return;const v=b.dataset.val;
   state.sub=state.sub===v?"":v;render();});
+$("#band").addEventListener("click",e=>{const d=e.target.closest("[data-dist]");if(d){lsSet("celarchive.distMode",d.dataset.dist);renderBand();}});
 /* stats & taste collapsible */
 (function(){const t=$("#statsToggle"),box=$("#collapsibleStats");if(!t||!box)return;
   const set=open=>{box.hidden=!open;t.setAttribute("aria-expanded",String(open));t.innerHTML=(open?"▾":"▸")+" Stats &amp; taste";};
