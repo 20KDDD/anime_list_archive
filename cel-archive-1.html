@@ -73,8 +73,12 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;padding-
 .hist .bar b{display:block;width:100%;border-radius:3px 3px 1px 1px;background:var(--accent);min-height:2px;opacity:.85}
 .hist .bar b.zero{background:var(--line);opacity:1}
 .hist .bar b.fan{background:var(--st-completed,#5C9BFF)}
-.disttog{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
-.disttog button{background:transparent;border:none;color:var(--muted);font:inherit;font-size:11px;font-weight:700;padding:4px 11px;cursor:pointer}
+.histhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.histright{display:inline-flex;align-items:center;gap:10px}
+.histmean{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.disttog{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;flex:0 0 auto}
+.disttog button{background:transparent;border:none;color:var(--muted);font-family:inherit;font-size:11px;font-weight:700;letter-spacing:normal;text-transform:none;line-height:1;padding:5px 12px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.disttog button+button{border-left:1px solid var(--line)}
 .disttog button.on{background:var(--accent);color:var(--accent-ink)}
 .hist .axis{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;font-family:var(--mono);font-size:10.5px;color:var(--muted);text-align:center;border-top:1px solid var(--line);padding-top:3px}
 .band .hist{grid-column:1/-1}
@@ -866,7 +870,7 @@ function renderBand(){
   const scored=src.filter(x=>x.score);
   const mean=scored.length?(scored.reduce((a,b)=>a+b.score,0)/scored.length):null;
   const seasonsW=src.reduce((a,b)=>a+seasonsOf(b).filter(s=>s.watched).length,0);
-  const fanScored=src.filter(x=>x.alScore!=null);
+  const fanScored=src.filter(x=>x.alScore!=null&&x.status==="completed"&&(x.kind==="anime"||isCartoonKind(x.kind)));
   const fanMean=fanScored.length?(fanScored.reduce((a,b)=>a+b.alScore,0)/fanScored.length):null;
   const distMode=(lsGet("celarchive.distMode")==="fan"&&fanScored.length)?"fan":"mine";
   const distArr=distMode==="fan"?fanScored:scored;
@@ -884,7 +888,7 @@ function renderBand(){
     kindTile("Cartoons","cartoon")+
     tile("Other animation",other.filter(x=>x.status==="completed").length,`completed · ${other.length} seen`)+
     `<div class="hist" aria-label="Score distribution">
-      <span class="k lbl" style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span>${distMode==="fan"?"Fan score distribution":"Your score distribution"}</span><span style="display:flex;align-items:center;gap:8px">${distMean!=null?"mean "+distMean.toFixed(2):""}${fanScored.length?`<span class="disttog"><button type="button" data-dist="mine" class="${distMode==="mine"?"on":""}">You</button><button type="button" data-dist="fan" class="${distMode==="fan"?"on":""}">Fans</button></span>`:""}</span></span>
+      <div class="histhead"><span class="k lbl">${distMode==="fan"?"Fan score distribution":"Your score distribution"}</span><span class="histright">${distMean!=null?`<span class="histmean">mean ${distMean.toFixed(2)}</span>`:""}${fanScored.length?`<span class="disttog"><button type="button" data-dist="mine" class="${distMode==="mine"?"on":""}">You</button><button type="button" data-dist="fan" class="${distMode==="fan"?"on":""}">Fans</button></span>`:""}</span></div>
       <div class="bars">${counts.map(c=>`<div class="bar" title="${c} title(s)"><span>${c||""}</span><b class="${c?"":"zero"}${distMode==="fan"?" fan":""}" style="height:${c?Math.max(4,c/max*58):2}px"></b></div>`).join("")}</div>
       <div class="axis">${counts.map((_,i)=>`<span>${i+1}</span>`).join("")}</div>
       ${distMode==="fan"?`<p class="help" style="margin:6px 2px 0;grid-column:1/-1">How many of your ${fanScored.length} community-scored shows sit at each fan rating 1–10.</p>`:""}
