@@ -757,7 +757,7 @@ function errMsg(e){
 function setSync(cls,txt){const s=$("#sync");s.className="sync "+cls;s.textContent=txt}
 
 /* ---------- state + filters ---------- */
-const state={status:"all",q:"",kind:"",sub:"",format:"",genre:"",demo:"",rating:"",fan:"",year:"",sort:lsGet("celarchive.sort")||"updated"};
+const state={status:"all",q:"",kind:"",sub:"",format:"",genre:"",shelf:"",demo:"",rating:"",fan:"",year:"",sort:lsGet("celarchive.sort")||"updated"};
 $("#fsort").value=state.sort;
 
 function items(){return [...store.items.values()]}
@@ -802,6 +802,7 @@ function viewItems(){
     if(state.format==="film"&&!isMovie(it))return false;
     if(state.format==="tv"&&isMovie(it))return false;
     if(state.genre&&!(it.genres||[]).includes(state.genre))return false;
+    if(state.shelf&&mainGenreOf(it)!==state.shelf)return false;
     if(state.demo&&it.demo!==state.demo)return false;
     if(state.rating){ if(state.rating==="none"){ if(it.score!=null)return false } else if(it.score==null||Math.round(it.score)!==+state.rating)return false }
     if(state.fan){ if(state.fan==="none"){ if(it.alScore!=null)return false } else if(it.alScore==null||Math.round(it.alScore)!==+state.fan)return false }
@@ -1306,8 +1307,8 @@ function render(){
   if(state.status!=="hidden")hiddenUnlocked=false;
   renderBand();renderTaste();renderAoty();renderRail();renderSelects();
   const list=viewItems();
-  $("#bannerSlot").innerHTML=isExampleMode()?`<div class="banner"><p><b>Your library is empty.</b> The three cards below are examples so you can see how entries look. Add a title, or paste your Google Doc list into Bulk import. Everything saves in this browser, so download a backup from More now and then.</p><button class="btn primary sm" id="bannerBulk">Bulk import</button></div>`:(state.status==="hidden"?`<div class="banner"><p><b>Hidden titles.</b> These stay out of the rest of your library. Open one and uncheck <b>“Hide from library”</b> in its editor to bring it back.</p></div>`:"");
-  const vk=[state.status,state.q,state.kind,state.sub,state.format,state.genre,state.demo,state.rating,state.fan,state.year,state.sort].join("|");
+  $("#bannerSlot").innerHTML=isExampleMode()?`<div class="banner"><p><b>Your library is empty.</b> The three cards below are examples so you can see how entries look. Add a title, or paste your Google Doc list into Bulk import. Everything saves in this browser, so download a backup from More now and then.</p><button class="btn primary sm" id="bannerBulk">Bulk import</button></div>`:(state.status==="hidden"?`<div class="banner"><p><b>Hidden titles.</b> These stay out of the rest of your library. Open one and uncheck <b>“Hide from library”</b> in its editor to bring it back.</p></div>`:(state.shelf?`<div class="banner"><p><b>Shelf: ${esc(state.shelf)}.</b> Showing every title on this shelf.</p><button class="btn primary sm" id="bannerClearShelf">&larr; Back to all</button></div>`:""));
+  const vk=[state.status,state.q,state.kind,state.sub,state.format,state.genre,state.shelf,state.demo,state.rating,state.fan,state.year,state.sort].join("|");
   if(vk!==lastViewKey){shownCount=PAGE_SIZE;lastViewKey=vk}
   const grid=$("#grid");
   const lvbar=$("#libviewBar");
@@ -1354,7 +1355,7 @@ $("#aoty").addEventListener("click",e=>{
   if(sh){aotyOpenY=+sh.getAttribute("data-awshelf");aotyCat="Anime of the Year";aotyPicking=false;renderAoty();}
 });
 /* ---------- events: library ---------- */
-$("#rail").addEventListener("click",e=>{const b=e.target.closest("[data-axis]");if(!b)return;const a=b.dataset.axis,v=b.dataset.val;
+$("#rail").addEventListener("click",e=>{const b=e.target.closest("[data-axis]");if(!b)return;const a=b.dataset.axis,v=b.dataset.val;state.shelf="";
   if(a==="reset"){state.status="all";state.kind="";state.sub="";state.format="";}
   else if(a==="status")state.status=v;
   else if(a==="fav")state.status=state.status==="fav"?"all":"fav";
@@ -1375,15 +1376,16 @@ $("#band").addEventListener("click",e=>{const d=e.target.closest("[data-dist]");
   t.onclick=()=>{const open=box.hidden;lsSet("celarchive.statsOpen",open?"1":"0");set(open);};
 })();
 let qTimer;$("#fq").addEventListener("input",e=>{clearTimeout(qTimer);qTimer=setTimeout(()=>{state.q=e.target.value;render()},120)});
-$("#fgenre").addEventListener("change",e=>{state.genre=e.target.value;render()});
+$("#fgenre").addEventListener("change",e=>{state.genre=e.target.value;state.shelf="";render()});
 $("#fdemo").addEventListener("change",e=>{state.demo=e.target.value;render()});
 $("#frating").addEventListener("change",e=>{state.rating=e.target.value;render()});
 $("#ffan").addEventListener("change",e=>{state.fan=e.target.value;render()});
 $("#fyear").addEventListener("change",e=>{state.year=e.target.value;render()});
 $("#fsort").addEventListener("change",e=>{state.sort=e.target.value;lsSet("celarchive.sort",state.sort);render()});
-$("#libviewBar").addEventListener("click",e=>{const b=e.target.closest("[data-libview]");if(!b)return;libView=b.dataset.libview==="shelves"?"shelves":"grid";lsSet("celarchive.libview",libView);render()});
+$("#libviewBar").addEventListener("click",e=>{const b=e.target.closest("[data-libview]");if(!b)return;libView=b.dataset.libview==="shelves"?"shelves":"grid";state.shelf="";lsSet("celarchive.libview",libView);render()});
 $("#shelfBy").addEventListener("change",e=>{shelfBy=e.target.value==="status"?"status":"genre";lsSet("celarchive.shelfby",shelfBy);render()});
-$("#grid").addEventListener("click",e=>{const s=e.target.closest("[data-seeall]");if(!s)return;e.stopPropagation();if(s.dataset.seealltype==="status"){state.status=s.dataset.seeall}else{state.genre=s.dataset.seeall;const fg=$("#fgenre");if(fg)fg.value=state.genre}libView="grid";lsSet("celarchive.libview","grid");render();window.scrollTo({top:0,behavior:"smooth"})});
+$("#grid").addEventListener("click",e=>{const s=e.target.closest("[data-seeall]");if(!s)return;e.stopPropagation();if(s.dataset.seealltype==="status"){state.status=s.dataset.seeall;state.shelf=""}else{state.shelf=s.dataset.seeall;state.genre="";const fg=$("#fgenre");if(fg)fg.value=""}libView="grid";lsSet("celarchive.libview","grid");render();window.scrollTo({top:0,behavior:"smooth"})});
+$("#bannerSlot").addEventListener("click",e=>{if(e.target.closest("#bannerClearShelf")){state.shelf="";render()}});
 /* ---- sticky filter sheet: toggle, badge, clear, outside-close ---- */
 (function(){
   const btn=$("#filtBtn"),sheet=$("#filterSheet"),badge=$("#filtBadge"),clear=$("#filtClear");
