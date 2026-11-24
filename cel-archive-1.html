@@ -162,6 +162,22 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
 
 /* grid */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+.libview{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;margin-bottom:14px}
+.libview button{background:transparent;border:none;color:var(--muted);font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.02em;padding:7px 15px;cursor:pointer}
+.libview button+button{border-left:1px solid var(--line)}
+.libview button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.grid.shelves{display:block}
+.shelf-sec{margin-bottom:26px}
+.shelf-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px;gap:12px}
+.shelf-head h3{margin:0;font-family:var(--display);font-size:18px;color:var(--ink)}
+.shelf-head h3 .n{font-family:var(--mono);font-size:12px;color:var(--muted);font-weight:400;margin-left:7px}
+.shelf-seeall{background:transparent;border:none;color:var(--muted);font-family:var(--mono);font-size:11.5px;cursor:pointer;white-space:nowrap}
+.shelf-seeall:hover{color:var(--accent)}
+.shelf-strip{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;scroll-snap-type:x proximity;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.shelf-strip::-webkit-scrollbar{height:7px}
+.shelf-strip::-webkit-scrollbar-thumb{background:var(--line);border-radius:999px}
+.shelf-strip .card{flex:0 0 160px;width:160px;scroll-snap-align:start}
+@media (max-width:560px){.shelf-strip .card{flex:0 0 132px;width:132px}}
 @media (max-width:560px){.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.ptitle{font-size:13px}}
 /* poster-forward cards */
 .card{position:relative;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:0;display:flex;flex-direction:column;box-shadow:var(--shadow);overflow:hidden;min-width:0;cursor:pointer}
@@ -571,6 +587,7 @@ button.tcard{font:inherit;color:inherit;text-align:left;cursor:pointer;position:
           </div>
         </div>
       <div id="bannerSlot"></div>
+      <div id="libviewBar" class="libview"><button type="button" data-libview="grid">▦ Grid</button><button type="button" data-libview="shelves">▤ Genre shelves</button></div>
       <div id="grid" class="grid"></div>
       <div id="emptySlot"></div>
       <div id="moreSlot"></div>
@@ -614,6 +631,18 @@ function kindMatch(k,sel){return k===sel}
 const KIND_LABEL=Object.fromEntries(KINDS.map(s=>[s.k,s.label]));
 const TYPES=["TV","Movie","OVA","ONA","Special","Short","Web series"];
 const GENRES=["Action","Adventure","Comedy","Drama","Fantasy","Romance","Sci-Fi","Slice of Life","Mystery","Horror","Thriller","Psychological","Supernatural","Sports","Mecha","Music","Isekai","Historical","Martial Arts","Military","School","Space","Detective","Vampire","Parody","Family","Kids","Harem","Ecchi","Iyashikei","Mahou Shoujo","Idol","Yuri","Yaoi (BL)","Gore","Cultivation","Wuxia","Xianxia"];
+/* ---- main genre: one representative genre per title, used by the Genre shelves view ----
+   Priority runs specific -> generic, so a show tagged [Fantasy, Adventure, Isekai] shelves under Isekai.
+   A per-title override (item.mainGenre, set in the editor) wins when it is still one of the show's genres. */
+const MAIN_GENRE_ORDER=["Isekai","Mecha","Mahou Shoujo","Idol","Cultivation","Xianxia","Wuxia","Martial Arts","Sports","Music","Vampire","Detective","Harem","Ecchi","Yuri","Yaoi (BL)","Iyashikei","Gore","Space","Military","Historical","School","Parody","Kids","Family","Mystery","Horror","Thriller","Psychological","Supernatural","Sci-Fi","Romance","Slice of Life","Adventure","Fantasy","Drama","Action","Comedy"];
+function mainGenreOf(it){
+  if(!it)return "Unsorted";
+  const gs=it.genres||[];
+  if(it.mainGenre&&gs.includes(it.mainGenre))return it.mainGenre;
+  for(const g of MAIN_GENRE_ORDER){if(gs.includes(g))return g}
+  return gs[0]||"Unsorted";
+}
+let libView=(function(){try{return localStorage.getItem("celarchive.libview")==="shelves"?"shelves":"grid"}catch(e){return "grid"}})();
 const GENRE_ALIAS={"sci fi":"Sci-Fi","scifi":"Sci-Fi","science fiction":"Sci-Fi","sol":"Slice of Life","slice-of-life":"Slice of Life","romcom":["Romance","Comedy"],"rom com":["Romance","Comedy"],"rom-com":["Romance","Comedy"],"psych":"Psychological","sport":"Sports","martial art":"Martial Arts","romantic":"Romance","funny":"Comedy","scary":"Horror","mech":"Mecha","robots":"Mecha","magic":"Fantasy","superpower":"Supernatural","super power":"Supernatural","magical girl":"Mahou Shoujo","mahou shojo":"Mahou Shoujo","healing":"Iyashikei","bl":"Yaoi (BL)","boys love":"Yaoi (BL)","boys' love":"Yaoi (BL)","yaoi":"Yaoi (BL)","shounen-ai":"Yaoi (BL)","shonen-ai":"Yaoi (BL)","gl":"Yuri","girls love":"Yuri","girls' love":"Yuri","shoujo-ai":"Yuri","shojo-ai":"Yuri","idols":"Idol","gory":"Gore","reverse harem":"Harem"};
 GENRES.forEach(g=>{GENRE_ALIAS[g.toLowerCase()]=g});
 const DEMOS=[{k:"shounen",label:"Shounen"},{k:"seinen",label:"Seinen"},{k:"shoujo",label:"Shoujo"},{k:"josei",label:"Josei"},{k:"kodomo",label:"Kids (Kodomo)"},{k:"general",label:"General / all ages"}];
@@ -1275,9 +1304,23 @@ function render(){
   $("#bannerSlot").innerHTML=isExampleMode()?`<div class="banner"><p><b>Your library is empty.</b> The three cards below are examples so you can see how entries look. Add a title, or paste your Google Doc list into Bulk import. Everything saves in this browser, so download a backup from More now and then.</p><button class="btn primary sm" id="bannerBulk">Bulk import</button></div>`:(state.status==="hidden"?`<div class="banner"><p><b>Hidden titles.</b> These stay out of the rest of your library. Open one and uncheck <b>“Hide from library”</b> in its editor to bring it back.</p></div>`:"");
   const vk=[state.status,state.q,state.kind,state.sub,state.format,state.genre,state.demo,state.rating,state.fan,state.year,state.sort].join("|");
   if(vk!==lastViewKey){shownCount=PAGE_SIZE;lastViewKey=vk}
-  $("#grid").innerHTML=list.slice(0,shownCount).map(cardHTML).join("");
-  const left=list.length-shownCount;
-  $("#moreSlot").innerHTML=left>0?`<div class="more"><button type="button" class="btn" id="btnMore">Load ${Math.min(PAGE_SIZE,left)} more</button><span class="help">Showing ${shownCount} of ${list.length}</span></div>`:"";
+  const grid=$("#grid");
+  const lvbar=$("#libviewBar");
+  if(lvbar){lvbar.hidden=isExampleMode();lvbar.querySelectorAll("[data-libview]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.libview===libView)))}
+  const canShelf=libView==="shelves"&&!isExampleMode()&&state.status!=="hidden"&&!state.genre;
+  if(canShelf){
+    grid.classList.add("shelves");
+    const SHELF_CAP=60, groups=new Map();
+    list.forEach(it=>{const g=mainGenreOf(it);if(!groups.has(g))groups.set(g,[]);groups.get(g).push(it)});
+    const ordered=[...groups.entries()].sort((a,b)=>b[1].length-a[1].length||a[0].localeCompare(b[0]));
+    grid.innerHTML=ordered.map(([g,arr])=>`<section class="shelf-sec"><div class="shelf-head"><h3>${esc(g)}<span class="n">${arr.length}</span></h3>${arr.length>SHELF_CAP?`<button type="button" class="shelf-seeall" data-seeall="${esc(g)}">See all ${arr.length} &rarr;</button>`:""}</div><div class="shelf-strip">${arr.slice(0,SHELF_CAP).map(cardHTML).join("")}</div></section>`).join("");
+    $("#moreSlot").innerHTML="";
+  }else{
+    grid.classList.remove("shelves");
+    grid.innerHTML=list.slice(0,shownCount).map(cardHTML).join("");
+    const left=list.length-shownCount;
+    $("#moreSlot").innerHTML=left>0?`<div class="more"><button type="button" class="btn" id="btnMore">Load ${Math.min(PAGE_SIZE,left)} more</button><span class="help">Showing ${shownCount} of ${list.length}</span></div>`:"";
+  }
   $("#emptySlot").innerHTML=list.length?"":`<div class="empty">${state.status==="fav"&&!state.q&&!state.kind&&!state.genre&&!state.demo?"No favorites yet. Tap the ♡ on any card to add one.":"Nothing matches these filters."}</div>`;
   const bb=$("#bannerBulk");if(bb)bb.onclick=openBulk;
   if(window.updateFilterChrome)window.updateFilterChrome();
@@ -1329,6 +1372,8 @@ $("#frating").addEventListener("change",e=>{state.rating=e.target.value;render()
 $("#ffan").addEventListener("change",e=>{state.fan=e.target.value;render()});
 $("#fyear").addEventListener("change",e=>{state.year=e.target.value;render()});
 $("#fsort").addEventListener("change",e=>{state.sort=e.target.value;lsSet("celarchive.sort",state.sort);render()});
+$("#libviewBar").addEventListener("click",e=>{const b=e.target.closest("[data-libview]");if(!b)return;libView=b.dataset.libview==="shelves"?"shelves":"grid";lsSet("celarchive.libview",libView);render()});
+$("#grid").addEventListener("click",e=>{const s=e.target.closest("[data-seeall]");if(!s)return;e.stopPropagation();state.genre=s.dataset.seeall;const fg=$("#fgenre");if(fg)fg.value=state.genre;libView="grid";lsSet("celarchive.libview","grid");render();window.scrollTo({top:0,behavior:"smooth"})});
 /* ---- sticky filter sheet: toggle, badge, clear, outside-close ---- */
 (function(){
   const btn=$("#filtBtn"),sheet=$("#filterSheet"),badge=$("#filtBadge"),clear=$("#filtClear");
@@ -1452,6 +1497,7 @@ function openEdit(it){
       <div class="field"><span class="lbl" style="display:flex;justify-content:space-between;align-items:center">Genres <button type="button" class="linkbtn" id="eTermsG">What do these mean?</button></span>
         <div class="gpick" id="gPick"></div>
         <div style="display:flex;gap:6px;margin-top:4px"><input type="text" id="gCustom" placeholder="Add another genre"><button type="button" class="btn sm" id="gAdd">Add</button></div>
+        <div style="margin-top:9px;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><label for="eMainGenre" style="font-size:12px;color:var(--muted);font-family:var(--mono)">Main genre (which shelf)</label><select id="eMainGenre"></select></div>
       </div>
       <div class="field"><label for="eNotes">What I think of it</label><textarea id="eNotes" rows="3" placeholder="Your thoughts, where you watched it, who recommended it…">${esc(d.notes||"")}</textarea></div>
       <div class="form-grid">
@@ -1671,8 +1717,9 @@ function openEdit(it){
   };
   $("#eSAdd").onclick=()=>{ if($("#eSAdd").classList.contains("blocked"))return; addSeason(); };
   $("#eType").onchange=e=>{$("#seasonsWrap").hidden=e.target.value==="Movie";if(e.target.value!=="Movie"&&!seasons.length){seasons=[{n:1,watched:$("#eStatus").value==="completed"}];drawS()}};
-  const drawG=()=>{const all=[...new Set([...GENRES,...genres])];$("#gPick").innerHTML=all.map(g=>`<button type="button" data-g="${esc(g)}" aria-pressed="${genres.includes(g)}">${esc(g)}</button>`).join("")};drawG();
-  $("#gPick").onclick=e=>{const b=e.target.closest("[data-g]");if(!b)return;const g=b.dataset.g;genres=genres.includes(g)?genres.filter(x=>x!==g):[...genres,g];b.setAttribute("aria-pressed",String(genres.includes(g)))};
+  const drawMainGenre=()=>{const sel=$("#eMainGenre");if(!sel)return;const cur=sel.value||d.mainGenre||"";sel.innerHTML=["<option value=\"\">Auto (by priority)</option>"].concat(genres.map(g=>`<option value="${esc(g)}">${esc(g)}</option>`)).join("");sel.value=(cur&&genres.includes(cur))?cur:""};
+  const drawG=()=>{const all=[...new Set([...GENRES,...genres])];$("#gPick").innerHTML=all.map(g=>`<button type="button" data-g="${esc(g)}" aria-pressed="${genres.includes(g)}">${esc(g)}</button>`).join("");drawMainGenre()};drawG();
+  $("#gPick").onclick=e=>{const b=e.target.closest("[data-g]");if(!b)return;const g=b.dataset.g;genres=genres.includes(g)?genres.filter(x=>x!==g):[...genres,g];b.setAttribute("aria-pressed",String(genres.includes(g)));drawMainGenre()};
   const addCustom=()=>{const v=$("#gCustom").value.trim();if(!v)return;const g=GENRE_ALIAS[v.toLowerCase()];const vals=Array.isArray(g)?g:[g||v];vals.forEach(x=>{if(!genres.includes(x))genres.push(x)});$("#gCustom").value="";drawG()};
   $("#eTermsG").onclick=()=>openTerms("genres",true);
   $("#gAdd").onclick=addCustom;$("#gCustom").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();addCustom()}};
@@ -1685,7 +1732,7 @@ function openEdit(it){
     const status=$("#eStatus").value,type=$("#eType").value;
     const now=Date.now();
     const out={...d,poster:poster||null,alUrl:poster?(alUrl||null):null,posterTried:poster?false:!!d.posterTried,title,altTitle:$("#eAlt").value.trim()||null,kind:$("#eKind").value,sub:($("#eKind").value==="cartoon"?($("#eSub").value||null):null),demo:$("#eDemo").value||null,type,year:toInt($("#eYear").value),
-      status,watchedYear:toInt($("#eWatched").value),startDate:$("#eStart").value||null,finishDate:$("#eFinish").value||null,score,genres,
+      status,watchedYear:toInt($("#eWatched").value),startDate:$("#eStart").value||null,finishDate:$("#eFinish").value||null,score,genres,mainGenre:(($("#eMainGenre")&&$("#eMainGenre").value)||null),
       rewatches:toInt($("#eRe").value),favorite:$("#eFav").checked,hidden:$("#eHidden").checked,notes:$("#eNotes").value.trim()||null,alScore:(alScore!=null?alScore:(d.alScore!=null?d.alScore:null)),alScoreTried:(alScore!=null?true:!!d.alScoreTried),updatedAt:now};
     delete out.epWatched;delete out.epTotal;
     const wasWatched=new Set(seasonsOf(d).filter(x=>x.watched).map(x=>x.n));
