@@ -166,6 +166,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
 .libview button{background:transparent;border:none;color:var(--muted);font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.02em;padding:7px 15px;cursor:pointer}
 .libview button+button{border-left:1px solid var(--line)}
 .libview button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.shelfby{margin:0 0 14px 10px;background:var(--surface);border:1px solid var(--line);color:var(--ink);font-family:var(--mono);font-size:12px;border-radius:999px;padding:7px 12px;cursor:pointer}
 .grid.shelves{display:block}
 .shelf-sec{margin-bottom:26px}
 .shelf-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px;gap:12px}
@@ -482,8 +483,8 @@ button.tcard{font:inherit;color:inherit;text-align:left;cursor:pointer;position:
 .flag.upd{border-style:solid;border-color:var(--st-completed);color:var(--st-completed)}
 .duphint{font-size:12.5px;color:var(--st-completed);min-height:0}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:80;max-width:calc(100% - 32px);box-shadow:var(--shadow)}
-.menu{position:relative}
-.menu .pop{position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px;display:flex;flex-direction:column;min-width:220px;z-index:30}
+.menu{position:relative;z-index:70}
+.menu .pop{position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px;display:flex;flex-direction:column;min-width:220px;z-index:70}
 .menu .pop button{border:none;background:transparent;text-align:left;padding:9px 10px;border-radius:8px;font-size:14px}
 .menu .pop button:hover{background:var(--surface-2)}
 .menu .pop hr{border:none;border-top:1px solid var(--line);margin:4px 0}
@@ -587,7 +588,8 @@ button.tcard{font:inherit;color:inherit;text-align:left;cursor:pointer;position:
           </div>
         </div>
       <div id="bannerSlot"></div>
-      <div id="libviewBar" class="libview"><button type="button" data-libview="grid">▦ Grid</button><button type="button" data-libview="shelves">▤ Genre shelves</button></div>
+      <div id="libviewBar" class="libview"><button type="button" data-libview="grid">▦ Grid</button><button type="button" data-libview="shelves">▤ Shelves</button></div>
+      <select id="shelfBy" class="shelfby" hidden aria-label="Group shelves by"><option value="genre">Group by: main genre</option><option value="status">Group by: status</option></select>
       <div id="grid" class="grid"></div>
       <div id="emptySlot"></div>
       <div id="moreSlot"></div>
@@ -638,11 +640,14 @@ const MAIN_GENRE_ORDER=["Isekai","Mecha","Mahou Shoujo","Idol","Cultivation","Xi
 function mainGenreOf(it){
   if(!it)return "Unsorted";
   const gs=it.genres||[];
-  if(it.mainGenre&&gs.includes(it.mainGenre))return it.mainGenre;
+  if(it.mainGenre)return it.mainGenre;
+  if(it.sub==="superhero")return "Superhero";
+  if(/pok[eé]mon/i.test((it.title||"")+" "+(it.altTitle||"")))return "Pokémon";
   for(const g of MAIN_GENRE_ORDER){if(gs.includes(g))return g}
   return gs[0]||"Unsorted";
 }
 let libView=(function(){try{return localStorage.getItem("celarchive.libview")==="shelves"?"shelves":"grid"}catch(e){return "grid"}})();
+let shelfBy=(function(){try{return localStorage.getItem("celarchive.shelfby")==="status"?"status":"genre"}catch(e){return "genre"}})();
 const GENRE_ALIAS={"sci fi":"Sci-Fi","scifi":"Sci-Fi","science fiction":"Sci-Fi","sol":"Slice of Life","slice-of-life":"Slice of Life","romcom":["Romance","Comedy"],"rom com":["Romance","Comedy"],"rom-com":["Romance","Comedy"],"psych":"Psychological","sport":"Sports","martial art":"Martial Arts","romantic":"Romance","funny":"Comedy","scary":"Horror","mech":"Mecha","robots":"Mecha","magic":"Fantasy","superpower":"Supernatural","super power":"Supernatural","magical girl":"Mahou Shoujo","mahou shojo":"Mahou Shoujo","healing":"Iyashikei","bl":"Yaoi (BL)","boys love":"Yaoi (BL)","boys' love":"Yaoi (BL)","yaoi":"Yaoi (BL)","shounen-ai":"Yaoi (BL)","shonen-ai":"Yaoi (BL)","gl":"Yuri","girls love":"Yuri","girls' love":"Yuri","shoujo-ai":"Yuri","shojo-ai":"Yuri","idols":"Idol","gory":"Gore","reverse harem":"Harem"};
 GENRES.forEach(g=>{GENRE_ALIAS[g.toLowerCase()]=g});
 const DEMOS=[{k:"shounen",label:"Shounen"},{k:"seinen",label:"Seinen"},{k:"shoujo",label:"Shoujo"},{k:"josei",label:"Josei"},{k:"kodomo",label:"Kids (Kodomo)"},{k:"general",label:"General / all ages"}];
@@ -1307,13 +1312,17 @@ function render(){
   const grid=$("#grid");
   const lvbar=$("#libviewBar");
   if(lvbar){lvbar.hidden=isExampleMode();lvbar.querySelectorAll("[data-libview]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.libview===libView)))}
-  const canShelf=libView==="shelves"&&!isExampleMode()&&state.status!=="hidden"&&!state.genre;
+  const sb=$("#shelfBy");
+  if(sb){sb.hidden=!(libView==="shelves"&&!isExampleMode());sb.value=shelfBy}
+  const canShelf=libView==="shelves"&&!isExampleMode()&&state.status!=="hidden";
   if(canShelf){
     grid.classList.add("shelves");
-    const SHELF_CAP=60, groups=new Map();
-    list.forEach(it=>{const g=mainGenreOf(it);if(!groups.has(g))groups.set(g,[]);groups.get(g).push(it)});
-    const ordered=[...groups.entries()].sort((a,b)=>b[1].length-a[1].length||a[0].localeCompare(b[0]));
-    grid.innerHTML=ordered.map(([g,arr])=>`<section class="shelf-sec"><div class="shelf-head"><h3>${esc(g)}<span class="n">${arr.length}</span></h3>${arr.length>SHELF_CAP?`<button type="button" class="shelf-seeall" data-seeall="${esc(g)}">See all ${arr.length} &rarr;</button>`:""}</div><div class="shelf-strip">${arr.slice(0,SHELF_CAP).map(cardHTML).join("")}</div></section>`).join("");
+    const SHELF_CAP=60, byStatus=shelfBy==="status", groups=new Map();
+    list.forEach(it=>{const k=byStatus?(it.status||"plan"):mainGenreOf(it);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(it)});
+    let ordered;
+    if(byStatus){const SORD=["watching","unfinished","on_hold","completed","plan","dropped"];ordered=[...groups.entries()].sort((a,b)=>{const ia=SORD.indexOf(a[0]),ib=SORD.indexOf(b[0]);return (ia<0?99:ia)-(ib<0?99:ib)})}
+    else{ordered=[...groups.entries()].sort((a,b)=>b[1].length-a[1].length||a[0].localeCompare(b[0]))}
+    grid.innerHTML=ordered.map(([k,arr])=>{const label=byStatus?(ST_LABEL[k]||k):k;return `<section class="shelf-sec"><div class="shelf-head"><h3>${esc(label)}<span class="n">${arr.length}</span></h3>${arr.length>SHELF_CAP?`<button type="button" class="shelf-seeall" data-seealltype="${byStatus?"status":"genre"}" data-seeall="${esc(k)}">See all ${arr.length} &rarr;</button>`:""}</div><div class="shelf-strip">${arr.slice(0,SHELF_CAP).map(cardHTML).join("")}</div></section>`}).join("");
     $("#moreSlot").innerHTML="";
   }else{
     grid.classList.remove("shelves");
@@ -1373,7 +1382,8 @@ $("#ffan").addEventListener("change",e=>{state.fan=e.target.value;render()});
 $("#fyear").addEventListener("change",e=>{state.year=e.target.value;render()});
 $("#fsort").addEventListener("change",e=>{state.sort=e.target.value;lsSet("celarchive.sort",state.sort);render()});
 $("#libviewBar").addEventListener("click",e=>{const b=e.target.closest("[data-libview]");if(!b)return;libView=b.dataset.libview==="shelves"?"shelves":"grid";lsSet("celarchive.libview",libView);render()});
-$("#grid").addEventListener("click",e=>{const s=e.target.closest("[data-seeall]");if(!s)return;e.stopPropagation();state.genre=s.dataset.seeall;const fg=$("#fgenre");if(fg)fg.value=state.genre;libView="grid";lsSet("celarchive.libview","grid");render();window.scrollTo({top:0,behavior:"smooth"})});
+$("#shelfBy").addEventListener("change",e=>{shelfBy=e.target.value==="status"?"status":"genre";lsSet("celarchive.shelfby",shelfBy);render()});
+$("#grid").addEventListener("click",e=>{const s=e.target.closest("[data-seeall]");if(!s)return;e.stopPropagation();if(s.dataset.seealltype==="status"){state.status=s.dataset.seeall}else{state.genre=s.dataset.seeall;const fg=$("#fgenre");if(fg)fg.value=state.genre}libView="grid";lsSet("celarchive.libview","grid");render();window.scrollTo({top:0,behavior:"smooth"})});
 /* ---- sticky filter sheet: toggle, badge, clear, outside-close ---- */
 (function(){
   const btn=$("#filtBtn"),sheet=$("#filterSheet"),badge=$("#filtBadge"),clear=$("#filtClear");
@@ -1497,7 +1507,7 @@ function openEdit(it){
       <div class="field"><span class="lbl" style="display:flex;justify-content:space-between;align-items:center">Genres <button type="button" class="linkbtn" id="eTermsG">What do these mean?</button></span>
         <div class="gpick" id="gPick"></div>
         <div style="display:flex;gap:6px;margin-top:4px"><input type="text" id="gCustom" placeholder="Add another genre"><button type="button" class="btn sm" id="gAdd">Add</button></div>
-        <div style="margin-top:9px;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><label for="eMainGenre" style="font-size:12px;color:var(--muted);font-family:var(--mono)">Main genre (which shelf)</label><select id="eMainGenre"></select></div>
+        <div style="margin-top:9px;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><label for="eMainGenre" style="font-size:12px;color:var(--muted);font-family:var(--mono)">Shelf</label><input id="eMainGenre" list="eMGList" placeholder="Auto — by main genre" style="min-width:200px"><datalist id="eMGList"></datalist><span style="font-size:11px;color:var(--muted);font-family:var(--mono)">or type a custom one — e.g. Superhero, Pokémon</span></div>
       </div>
       <div class="field"><label for="eNotes">What I think of it</label><textarea id="eNotes" rows="3" placeholder="Your thoughts, where you watched it, who recommended it…">${esc(d.notes||"")}</textarea></div>
       <div class="form-grid">
@@ -1717,8 +1727,9 @@ function openEdit(it){
   };
   $("#eSAdd").onclick=()=>{ if($("#eSAdd").classList.contains("blocked"))return; addSeason(); };
   $("#eType").onchange=e=>{$("#seasonsWrap").hidden=e.target.value==="Movie";if(e.target.value!=="Movie"&&!seasons.length){seasons=[{n:1,watched:$("#eStatus").value==="completed"}];drawS()}};
-  const drawMainGenre=()=>{const sel=$("#eMainGenre");if(!sel)return;const cur=sel.value||d.mainGenre||"";sel.innerHTML=["<option value=\"\">Auto (by priority)</option>"].concat(genres.map(g=>`<option value="${esc(g)}">${esc(g)}</option>`)).join("");sel.value=(cur&&genres.includes(cur))?cur:""};
+  const drawMainGenre=()=>{const dl=$("#eMGList");if(!dl)return;dl.innerHTML=[...new Set([...genres,...GENRES])].map(g=>`<option value="${esc(g)}"></option>`).join("")};
   const drawG=()=>{const all=[...new Set([...GENRES,...genres])];$("#gPick").innerHTML=all.map(g=>`<button type="button" data-g="${esc(g)}" aria-pressed="${genres.includes(g)}">${esc(g)}</button>`).join("");drawMainGenre()};drawG();
+  {const mg=$("#eMainGenre");if(mg)mg.value=d.mainGenre||"";}
   $("#gPick").onclick=e=>{const b=e.target.closest("[data-g]");if(!b)return;const g=b.dataset.g;genres=genres.includes(g)?genres.filter(x=>x!==g):[...genres,g];b.setAttribute("aria-pressed",String(genres.includes(g)));drawMainGenre()};
   const addCustom=()=>{const v=$("#gCustom").value.trim();if(!v)return;const g=GENRE_ALIAS[v.toLowerCase()];const vals=Array.isArray(g)?g:[g||v];vals.forEach(x=>{if(!genres.includes(x))genres.push(x)});$("#gCustom").value="";drawG()};
   $("#eTermsG").onclick=()=>openTerms("genres",true);
@@ -1732,7 +1743,7 @@ function openEdit(it){
     const status=$("#eStatus").value,type=$("#eType").value;
     const now=Date.now();
     const out={...d,poster:poster||null,alUrl:poster?(alUrl||null):null,posterTried:poster?false:!!d.posterTried,title,altTitle:$("#eAlt").value.trim()||null,kind:$("#eKind").value,sub:($("#eKind").value==="cartoon"?($("#eSub").value||null):null),demo:$("#eDemo").value||null,type,year:toInt($("#eYear").value),
-      status,watchedYear:toInt($("#eWatched").value),startDate:$("#eStart").value||null,finishDate:$("#eFinish").value||null,score,genres,mainGenre:(($("#eMainGenre")&&$("#eMainGenre").value)||null),
+      status,watchedYear:toInt($("#eWatched").value),startDate:$("#eStart").value||null,finishDate:$("#eFinish").value||null,score,genres,mainGenre:(($("#eMainGenre")&&$("#eMainGenre").value.trim())||null),
       rewatches:toInt($("#eRe").value),favorite:$("#eFav").checked,hidden:$("#eHidden").checked,notes:$("#eNotes").value.trim()||null,alScore:(alScore!=null?alScore:(d.alScore!=null?d.alScore:null)),alScoreTried:(alScore!=null?true:!!d.alScoreTried),updatedAt:now};
     delete out.epWatched;delete out.epTotal;
     const wasWatched=new Set(seasonsOf(d).filter(x=>x.watched).map(x=>x.n));
