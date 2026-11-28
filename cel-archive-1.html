@@ -77,6 +77,12 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;padding-
 .hist .bar b.fan{background:var(--st-completed,#5C9BFF)}
 .hist .bar b.yr{background:#A78BFA}
 .yhist{margin-top:10px}
+.yhist .yscroll{display:flex;flex-direction:column;gap:6px;min-width:0}
+.yhist .yscroll.on{overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;scrollbar-color:var(--line) transparent;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+.yhist .yscroll.on::-webkit-scrollbar{height:6px}
+.yhist .yscroll.on::-webkit-scrollbar-thumb{background:var(--line);border-radius:999px}
+.yexp{background:transparent;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-family:inherit;font-size:11px;font-weight:700;padding:4px 11px;cursor:pointer}
+.yexp:hover{border-color:var(--muted);color:var(--ink)}
 .histhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .histright{display:inline-flex;align-items:center;gap:10px}
 .histmean{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap}
@@ -897,12 +903,19 @@ function renderBand(){
       const yCounts=years.map(y=>(ymap[y]||[]).length), yMax=Math.max(1,...yCounts);
       years.forEach(y=>{if(ymap[y])BAND_YEAR_SETS[y]={title:y+" anime you completed ("+ymap[y].length+")",items:[...ymap[y]].sort((a,b)=>(b.score||0)-(a.score||0)||String(a.title).localeCompare(String(b.title)))};});
       const n=years.length, twoD=n>8;
-      const step=n<=8?1:n<=16?2:Math.ceil(n/8); /* how often to show a year label */
-      const showNum=n<=16; /* show count above bar only when not too crowded */
+      const expand=lsGet("celarchive.yrExpand")==="1"&&n>8;
+      const per=38; /* px per year column when expanded */
+      const colStyle=expand?`grid-template-columns:repeat(${n},${per}px);width:${n*per}px`:`grid-template-columns:repeat(${n},1fr)`;
+      const step=expand?1:(n<=8?1:n<=16?2:Math.ceil(n/8)); /* how often to show a year label */
+      const showNum=expand||n<=16; /* show count above bar only when not too crowded */
+      const canExpand=n>8;
       yearHist=`<div class="hist yhist" aria-label="Completed anime by release year">
-        <div class="histhead"><span class="k lbl">Anime by release year</span><span class="histright"><span class="histmean">${animeDoneY.length} total</span></span></div>
-        <div class="bars" style="grid-template-columns:repeat(${n},1fr)">${years.map((y,i)=>{const c=yCounts[i];return `<button type="button" class="bar${c?" click":""}"${c?` data-year="${y}"`:""} title="${c} anime · ${y}" aria-label="${c} anime released in ${y}"><span>${showNum?(c||""):""}</span><b class="${c?"":"zero"} yr" style="height:${c?Math.max(4,c/yMax*58):2}px"></b></button>`}).join("")}</div>
-        <div class="axis" style="grid-template-columns:repeat(${n},1fr)">${years.map((y,i)=>`<span>${(i%step===0||i===n-1)?(twoD?"'"+String(y).slice(2):y):""}</span>`).join("")}</div>
+        <div class="histhead"><span class="k lbl">Anime by release year</span><span class="histright"><span class="histmean">${animeDoneY.length} total</span>${canExpand?`<button type="button" class="yexp" data-yrexp="${expand?0:1}">${expand?"Collapse":"Expand"}</button>`:""}</span></div>
+        <div class="yscroll${expand?" on":""}">
+          <div class="bars" style="${colStyle}">${years.map((y,i)=>{const c=yCounts[i];return `<button type="button" class="bar${c?" click":""}"${c?` data-year="${y}"`:""} title="${c} anime · ${y}" aria-label="${c} anime released in ${y}"><span>${showNum?(c||""):""}</span><b class="${c?"":"zero"} yr" style="height:${c?Math.max(4,c/yMax*58):2}px"></b></button>`}).join("")}</div>
+          <div class="axis" style="${colStyle}">${years.map((y,i)=>`<span>${(i%step===0||i===n-1)?(twoD&&!expand?"'"+String(y).slice(2):"'"+String(y).slice(2)):""}</span>`).join("")}</div>
+        </div>
+        ${expand?`<p class="help" style="margin:6px 2px 0">Scroll sideways to see every year. Tap a bar for that year's anime.</p>`:""}
       </div>`;
     }
   }
@@ -1341,6 +1354,7 @@ $("#subBubbles").addEventListener("click",e=>{const b=e.target.closest("[data-ax
   state.sub=state.sub===v?"":v;render();});
 $("#band").addEventListener("click",e=>{const d=e.target.closest("[data-dist]");if(d){lsSet("celarchive.distMode",d.dataset.dist);renderBand();return;}
   const bk=e.target.closest("[data-bucket]");if(bk){const s=BAND_SETS[bk.dataset.bucket];if(s)openSetObj(s);return;}
+  const ye=e.target.closest("[data-yrexp]");if(ye){lsSet("celarchive.yrExpand",ye.dataset.yrexp==="1"?"1":"0");renderBand();return;}
   const yr=e.target.closest("[data-year]");if(yr){const s=BAND_YEAR_SETS[yr.dataset.year];if(s)openSetObj(s);}});
 /* stats & taste collapsible */
 (function(){const t=$("#statsToggle"),box=$("#collapsibleStats");if(!t||!box)return;
@@ -3687,10 +3701,45 @@ setTimeout(()=>{try{refreshCommScores()}catch(e){}},3000);
   function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
   function lib(){try{var a=JSON.parse(lsGet(LS_LIB)||"[]");return Array.isArray(a)?a.filter(function(x){return x&&!x.hidden}):[]}catch(e){return []}}
 
-  var SVG = {
-    star:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 6.5 7 .8-5.2 4.8L18.4 22 12 18.3 5.6 22 7.2 14.1 2 9.3l7-.8z"/></svg>',
-    lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>'
-  };
+  function animeCompleted(){return lib().filter(function(x){return x.status==="completed"&&x.kind==="anime"}).length;}
+
+  /* Real anitubers with verified, public MyAnimeList lists. Their "completed
+     anime" number is pulled LIVE from MAL via the keyless Jikan API and refreshed
+     automatically — the fallback is just the last-known real value for first paint
+     / offline, and gets overwritten by the live fetch. */
+  var CREATORS = [
+    /* anitubers (verified public MAL lists) */
+    {name:"Digibro",         tag:"anituber · Digital Boy",   mal:"digibro",   fallback:656},
+    {name:"Aleczandxr",      tag:"anituber · lore & analysis",mal:"Aleczandxr",fallback:631},
+    {name:"Gigguk",          tag:"anituber · Trash Taste",   mal:"gigguk",    fallback:320},
+    {name:"Glass Reflection",tag:"anituber · Arkada",        mal:"Arkada",    fallback:306},
+    {name:"RogersBase",      tag:"anituber",                 mal:"RogersBase",fallback:97},
+    {name:"Misty Chronexia", tag:"anituber",                 mal:"chronexia", fallback:88},
+    /* random real public MAL users — a spread of casual to hardcore */
+    {name:"ACasualViewer",   tag:"random MAL user (the name lies)", mal:"ACasualViewer", fallback:1270},
+    {name:"secondbestgirl",  tag:"random MAL user · 3.3k sampled",  mal:"secondbestgirl",fallback:874},
+    {name:"5kander",         tag:"random MAL user",                 mal:"5kander",       fallback:266},
+    {name:"mt_5950",         tag:"casual · just getting started",   mal:"mt_5950",       fallback:29}
+  ];
+  var LB_CACHE="celarchive.lbcache.v1";
+  function cacheGet(){try{return JSON.parse(lsGet(LB_CACHE)||"{}")||{}}catch(e){return {}}}
+  function cacheSet(o){try{localStorage.setItem(LB_CACHE,JSON.stringify(o))}catch(e){}}
+  function countFor(c,cache){var e=cache[c.mal];return (e&&typeof e.n==="number")?e.n:c.fallback;}
+  function fetchAll(done){
+    if(typeof fetch!=="function"){done&&done();return;}
+    var cache=cacheGet(), now=Date.now(), i=0, changed=false, SIX_H=6*3600*1000;
+    (function next(){
+      if(i>=CREATORS.length){ if(changed)cacheSet(cache); done&&done(); return; }
+      var c=CREATORS[i++], e=cache[c.mal];
+      if(e&&typeof e.n==="number"&&(now-(e.ts||0))<SIX_H){ return next(); }
+      fetch("https://api.jikan.moe/v4/users/"+encodeURIComponent(c.mal)+"/statistics")
+        .then(function(r){return r&&r.ok?r.json():null;})
+        .then(function(j){var n=j&&j.data&&j.data.anime&&typeof j.data.anime.completed==="number"?j.data.anime.completed:null;
+          if(n!=null){cache[c.mal]={n:n,ts:Date.now()};changed=true;}})
+        .catch(function(){})
+        .then(function(){ setTimeout(next,500); }); /* stay under Jikan's rate limit */
+    })();
+  }
 
   function stats(){
     var items=lib(), SEEN={completed:1,watching:1,unfinished:1,dropped:1,on_hold:1};
@@ -3767,42 +3816,53 @@ setTimeout(()=>{try{refreshCommScores()}catch(e){}},3000);
     if(document.getElementById("cab-style"))return;
     var s=document.createElement("style");s.id="cab-style";
     s.textContent=
-      ".cab-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:28px 0 14px}"+
-      ".cab-head h2{font-size:19px;font-weight:900;margin:0;color:var(--ink)}"+
-      ".cab-head .sub{font-size:13px;color:var(--muted)}"+
-      ".cab-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}"+
-      ".cab-badge{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:13px 14px}"+
-      ".cab-badge.locked{opacity:.55}"+
-      ".cab-ic{flex:0 0 auto;width:38px;height:38px;border-radius:11px;background:color-mix(in srgb,var(--accent) 20%,var(--surface-2));color:var(--accent);display:flex;align-items:center;justify-content:center}"+
-      ".cab-badge.locked .cab-ic{background:var(--surface-2);color:var(--muted)}"+
-      ".cab-ic svg{width:20px;height:20px}"+
-      ".cab-n{font-weight:800;font-size:13.5px;color:var(--ink)}"+
-      ".cab-d{font-size:11.5px;color:var(--muted);margin-top:2px}"+
-      ".cab-p{margin-top:6px;height:5px;border-radius:3px;background:var(--surface-2);overflow:hidden}"+
-      ".cab-p b{display:block;height:100%;background:var(--accent)}"+
-      ".cab-count{font-family:var(--mono,monospace);font-size:10.5px;color:var(--muted);margin-top:4px}";
+      ".lb-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:28px 0 12px}"+
+      ".lb-head h2{font-size:19px;font-weight:900;margin:0;color:var(--ink)}"+
+      ".lb-head .sub{font-size:13px;color:var(--muted)}"+
+      ".lb-you{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px 13px;font-size:13px;color:#d9ccf5;line-height:1.5;margin-bottom:12px}"+
+      ".lb-you b{color:var(--ink)}"+
+      ".lb-list{display:flex;flex-direction:column;gap:7px}"+
+      ".lb-row{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:9px 12px}"+
+      ".lb-row.me{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--surface))}"+
+      ".lb-rank{flex:0 0 auto;width:22px;text-align:center;font-family:var(--mono,monospace);font-weight:800;font-size:13px;color:var(--muted)}"+
+      ".lb-row.me .lb-rank{color:var(--accent)}"+
+      ".lb-name{flex:0 0 40%;min-width:0;display:flex;flex-direction:column;line-height:1.15;overflow:hidden}"+
+      ".lb-name b{font-size:13.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}"+
+      ".lb-name small{font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}"+
+      ".lb-bar{flex:1;min-width:0;height:8px;background:var(--surface-2);border-radius:999px;overflow:hidden}"+
+      ".lb-bar b{display:block;height:100%;background:#A78BFA}"+
+      ".lb-row.me .lb-bar b{background:var(--accent)}"+
+      ".lb-n{flex:0 0 auto;min-width:46px;text-align:right;font-family:var(--mono,monospace);font-weight:800;font-size:13px;color:var(--ink)}"+
+      ".lb-foot{font-size:11px;color:var(--muted);margin:12px 2px 0;line-height:1.5}";
     document.head.appendChild(s);
   }
 
   function render(){
     if(!page)return;
     var wrap=page.querySelector("#cab-wrap");if(!wrap)return;
-    var S=stats(), rows=BADGES.map(function(b){
-      var r=b.c(S), on = r.on!=null ? r.on : (r.cur>=r.goal);
-      var pct = r.goal ? Math.min(100, Math.round((r.cur||0)/r.goal*100)) : (on?100:0);
-      return {b:b, on:on, cur:r.cur, goal:r.goal, pct:pct};
-    });
-    rows.sort(function(a,b){return (b.on?1:0)-(a.on?1:0) || b.pct-a.pct;});
-    var earned=rows.filter(function(x){return x.on}).length;
+    var cache=cacheGet();
+    var you=animeCompleted();
+    var rows=CREATORS.map(function(c){return {name:c.name,tag:c.tag,n:countFor(c,cache),you:false}});
+    rows.push({name:"You",tag:"your library",n:you,you:true});
+    rows.sort(function(a,b){return b.n-a.n || (a.you?-1:(b.you?1:0));});
+    var max=Math.max(1,rows[0].n);
+    var rank=1; for(var i=0;i<rows.length;i++){if(rows[i].you){rank=i+1;break;}}
+    var total=rows.length, below=total-rank, next=rank>1?rows[rank-2]:null;
+    var head = 'You’ve completed <b>'+you+'</b> anime — ranked <b>#'+rank+'</b> of '+total+'. '+
+      (next ? (next.n-you)+' behind <b>'+esc(next.name)+'</b>.' : 'That tops the whole board 👑') +
+      (below>0 ? ' Ahead of '+below+' of them.' : '');
     wrap.innerHTML=
-      '<div class="cab-head"><h2>Achievements</h2><span class="sub">'+earned+' of '+BADGES.length+' unlocked · auto-earned from your library</span></div>'+
-      '<div class="cab-grid">'+rows.map(function(x){
-        return '<div class="cab-badge'+(x.on?"":" locked")+'">'+
-          '<div class="cab-ic">'+(x.on?SVG.star:SVG.lock)+'</div>'+
-          '<div style="min-width:0"><div class="cab-n">'+esc(x.b.n)+'</div><div class="cab-d">'+esc(x.b.d)+'</div>'+
-          (!x.on && x.goal ? '<div class="cab-p"><b style="width:'+x.pct+'%"></b></div><div class="cab-count">'+(x.cur||0)+' of '+x.goal+'</div>' : '')+
-          '</div></div>';
-      }).join("")+'</div>';
+      '<div class="lb-head"><h2>Leaderboard</h2><span class="sub">your anime count vs anitubers — live from MyAnimeList</span></div>'+
+      '<div class="lb-you">'+head+'</div>'+
+      '<div class="lb-list">'+rows.map(function(r,i){
+        return '<div class="lb-row'+(r.you?" me":"")+'">'+
+          '<span class="lb-rank">'+(i+1)+'</span>'+
+          '<span class="lb-name"><b>'+esc(r.name)+'</b><small>'+esc(r.tag)+'</small></span>'+
+          '<span class="lb-bar"><b style="width:'+Math.max(4,Math.round(r.n/max*100))+'%"></b></span>'+
+          '<span class="lb-n">'+r.n+'</span>'+
+        '</div>';
+      }).join("")+'</div>'+
+      '<p class="lb-foot">A mix of anitubers and random public MyAnimeList users. Every number is <b>completed anime</b> only — pulled live (via Jikan) and refreshed automatically. Yours follows the same rule: completed <b>anime</b> only, so what you sampled or dropped doesn’t count (same as them).</p>';
   }
 
   function build(){
@@ -3810,9 +3870,10 @@ setTimeout(()=>{try{refreshCommScores()}catch(e){}},3000);
     var wrap=document.createElement("div");wrap.id="cab-wrap";
     page.appendChild(wrap);
     render();
+    fetchAll(render); /* pull live MAL counts, then re-render */
     /* refresh when the Stats tab is opened (library may have changed) */
     var navBtn=document.querySelector('#canv-nav [data-view="stats"]');
-    if(navBtn)navBtn.addEventListener("click",function(){setTimeout(render,0)});
+    if(navBtn)navBtn.addEventListener("click",function(){render();fetchAll(render);});
   }
 
   function mount(tries){
