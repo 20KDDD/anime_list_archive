@@ -76,6 +76,14 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;padding-
 .hist .bar b.zero{background:var(--line);opacity:1}
 .hist .bar b.fan{background:var(--st-completed,#5C9BFF)}
 .hist .bar b.yr{background:#A78BFA}
+.hist .bar b.yr.bestmine{background:var(--gold,#F5C542)}
+.hist .bar b.yr.bestfan{background:var(--st-watching,#3DE0A0)}
+.hist .bar b.yr.bestmine.bestfan{background:linear-gradient(180deg,var(--gold,#F5C542) 0 50%,var(--st-watching,#3DE0A0) 50% 100%)}
+.ylegend{display:flex;flex-wrap:wrap;gap:12px;margin:8px 2px 0}
+.ylegend .yl{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);font-weight:700}
+.ylegend .yl i{width:10px;height:10px;border-radius:3px;flex:none}
+.ylegend .yl-mine{background:var(--gold,#F5C542)}
+.ylegend .yl-fan{background:var(--st-watching,#3DE0A0)}
 .yhist{margin-top:10px}
 .yhist .yscroll{display:flex;flex-direction:column;gap:6px;min-width:0}
 .yhist .yscroll.on{overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;scrollbar-color:var(--line) transparent;padding-bottom:2px;-webkit-overflow-scrolling:touch}
@@ -902,6 +910,26 @@ function renderBand(){
       const minY=Math.min(...ys),maxY=Math.max(...ys),years=[];
       for(let y=minY;y<=maxY;y++)years.push(y);
       const yCounts=years.map(y=>(ymap[y]||[]).length), yMax=Math.max(1,...yCounts);
+      /* Best-rated year by you (gold) and fans (green). Needs a genuine pool — at
+         least as many titles as a typical year (min 3) — and is ranked by a
+         weighted average that shrinks small samples toward your overall mean, so
+         one anime rated 10 can't crown a whole year. */
+      const median=(a)=>{if(!a.length)return 0;const s=[...a].sort((x,y)=>x-y),m=s.length>>1;return s.length%2?s[m]:(s[m-1]+s[m])/2;};
+      const pickBest=(field)=>{
+        const ys2=years.map(y=>{const v=(ymap[y]||[]).filter(x=>x[field]!=null);return {y:y,n:v.length,sum:v.reduce((t,x)=>t+x[field],0)};}).filter(s=>s.n>0);
+        if(!ys2.length)return null;
+        const allN=ys2.reduce((t,s)=>t+s.n,0), gMean=ys2.reduce((t,s)=>t+s.sum,0)/allN;
+        const med=median(ys2.map(s=>s.n));
+        const PRIOR=Math.max(3,med);                 /* shrinkage strength: phantom "average" titles */
+        const minPool=Math.max(3,Math.round(med*0.4)); /* must be a reasonably watched year to qualify */
+        let best=null;
+        for(let pool=minPool;pool>=1&&!best;pool--){
+          ys2.forEach(s=>{if(s.n<pool)return;const w=(PRIOR*gMean+s.sum)/(PRIOR+s.n);
+            if(!best||w>best.w||(w===best.w&&s.n>best.n))best={y:s.y,avg:s.sum/s.n,w:w,n:s.n};});
+        }
+        return best;
+      };
+      const bestMine=pickBest("score"), bestFan=pickBest("alScore");
       years.forEach(y=>{if(ymap[y])BAND_YEAR_SETS[y]={title:y+" anime you completed ("+ymap[y].length+")",items:[...ymap[y]].sort((a,b)=>(b.score||0)-(a.score||0)||String(a.title).localeCompare(String(b.title)))};});
       const n=years.length, twoD=n>8;
       const expand=lsGet("celarchive.yrExpand")==="1"&&n>8;
@@ -913,9 +941,10 @@ function renderBand(){
       yearHist=`<div class="hist yhist" aria-label="Completed anime by release year">
         <div class="histhead"><span class="k lbl">Anime by release year</span><span class="histright"><span class="histmean">${animeDoneY.length} total</span>${canExpand?`<button type="button" class="yexp" data-yrexp="${expand?0:1}">${expand?"Collapse":"Expand"}</button>`:""}</span></div>
         <div class="yscroll${expand?" on":""}">
-          <div class="bars" style="${colStyle}">${years.map((y,i)=>{const c=yCounts[i];return `<button type="button" class="bar${c?" click":""}"${c?` data-year="${y}"`:""} title="${c} anime · ${y}" aria-label="${c} anime released in ${y}"><span>${showNum?(c||""):""}</span><b class="${c?"":"zero"} yr" style="height:${c?Math.max(4,c/yMax*58):2}px"></b></button>`}).join("")}</div>
+          <div class="bars" style="${colStyle}">${years.map((y,i)=>{const c=yCounts[i];const bm=bestMine&&bestMine.y===y,bf=bestFan&&bestFan.y===y;const bc=(bm?" bestmine":"")+(bf?" bestfan":"");const tt=`${c} anime · ${y}`+(bm?` · your best avg ${bestMine.avg.toFixed(1)}`:"")+(bf?` · fans' best avg ${bestFan.avg.toFixed(1)}`:"");return `<button type="button" class="bar${c?" click":""}"${c?` data-year="${y}"`:""} title="${esc(tt)}" aria-label="${esc(tt)}"><span>${showNum?(c||""):""}</span><b class="${c?"":"zero"} yr${bc}" style="height:${c?Math.max(4,c/yMax*58):2}px"></b></button>`}).join("")}</div>
           <div class="axis" style="${colStyle}">${years.map((y,i)=>`<span>${(i%step===0||i===n-1)?(twoD&&!expand?"'"+String(y).slice(2):"'"+String(y).slice(2)):""}</span>`).join("")}</div>
         </div>
+        ${(bestMine||bestFan)?`<div class="ylegend">${bestMine?`<span class="yl"><i class="yl-mine"></i>Your top year ’${String(bestMine.y).slice(2)}</span>`:""}${bestFan?`<span class="yl"><i class="yl-fan"></i>Fans’ top year ’${String(bestFan.y).slice(2)}</span>`:""}</div>`:""}
         ${expand?`<p class="help" style="margin:6px 2px 0">Scroll sideways to see every year. Tap a bar for that year's anime.</p>`:""}
       </div>`;
     }
