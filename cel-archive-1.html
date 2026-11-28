@@ -884,23 +884,25 @@ function renderBand(){
   const counts=bucketItems.map(a=>a.length);
   const max=Math.max(1,...counts);
   BAND_SETS={};bucketItems.forEach((list,i)=>{if(list.length)BAND_SETS[i+1]={title:(distMode==="fan"?"Community rated ":"You rated ")+(i+1)+" ("+list.length+")",items:list};});
-  /* ---- anime completed by year (watched year, anime only) ---- */
+  /* ---- completed anime by release year (anime only) ---- */
   const baseSrc=isExampleMode()?EXAMPLES:items();
-  const animeDoneY=baseSrc.filter(x=>x.status==="completed"&&x.kind==="anime"&&x.watchedYear);
+  const animeDoneY=baseSrc.filter(x=>x.status==="completed"&&x.kind==="anime"&&x.year);
   BAND_YEAR_SETS={};let yearHist="";
   if(bk!=="cartoon"){
-    const ymap={};animeDoneY.forEach(x=>{const y=+x.watchedYear;(ymap[y]=ymap[y]||[]).push(x)});
+    const ymap={};animeDoneY.forEach(x=>{const y=+x.year;(ymap[y]=ymap[y]||[]).push(x)});
     const ys=Object.keys(ymap).map(Number);
     if(ys.length){
       const minY=Math.min(...ys),maxY=Math.max(...ys),years=[];
       for(let y=minY;y<=maxY;y++)years.push(y);
       const yCounts=years.map(y=>(ymap[y]||[]).length), yMax=Math.max(1,...yCounts);
-      years.forEach(y=>{if(ymap[y])BAND_YEAR_SETS[y]={title:"Anime completed in "+y+" ("+ymap[y].length+")",items:[...ymap[y]].sort((a,b)=>(b.score||0)-(a.score||0)||String(a.title).localeCompare(String(b.title)))};});
-      const twoD=years.length>8;
-      yearHist=`<div class="hist yhist" aria-label="Anime completed by year">
-        <div class="histhead"><span class="k lbl">Anime completed by year</span><span class="histright"><span class="histmean">${animeDoneY.length} total</span></span></div>
-        <div class="bars" style="grid-template-columns:repeat(${years.length},1fr)">${years.map((y,i)=>{const c=yCounts[i];return `<button type="button" class="bar${c?" click":""}"${c?` data-year="${y}"`:""} title="${c} anime in ${y}" aria-label="${c} anime completed in ${y}"><span>${c||""}</span><b class="${c?"":"zero"} yr" style="height:${c?Math.max(4,c/yMax*58):2}px"></b></button>`}).join("")}</div>
-        <div class="axis" style="grid-template-columns:repeat(${years.length},1fr)">${years.map(y=>`<span>${twoD?"'"+String(y).slice(2):y}</span>`).join("")}</div>
+      years.forEach(y=>{if(ymap[y])BAND_YEAR_SETS[y]={title:y+" anime you completed ("+ymap[y].length+")",items:[...ymap[y]].sort((a,b)=>(b.score||0)-(a.score||0)||String(a.title).localeCompare(String(b.title)))};});
+      const n=years.length, twoD=n>8;
+      const step=n<=8?1:n<=16?2:Math.ceil(n/8); /* how often to show a year label */
+      const showNum=n<=16; /* show count above bar only when not too crowded */
+      yearHist=`<div class="hist yhist" aria-label="Completed anime by release year">
+        <div class="histhead"><span class="k lbl">Anime by release year</span><span class="histright"><span class="histmean">${animeDoneY.length} total</span></span></div>
+        <div class="bars" style="grid-template-columns:repeat(${n},1fr)">${years.map((y,i)=>{const c=yCounts[i];return `<button type="button" class="bar${c?" click":""}"${c?` data-year="${y}"`:""} title="${c} anime · ${y}" aria-label="${c} anime released in ${y}"><span>${showNum?(c||""):""}</span><b class="${c?"":"zero"} yr" style="height:${c?Math.max(4,c/yMax*58):2}px"></b></button>`}).join("")}</div>
+        <div class="axis" style="grid-template-columns:repeat(${n},1fr)">${years.map((y,i)=>`<span>${(i%step===0||i===n-1)?(twoD?"'"+String(y).slice(2):y):""}</span>`).join("")}</div>
       </div>`;
     }
   }
