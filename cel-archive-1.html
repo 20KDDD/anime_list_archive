@@ -876,11 +876,12 @@ function renderBand(){
   const by=(l,st)=>l.filter(x=>x.status===st).length;
   const kd=(l,k)=>l.filter(x=>x.kind===k);
   const prog=src.filter(x=>x.status==="watching"||x.status==="on_hold").length;
-  const other=src.filter(x=>SEEN.includes(x.status)&&!["anime","donghua"].includes(x.kind)&&!isCartoonKind(x.kind));
-  const scored=src.filter(x=>x.score);
+  /* hentai is excluded from anime stats/charts and folded into "Other animation" */
+  const other=src.filter(x=>SEEN.includes(x.status)&&(isAdultTitle(x)||(!["anime","donghua"].includes(x.kind)&&!isCartoonKind(x.kind))));
+  const scored=src.filter(x=>x.score&&!isAdultTitle(x));
   const mean=scored.length?(scored.reduce((a,b)=>a+b.score,0)/scored.length):null;
   const seasonsW=src.reduce((a,b)=>a+seasonsOf(b).filter(s=>s.watched).length,0);
-  const fanScored=src.filter(x=>x.alScore!=null&&x.status==="completed"&&(x.kind==="anime"||isCartoonKind(x.kind)));
+  const fanScored=src.filter(x=>x.alScore!=null&&x.status==="completed"&&!isAdultTitle(x)&&(x.kind==="anime"||isCartoonKind(x.kind)));
   const fanMean=fanScored.length?(fanScored.reduce((a,b)=>a+b.alScore,0)/fanScored.length):null;
   const distMode=(lsGet("celarchive.distMode")==="fan"&&fanScored.length)?"fan":"mine";
   const distArr=distMode==="fan"?fanScored:scored;
@@ -892,7 +893,7 @@ function renderBand(){
   BAND_SETS={};bucketItems.forEach((list,i)=>{if(list.length)BAND_SETS[i+1]={title:(distMode==="fan"?"Community rated ":"You rated ")+(i+1)+" ("+list.length+")",items:list};});
   /* ---- completed anime by release year (anime only) ---- */
   const baseSrc=isExampleMode()?EXAMPLES:items();
-  const animeDoneY=baseSrc.filter(x=>x.status==="completed"&&x.kind==="anime"&&x.year);
+  const animeDoneY=baseSrc.filter(x=>x.status==="completed"&&x.kind==="anime"&&x.year&&!isAdultTitle(x));
   BAND_YEAR_SETS={};let yearHist="";
   if(bk!=="cartoon"){
     const ymap={};animeDoneY.forEach(x=>{const y=+x.year;(ymap[y]=ymap[y]||[]).push(x)});
@@ -920,7 +921,7 @@ function renderBand(){
     }
   }
   const tile=(k,v,sub,cls)=>`<div class="stat${cls?" "+cls:""}"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${sub}</span></div>`;
-  const kindTile=(label,k,extra)=>{const s=seen.filter(x=>kindMatch(x.kind,k)),c=by(s,"completed");return tile(label,c,`completed · ${s.length} seen${extra||""}`)};
+  const kindTile=(label,k,extra)=>{const s=seen.filter(x=>kindMatch(x.kind,k)&&!isAdultTitle(x)),c=by(s,"completed");return tile(label,c,`completed · ${s.length} seen${extra||""}`)};
   $("#band").innerHTML=
     tile("Completed",done.length,`finished every season · ${seasonsW} seasons watched`,"lead")+
     tile("Seen · all",seen.length,[`${by(seen,"unfinished")} unfinished`,`${by(seen,"dropped")} dropped`,prog?`${prog} in progress`:""].filter(Boolean).join(" · "),"lead")+
@@ -940,7 +941,7 @@ let BAND_SETS={};
 let BAND_YEAR_SETS={};
 function renderTaste(){
   const el=$("#taste");
-  const src=isExampleMode()?EXAMPLES:items();
+  const src=(isExampleMode()?EXAMPLES:items()).filter(x=>!isAdultTitle(x)); /* hentai excluded from taste charts */
   const done=src.filter(x=>x.status==="completed");
   if(!src.length){el.innerHTML="";TASTE_SETS={};return}
   const hidden=lsGet("celarchive.tasteHidden")==="1";
@@ -1043,7 +1044,7 @@ function openSetObj(set){
   if(!set||!set.items||!set.items.length)return;
   openSheet(`<header><h2>${esc(set.title)}</h2><span class="mono" style="color:var(--muted);font-size:13px">${set.items.length} title${set.items.length===1?"":"s"}</span><button class="x" data-close aria-label="Close">×</button></header>
     <div class="body"><div class="dlist">${set.items.map(it=>`<button type="button" class="drow" data-id="${esc(it.id)}">
-      ${it.poster?`<img src="${esc(it.poster)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'dph'}))">`:`<span class="dph"></span>`}
+      ${(it.poster&&!isAdultTitle(it))?`<img src="${esc(it.poster)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'dph'}))">`:`<span class="dph"></span>`}
       <span class="dt"><b>${it.favorite?`<span class="fav">♥</span> `:""}${esc(it.title)}</b><small>${[KIND_LABEL[it.kind],DEMO_LABEL[it.demo],it.type,it.year,it.status!=="completed"?ST_LABEL[it.status]:""].filter(Boolean).map(esc).join(" · ")}</small></span>
       <span class="ds${it.score?"":" none"}">${it.score||"–"}</span></button>`).join("")}</div></div>
     <div class="foot-bar"><span class="sp help">Tap a show to open it.</span><button class="btn" data-close>Close</button></div>`,true);
@@ -1143,6 +1144,7 @@ function aotyYearsFor(id){const m=getAoty();const ys=[];Object.keys(m).forEach(y
 function aotySilverYearsFor(id){const m=getAoty();const ys=[];Object.keys(m).forEach(y=>{if(aoBase((m[y]["Anime of the Year"]||{}).r)===String(id))ys.push(+y)});return ys.sort((a,b)=>a-b);}
 const AW_SHORT={"Film of the Year":"Best Film"};
 function awardChipsFor(id){const m=getAoty();const valid={};CR_CATS.forEach(c=>{if(c.k!=="Anime of the Year")valid[c.k]=1});const out=[];Object.keys(m).forEach(y=>{const yo=m[y]||{};Object.keys(yo).forEach(cat=>{if(!valid[cat])return;const v=yo[cat]||{};if(aoBase(v.w)===String(id))out.push({cat,year:+y})})});out.sort((a,b)=>b.year-a.year||a.cat.localeCompare(b.cat));return out;}
+function isAdultTitle(it){return !!(it&&(it.isAdult===true||(it.genres||[]).some(function(g){return /^\s*hentai\s*$/i.test(String(g))})));}
 function cardHTML(it){
   const st=it.status||"plan";
   const aoYears=it._example?[]:aotyYearsFor(it.id);
@@ -1155,7 +1157,7 @@ function cardHTML(it){
   return `<article class="card${it._example?" example":""}" style="--st:var(--st-${st})" data-id="${esc(it.id)}" tabindex="0" role="button" aria-label="${esc(it.title)}, open details">
     <div class="posterbox">
       <div class="pfallback" style="background:${posterGrad(it.id||it.title)}"></div>
-      ${it.poster?`<img class="cposter" src="${esc(it.poster)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.closest('.card').classList.add('noimg')">`:``}
+      ${(it.poster&&!isAdultTitle(it))?`<img class="cposter" src="${esc(it.poster)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.closest('.card').classList.add('noimg')">`:``}
       <span class="medal${it.score?"":" none"}">${it.score||"–"}</span>
       ${(!it._example&&it.alScore!=null)?(it.score?(()=>{const dd=it.score-it.alScore,even=Math.abs(dd)<0.25,cls=even?"even":(dd>0?"up":"down"),ar=even?"≈":(dd>0?"▲":"▼");return `<span class="commdelta ${cls}" title="Community ${it.alScore.toFixed(1)} · you ${it.score}">${ar} ${even?"0":(dd>0?"+":"")+dd.toFixed(1)}</span>`;})():`<span class="commdelta comm" title="Community score · you haven't rated this yet">☆ ${it.alScore.toFixed(1)}</span>`):""}
       ${aoYears.length?`<span class="aotybadge" title="Your Anime of the Year">🏆 ${aoYears.join(", ")}</span>`:""}
@@ -2421,7 +2423,7 @@ async function alSeasonChain(id){
 let postersRunning=false;
 async function findPosters(src,manual){
   if(postersRunning){if(manual)toast("Already finding posters…");return}
-  const todo=src.filter(x=>x&&x.id&&!x.poster&&(manual||!x.posterTried)&&!x._example).map(x=>store.items.get(x.id)||x);
+  const todo=src.filter(x=>x&&x.id&&!x.poster&&(manual||!x.posterTried)&&!x._example&&!isAdultTitle(x)).map(x=>store.items.get(x.id)||x);
   if(!todo.length){if(manual)toast("Every title already has a poster, or AniList doesn't list it.");return}
   postersRunning=true;let found=0,done=0;const B=10;
   try{
@@ -3701,7 +3703,8 @@ setTimeout(()=>{try{refreshCommScores()}catch(e){}},3000);
   function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
   function lib(){try{var a=JSON.parse(lsGet(LS_LIB)||"[]");return Array.isArray(a)?a.filter(function(x){return x&&!x.hidden}):[]}catch(e){return []}}
 
-  function animeCompleted(){return lib().filter(function(x){return x.status==="completed"&&x.kind==="anime"}).length;}
+  function isAdult(x){return !!(x&&(x.isAdult===true||(x.genres||[]).some(function(g){return /^\s*hentai\s*$/i.test(String(g))})));}
+  function animeCompleted(){return lib().filter(function(x){return x.status==="completed"&&x.kind==="anime"&&!isAdult(x)}).length;}
 
   /* Real anitubers with verified, public MyAnimeList lists. Their "completed
      anime" number is pulled LIVE from MAL via the keyless Jikan API and refreshed
